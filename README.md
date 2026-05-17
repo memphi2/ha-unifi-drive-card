@@ -111,6 +111,7 @@ Common options:
 npm run check
 npm run render-smoke
 npm run anonymization-check
+npm run security-audit
 ```
 
 Live Home Assistant smoke uses environment variables only:

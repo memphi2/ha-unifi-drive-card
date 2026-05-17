@@ -111,6 +111,14 @@ const html = `<!doctype html>
             installed_version: "4.1.0",
             latest_version: "4.2.0"
           }
+        },
+        "update.drive": {
+          state: "off",
+          attributes: {
+            friendly_name: "Drive Update",
+            installed_version: "3.0.0",
+            latest_version: "3.0.0"
+          }
         }
       };
       const registry = {
@@ -123,7 +131,8 @@ const html = `<!doctype html>
         "switch.snapshots": { platform: "unifi_drive", device_id: "dev-a", config_entry_id: "entry-a", translation_key: "snapshot_enabled", unique_id: "dev-a_snapshot_shared_main_enabled" },
         "select.fan": { platform: "unifi_drive", device_id: "dev-a", config_entry_id: "entry-a", translation_key: "fan_mode", unique_id: "dev-a_fan_mode" },
         "button.shutdown": { platform: "unifi_drive", device_id: "dev-a", config_entry_id: "entry-a", translation_key: "shutdown", unique_id: "dev-a_shutdown" },
-        "update.unifi_os": { platform: "unifi_drive", device_id: "dev-a", config_entry_id: "entry-a", translation_key: "unifi_os", unique_id: "dev-a_unifi_os_update" }
+        "update.unifi_os": { platform: "unifi_drive", device_id: "dev-a", config_entry_id: "entry-a", translation_key: "unifi_os", unique_id: "dev-a_unifi_os_update" },
+        "update.drive": { platform: "unifi_drive", device_id: "dev-a", config_entry_id: "entry-a", translation_key: "drive", unique_id: "dev-a_drive_update" }
       };
       const card = document.createElement("unifi-drive-card");
       card.hass = {
@@ -212,6 +221,9 @@ try {
       color: getComputedStyle(element).color,
       className: element.className,
     }));
+    const installButtons = [...root.querySelectorAll("button.chip")]
+      .filter((element) => element.textContent.trim() === "Install")
+      .map((element) => ({ disabled: element.disabled }));
     return {
       actionDetails,
       text,
@@ -223,6 +235,7 @@ try {
       customCards: window.customCards,
       hasShutdownByDefault: text.includes("Shut down"),
       prefixStillVisible: /UniFi Drive Storage Usage/.test(text),
+      installButtons,
     };
   });
 
@@ -234,7 +247,11 @@ try {
   assert(result.text.includes("Pool 1"), "pool group missing");
   assert(result.text.includes("Disk 1"), "drive group missing");
   assert(result.text.includes("Shared"), "snapshot group missing");
+  assert(result.text.includes("Drive Update"), "Drive update label was over-normalized");
   assert(result.text.includes("Install"), "update install control missing");
+  assert(result.installButtons.length === 2, "expected two update install controls");
+  assert(result.installButtons.some((item) => item.disabled === false), "available update install control missing");
+  assert(result.installButtons.some((item) => item.disabled === true), "non-available update install control was not disabled");
   assert(!result.hasShutdownByDefault, "dangerous shutdown action rendered by default");
   assert(!result.prefixStillVisible, "device prefix was not normalized");
   assert(result.cardBox.width > 400 && result.cardBox.height > 280, "card layout looks collapsed");

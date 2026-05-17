@@ -8,6 +8,10 @@ describe("display text", () => {
     expect(stripDeviceNamePrefix("Ubiquiti UniFi Drive Storage Used")).toBe("Used");
   });
 
+  it("keeps Drive application names that are not device prefixes", () => {
+    expect(stripDeviceNamePrefix("Drive Update")).toBe("Drive Update");
+  });
+
   it("uses the fallback when the value is only the device prefix", () => {
     expect(normalizeDisplayText("UniFi Drive", "System status")).toBe("System status");
   });
