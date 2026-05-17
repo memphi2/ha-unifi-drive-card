@@ -76,11 +76,10 @@ async function login() {
   return {
     accessToken: token.access_token,
     refreshToken: token.refresh_token,
-    clientId,
   };
 }
 
-async function revokeRefreshToken(refreshToken, clientId) {
+async function revokeRefreshToken(refreshToken) {
   if (!refreshToken) {
     return;
   }
@@ -88,9 +87,8 @@ async function revokeRefreshToken(refreshToken, clientId) {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
-      grant_type: "delete",
-      refresh_token: refreshToken,
-      client_id: clientId,
+      token: refreshToken,
+      action: "revoke",
     }),
   });
 }
@@ -293,15 +291,27 @@ async function validateServedBundle() {
   const expected = await readFile(DIST_FILE, "utf8");
   const url = new URL(resourceUrl, baseUrl);
   url.searchParams.set("smoke", String(Date.now()));
-  const response = await fetch(url);
-  const actual = await response.text();
-  if (!response.ok) {
-    throw new Error(`deployed bundle is not reachable: HTTP ${response.status}`);
+  let lastError;
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    try {
+      const response = await fetch(url);
+      const actual = await response.text();
+      if (!response.ok) {
+        throw new Error(`deployed bundle is not reachable: HTTP ${response.status}`);
+      }
+      if (actual !== expected) {
+        throw new Error("deployed bundle differs from local dist bundle");
+      }
+      pass(`deployed bundle served from ${resourceUrl.split("?")[0]}`);
+      return;
+    } catch (error) {
+      lastError = error;
+      if (attempt < 7) {
+        await sleep(750);
+      }
+    }
   }
-  if (actual !== expected) {
-    throw new Error("deployed bundle differs from local dist bundle");
-  }
-  pass(`deployed bundle served from ${resourceUrl.split("?")[0]}`);
+  throw lastError;
 }
 
 async function upsertLovelaceResource(accessToken) {
@@ -449,8 +459,16 @@ try {
     }
   } finally {
     try {
-      await revokeRefreshToken(token.refreshToken, token.clientId);
+      await revokeRefreshToken(token.refreshToken);
       pass("HA refresh token revoked");
+      const cleanup = await cleanupLocalhostTokensWithRetry();
+      if (cleanup.remaining > 0) {
+        fail(
+          `localhost token cleanup incomplete: removed=${cleanup.removed} remaining=${cleanup.remaining}`,
+        );
+      } else {
+        pass(`localhost token cleanup removed=${cleanup.removed}`);
+      }
     } catch (error) {
       console.warn(
         `WARN: HA refresh token revoke failed: ${

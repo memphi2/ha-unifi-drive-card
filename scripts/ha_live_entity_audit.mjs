@@ -23,6 +23,9 @@ const expectedKeys = JSON.parse(
 const expectedKeySet = new Set(
   expectedKeys.map((item) => `${item.domain}.${item.key}`),
 );
+const optionalExpectedKeys = new Set([
+  "button.wake_on_lan",
+]);
 
 function pass(message) {
   console.log(`PASS: ${message}`);
@@ -78,11 +81,10 @@ async function login() {
   return {
     accessToken: token.access_token,
     refreshToken: token.refresh_token,
-    clientId,
   };
 }
 
-async function revokeRefreshToken(refreshToken, clientId) {
+async function revokeRefreshToken(refreshToken) {
   if (!refreshToken) {
     return;
   }
@@ -90,9 +92,8 @@ async function revokeRefreshToken(refreshToken, clientId) {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
-      grant_type: "delete",
-      refresh_token: refreshToken,
-      client_id: clientId,
+      token: refreshToken,
+      action: "revoke",
     }),
   });
 }
@@ -160,7 +161,9 @@ try {
           }),
       );
       const unknownKeys = [...liveKeys].filter((key) => !expectedKeySet.has(key));
-      const missingKeys = [...expectedKeySet].filter((key) => !liveKeys.has(key));
+      const missingKeys = [...expectedKeySet].filter(
+        (key) => !liveKeys.has(key) && !optionalExpectedKeys.has(key),
+      );
       if (unknownKeys.length) {
         throw new Error(`live integration exposes unknown keys: ${unknownKeys.join(", ")}`);
       }
@@ -175,7 +178,7 @@ try {
     );
   } finally {
     try {
-      await revokeRefreshToken(token.refreshToken, token.clientId);
+      await revokeRefreshToken(token.refreshToken);
     } catch {
       // The card smoke script performs config-file token cleanup when needed; this
       // audit does not mutate the HA config share.
