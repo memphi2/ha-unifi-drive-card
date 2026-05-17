@@ -37,7 +37,7 @@ Reviewed reference points:
 
 | Asset | Source | Note |
 | --- | --- | --- |
-| `assets/screenshot-card.png` | Screenshot of this card UI. | Generated from synthetic data; should be regenerated if UI changes. |
+| `assets/screenshot*-card.png` | Screenshots of this card UI. | Generated from redacted or synthetic data; should be regenerated if UI changes. |
 
 ## Security Hygiene
 

@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="assets/screenshot-card.png" alt="Drive Storage Card preview" width="420">
-</p>
-
 # Drive Storage Card
 
 [![CI](https://github.com/memphi2/ha-unifi-drive-card/actions/workflows/ci.yml/badge.svg)](https://github.com/memphi2/ha-unifi-drive-card/actions/workflows/ci.yml)
@@ -14,6 +10,14 @@ update entities from Home Assistant registry metadata and renders them as one
 compact dashboard card.
 
 Built with Codex.
+
+## Screenshots
+
+| Compact overview | Snapshot controls |
+| --- | --- |
+| <img src="assets/screenshot-card.png" alt="Drive Storage Card compact overview" width="320"> | <img src="assets/screenshot2-card.png" alt="Drive Storage Card snapshot controls" width="320"> |
+| System controls | Updates and diagnostics |
+| <img src="assets/screenshot3-card.png" alt="Drive Storage Card system controls with private address redacted" width="320"> | <img src="assets/screenshot4-card.png" alt="Drive Storage Card updates and diagnostics" width="320"> |
 
 ## Highlights
 
