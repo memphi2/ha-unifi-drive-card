@@ -43,9 +43,17 @@ export function actionConfigFromEditor(
   key: ActionConfigKey,
   value: Record<string, unknown>,
 ): UnifiDriveCardConfig["tap_action"] | undefined {
-  const action = isEditorActionName(value.action) ? value.action : actionNameFromConfig(value, key);
+  const rawAction = typeof value.action === "string" ? value.action : undefined;
+  const action = isEditorActionName(rawAction)
+    ? rawAction
+    : rawAction && rawAction !== "perform-action"
+      ? rawAction
+      : actionNameFromConfig(value, key);
   if (action === "none") {
     return key === "tap_action" ? { action } : undefined;
+  }
+  if (rawAction === action && !isEditorActionName(action)) {
+    return { ...value, action };
   }
 
   const config: NonNullable<UnifiDriveCardConfig["tap_action"]> = { action };

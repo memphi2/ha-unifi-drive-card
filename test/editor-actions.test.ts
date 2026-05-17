@@ -42,6 +42,20 @@ describe("editor action helpers", () => {
     });
   });
 
+  it("preserves Home Assistant actions that are not exposed in the editor menu", () => {
+    expect(
+      actionConfigFromEditor("tap_action", {
+        action: "assist",
+        entity: "assist_satellite.kitchen",
+        pipeline_id: "preferred",
+      }),
+    ).toEqual({
+      action: "assist",
+      entity: "assist_satellite.kitchen",
+      pipeline_id: "preferred",
+    });
+  });
+
   it("normalizes target fields and validates service data JSON", () => {
     const target = updateActionTargetField(undefined, "area_id", "bathroom, wellness");
 
