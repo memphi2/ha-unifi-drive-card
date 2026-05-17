@@ -19,4 +19,3 @@
 ### Notes
 
 - Built with Codex.
-- No release tag has been published yet.
