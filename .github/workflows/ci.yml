@@ -13,8 +13,17 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Confirm clean main baseline
-        run: echo "No card implementation is present on this baseline branch."
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run checks
+        run: npm run check
 
   ha-compat:
     runs-on: ubuntu-latest
@@ -22,8 +31,23 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Confirm Home Assistant compatibility baseline
-        run: echo "Home Assistant compatibility is validated in the feature PR."
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build bundle
+        run: npm run build
+
+      - name: Check HACS and bundle compatibility
+        run: npm run compat
+
+      - name: Check HA storage fixture compatibility
+        run: npm run ha:storage-smoke -- test/fixtures/ha-config
 
   browser-smoke:
     runs-on: ubuntu-latest
@@ -31,5 +55,20 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Confirm browser smoke baseline
-        run: echo "Browser smoke is validated in the feature PR."
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Set up Chrome
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Run browser render smoke
+        env:
+          CHROME_BIN: ${{ steps.setup-chrome.outputs.chrome-path }}
+        run: npm run render-smoke
