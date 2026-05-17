@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/readme-banner.svg" alt="Drive Storage Card - Home Assistant Lovelace card" width="100%">
+  <img src="assets/screenshot-card.png" alt="Drive Storage Card preview" width="420">
 </p>
 
 # Drive Storage Card

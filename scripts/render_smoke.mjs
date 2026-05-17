@@ -8,6 +8,8 @@ const chromePath = process.env.CHROME_BIN || "/usr/bin/google-chrome";
 const args = process.argv.slice(2);
 const screenshotIndex = args.indexOf("--screenshot");
 const screenshotPath = screenshotIndex >= 0 ? args[screenshotIndex + 1] : undefined;
+const screenshotCardWidth = 420;
+const screenshotClipHeight = 430;
 const bundle = await readFile("dist/ha-unifi-drive-card.js", "utf8");
 
 const html = `<!doctype html>
@@ -269,6 +271,19 @@ try {
   });
 
   if (screenshotPath) {
+    await page.setViewport({
+      width: screenshotCardWidth + 48,
+      height: screenshotClipHeight + 80,
+      deviceScaleFactor: 1,
+    });
+    await page.evaluate(
+      async (width) => {
+        const card = document.querySelector("unifi-drive-card");
+        card.style.width = `${width}px`;
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      },
+      screenshotCardWidth,
+    );
     const cardBox = await (await page.$("unifi-drive-card"))?.boundingBox();
     if (!cardBox) {
       throw new Error("card screenshot target missing");
@@ -279,7 +294,7 @@ try {
         x: Math.max(0, Math.floor(cardBox.x)),
         y: Math.max(0, Math.floor(cardBox.y)),
         width: Math.ceil(cardBox.width),
-        height: Math.ceil(cardBox.height),
+        height: Math.min(Math.ceil(cardBox.height), screenshotClipHeight),
       },
     });
   }

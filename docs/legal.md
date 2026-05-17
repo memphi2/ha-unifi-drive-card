@@ -37,7 +37,6 @@ Reviewed reference points:
 
 | Asset | Source | Note |
 | --- | --- | --- |
-| `assets/readme-banner.svg` | Project-authored SVG. | Does not embed official logos or vendor trade dress. |
 | `assets/screenshot-card.png` | Screenshot of this card UI. | Generated from synthetic data; should be regenerated if UI changes. |
 
 ## Security Hygiene
