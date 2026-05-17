@@ -1,0 +1,62 @@
+import { clamp, numericAttribute, parseFiniteNumber, roundToStep } from "./format";
+import type { HassEntity, HomeAssistant } from "./types";
+
+export function serviceForToggle(state: HassEntity | undefined): "turn_on" | "turn_off" {
+  return state?.state === "on" ? "turn_off" : "turn_on";
+}
+
+export async function callEntityService(
+  hass: HomeAssistant,
+  entityId: string,
+  service: string,
+  data: Record<string, unknown> = {},
+): Promise<unknown> {
+  const domain = entityId.split(".", 1)[0] ?? "";
+  return hass.callService(domain, service, { entity_id: entityId, ...data });
+}
+
+export async function setNumberValue(
+  hass: HomeAssistant,
+  entityId: string,
+  state: HassEntity | undefined,
+  rawValue: string | number,
+): Promise<unknown> {
+  const parsed = parseFiniteNumber(rawValue);
+  if (parsed === undefined) {
+    return undefined;
+  }
+  const min = numericAttribute(state, "min");
+  const max = numericAttribute(state, "max");
+  const step = numericAttribute(state, "step") ?? 1;
+  const value = roundToStep(
+    clamp(parsed, min ?? Number.NEGATIVE_INFINITY, max ?? Number.POSITIVE_INFINITY),
+    step,
+  );
+  return callEntityService(hass, entityId, "set_value", { value });
+}
+
+export async function selectOption(
+  hass: HomeAssistant,
+  entityId: string,
+  option: string,
+): Promise<unknown> {
+  return callEntityService(hass, entityId, "select_option", { option });
+}
+
+export async function setTimeValue(
+  hass: HomeAssistant,
+  entityId: string,
+  value: string,
+): Promise<unknown> {
+  if (!/^\d{2}:\d{2}(:\d{2})?$/.test(value)) {
+    return undefined;
+  }
+  return callEntityService(hass, entityId, "set_value", { time: value.slice(0, 5) });
+}
+
+export async function installUpdate(
+  hass: HomeAssistant,
+  entityId: string,
+): Promise<unknown> {
+  return hass.callService("update", "install", { entity_id: entityId });
+}
