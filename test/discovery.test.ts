@@ -145,6 +145,46 @@ describe("discoverEntities", () => {
     expect(discovered.entityIds.usage_percent).toBe("sensor.unas_usage");
   });
 
+  it("uses a UNAS fallback entity as base when status is unavailable", () => {
+    const hass: HomeAssistant = {
+      states: {
+        "sensor.storage_usage": entity("42", {
+          friendly_name: "UNAS Storage Usage",
+        }),
+      },
+      callService: async () => undefined,
+    };
+
+    const discovered = discoverEntities(hass, normalizeConfig({}));
+
+    expect(discovered.baseEntity).toBe("sensor.storage_usage");
+    expect(discovered.entityIds.usage_percent).toBe("sensor.storage_usage");
+  });
+
+  it("does not match dynamic aliases inside larger slug tokens", () => {
+    const hass: HomeAssistant = {
+      states: {
+        "sensor.pool_unused_space": entity("123", {
+          friendly_name: "Pool 1 Unused Space",
+          pool_key: "pool-1",
+          pool_name: "Pool 1",
+        }),
+      },
+      entities: {
+        "sensor.pool_unused_space": registry(
+          "dev-a",
+          undefined,
+          "unifi_drive_entry_pool_pool-1_unused_space",
+        ),
+      },
+      callService: async () => undefined,
+    };
+
+    const discovered = discoverEntities(hass, normalizeConfig({ device_id: "dev-a" }));
+
+    expect(discovered.groups.pool).toHaveLength(0);
+  });
+
   it("honors explicit overrides before discovery", () => {
     const hass: HomeAssistant = {
       states: {

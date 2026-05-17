@@ -1,5 +1,6 @@
 import { LitElement, css, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { ifDefined } from "lit/directives/if-defined.js";
 import {
   DIAGNOSTIC_KEYS,
   ENTITY_DEFINITION_BY_KEY,
@@ -328,13 +329,16 @@ export class UnifiDriveCard extends LitElement {
       }
       case "number": {
         const busy = this._isServiceBusy(entityId, "set_value");
+        const min = inputAttributeValue(state.attributes.min);
+        const max = inputAttributeValue(state.attributes.max);
+        const step = inputAttributeValue(state.attributes.step) ?? "1";
         return html`
           <input
             class="number"
             type="number"
-            min=${String(state.attributes.min ?? "")}
-            max=${String(state.attributes.max ?? "")}
-            step=${String(state.attributes.step ?? 1)}
+            min=${ifDefined(min)}
+            max=${ifDefined(max)}
+            step=${step}
             .value=${String(numericState(state) ?? "")}
             ?disabled=${busy}
             aria-busy=${String(busy)}
@@ -350,6 +354,7 @@ export class UnifiDriveCard extends LitElement {
           <input
             class="time"
             type="time"
+            step="1"
             .value=${state.state}
             ?disabled=${busy}
             aria-busy=${String(busy)}
@@ -1086,4 +1091,14 @@ export class UnifiDriveCard extends LitElement {
       }
     }
   `;
+}
+
+function inputAttributeValue(value: unknown): string | undefined {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return String(value);
+  }
+  if (typeof value === "string" && value.trim()) {
+    return value.trim();
+  }
+  return undefined;
 }

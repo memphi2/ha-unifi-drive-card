@@ -31,6 +31,20 @@ describe("actions", () => {
     });
   });
 
+  it("keeps stepped number values inside entity bounds", async () => {
+    const hass = mockHass();
+    await setNumberValue(
+      hass,
+      "number.snapshot_limit",
+      { state: "7", attributes: { min: 1, max: 8, step: 2 } },
+      "8",
+    );
+    expect(hass.callService).toHaveBeenCalledWith("number", "set_value", {
+      entity_id: "number.snapshot_limit",
+      value: 7,
+    });
+  });
+
   it("ignores invalid number input", async () => {
     const hass = mockHass();
     await setNumberValue(hass, "number.snapshot_limit", undefined, "");
@@ -58,6 +72,13 @@ describe("actions", () => {
       entity_id: "time.snapshot_schedule",
       time: "02:30:45",
     });
+  });
+
+  it("ignores out-of-range time service payloads", async () => {
+    const hass = mockHass();
+    await setTimeValue(hass, "time.snapshot_schedule", "24:00");
+    await setTimeValue(hass, "time.snapshot_schedule", "12:61:00");
+    expect(hass.callService).not.toHaveBeenCalled();
   });
 
   it("routes update installs through the update domain", async () => {
