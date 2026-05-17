@@ -20,13 +20,13 @@ entity: sensor.unifi_drive_system_status
 ```yaml
 type: custom:unifi-drive-card
 name: UniFi Drive
-compact: false
+compact: true
 show_unavailable: false
 show_optional: false
 show_diagnostics: true
 show_dangerous_actions: false
 show_icon_animations: true
-max_sensor_rows: 12
+max_sensor_rows: 10
 sections:
   - overview
   - storage
@@ -58,19 +58,23 @@ double_tap_action:
 | `entity` | string | auto | Optional anchor entity for registry discovery. |
 | `device_id` | string | auto | Restricts discovery to one Home Assistant device. |
 | `name` | string | `UniFi Drive` | Card title. |
-| `compact` | boolean | `false` | Reduces spacing. |
+| `compact` | boolean | `true` | Reduces vertical spacing. Set to `false` for the roomier layout. |
 | `show_unavailable` | boolean | `false` | Shows unavailable entities. |
 | `show_optional` | boolean | `false` | Shows optional missing entities as placeholders. |
 | `show_diagnostics` | boolean | `true` | Enables diagnostics. |
 | `show_dangerous_actions` | boolean | `false` | Shows restart/shutdown actions with confirmation. |
 | `show_icon_animations` | boolean | `true` | Enables animated icon states. |
-| `max_sensor_rows` | number | `12` | Limits row-heavy sections. |
+| `max_sensor_rows` | number | `10` | Limits row-heavy sections. |
 | `sections` | list | all | Ordered visible sections. |
 | `hide_entities` | list | `[]` | Known entity keys to hide. |
 | `entities` | map | `{}` | Entity ID overrides by key. |
 | `tap_action` | action | `more-info` | Action fired on click. |
 | `hold_action` | action | unset | Action fired on long press. |
 | `double_tap_action` | action | unset | Action fired on double click. |
+
+Service actions from the visual editor are written in Home Assistant's current
+`perform-action` format. The editor also supports service target entity, area
+and device fields plus JSON service data.
 
 ## Sections
 

@@ -69,13 +69,13 @@ type: module
 ```yaml
 type: custom:unifi-drive-card
 name: UniFi Drive
-compact: false
+compact: true
 show_unavailable: false
 show_optional: false
 show_diagnostics: true
 show_dangerous_actions: false
 show_icon_animations: true
-max_sensor_rows: 12
+max_sensor_rows: 10
 sections:
   - overview
   - storage
@@ -103,7 +103,8 @@ Common options:
 | `show_dangerous_actions` | `false` | Shows restart/shutdown actions with confirmation. |
 | `hide_entities` | `[]` | Known entity keys to hide. |
 | `entities` | `{}` | Per-key entity overrides. |
-| `max_sensor_rows` | `12` | Row limit for list sections. |
+| `compact` | `true` | Uses the compact layout by default. |
+| `max_sensor_rows` | `10` | Row limit for list sections. |
 
 ## Validation
 

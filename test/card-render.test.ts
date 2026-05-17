@@ -71,6 +71,23 @@ describe("UnifiDriveCard rendering", () => {
       entity: "sensor.system_status",
     });
   });
+
+  it("uses the compact layout by default and can disable it explicitly", async () => {
+    const compactCard = await renderCard(hassFixture(), { sections: ["overview"] });
+    expect(compactCard.getCardSize()).toBe(5);
+    expect(compactCard.shadowRoot?.querySelector("ha-card")?.classList.contains("compact")).toBe(
+      true,
+    );
+
+    const fullCard = await renderCard(hassFixture(), {
+      compact: false,
+      sections: ["overview"],
+    });
+    expect(fullCard.getCardSize()).toBe(9);
+    expect(fullCard.shadowRoot?.querySelector("ha-card")?.classList.contains("compact")).toBe(
+      false,
+    );
+  });
 });
 
 async function renderCard(hass: HomeAssistant, config: Record<string, unknown>) {

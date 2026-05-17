@@ -2,12 +2,9 @@ import { LitElement, css, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
   DIAGNOSTIC_KEYS,
-  DRIVE_KEYS,
   ENTITY_DEFINITION_BY_KEY,
   FALLBACK_ENTITY_DEFINITION,
   OVERVIEW_KEYS,
-  POOL_KEYS,
-  SNAPSHOT_KEYS,
   STORAGE_KEYS,
   SYSTEM_KEYS,
   UPDATE_KEYS,
@@ -16,6 +13,7 @@ import { callEntityService, installUpdate, selectOption, serviceForToggle, setNu
 import { actionEventConfig, type ActionTrigger } from "./card-actions";
 import { normalizeConfig } from "./config";
 import { discoverEntities } from "./discovery";
+import { GROUP_KEYS, groupIcon } from "./entity-groups";
 import {
   booleanState,
   displayState,
@@ -28,13 +26,13 @@ import {
 import { EntityActionController } from "./interaction-controller";
 import { iconVisualClass } from "./icon-visuals";
 import { localize, sectionLabel } from "./i18n";
+import { isVisibleRenderable } from "./rendering";
 import { ServiceCallGuard, serviceActionKey } from "./service-call-guard";
 import { headerStatusText } from "./status-text";
 import type {
   DiscoveredEntities,
   EntityDefinition,
   EntityGroup,
-  EntityGroupKind,
   HassEntity,
   HomeAssistant,
   NormalizedUnifiDriveCardConfig,
@@ -42,13 +40,6 @@ import type {
   SectionId,
   UnifiDriveCardConfig,
 } from "./types";
-
-const GROUP_KEYS: Record<EntityGroupKind, string[]> = {
-  backup: ["backup_run"],
-  drive: DRIVE_KEYS,
-  pool: POOL_KEYS,
-  snapshot: SNAPSHOT_KEYS,
-};
 
 @customElement("unifi-drive-card")
 export class UnifiDriveCard extends LitElement {
@@ -981,21 +972,4 @@ export class UnifiDriveCard extends LitElement {
       }
     }
   `;
-}
-
-function groupIcon(kind: EntityGroupKind): string {
-  switch (kind) {
-    case "backup":
-      return "mdi:cloud-upload";
-    case "drive":
-      return "mdi:harddisk";
-    case "pool":
-      return "mdi:database";
-    case "snapshot":
-      return "mdi:camera-burst";
-  }
-}
-
-export function isVisibleRenderable(value: Renderable): boolean {
-  return value !== nothing && value !== undefined && value !== null && value !== "";
 }

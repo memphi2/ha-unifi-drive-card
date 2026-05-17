@@ -10,8 +10,14 @@ describe("normalizeConfig", () => {
     expect(config.show_diagnostics).toBe(true);
     expect(config.show_icon_animations).toBe(true);
     expect(config.show_dangerous_actions).toBe(false);
+    expect(config.compact).toBe(true);
     expect(config.tap_action).toEqual({ action: "more-info" });
-    expect(config.max_sensor_rows).toBe(12);
+    expect(config.max_sensor_rows).toBe(10);
+  });
+
+  it("allows compact mode to be disabled explicitly", () => {
+    const config = normalizeConfig({ compact: false });
+    expect(config.compact).toBe(false);
   });
 
   it("filters invalid sections", () => {

@@ -67,6 +67,9 @@ npm run smoke:install-uninstall
 | `src/editor.ts` | Visual card editor. |
 | `src/catalog.ts` | Sections and entity definitions. |
 | `src/discovery.ts` | Entity discovery and dynamic grouping. |
+| `src/editor-actions.ts` | Visual editor action conversion, service targets and service data parsing. |
+| `src/entity-groups.ts` | Section-specific dynamic entity groups. |
+| `src/rendering.ts` | Shared Lit renderability helpers. |
 | `src/actions.ts` | Home Assistant service helpers. |
 | `src/display-text.ts` | Label and state cleanup. |
 | `scripts/render_smoke.mjs` | Browser smoke. |

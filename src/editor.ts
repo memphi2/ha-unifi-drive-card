@@ -2,9 +2,19 @@ import { LitElement, css, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { DEFAULT_SECTIONS, ENTITY_DEFINITIONS } from "./catalog";
 import { normalizeConfig } from "./config";
+import {
+  ACTION_OPTIONS,
+  actionConfigFromEditor,
+  actionNameFromConfig,
+  formatActionData,
+  parseActionData,
+  targetFieldToString,
+  updateActionTargetField,
+  type ActionConfigKey,
+  type ActionTargetField,
+} from "./editor-actions";
 import { entityLabel, localize, sectionLabel } from "./i18n";
 import type {
-  ActionConfig,
   EntityDefinition,
   EntityKey,
   HomeAssistant,
@@ -13,7 +23,7 @@ import type {
 } from "./types";
 
 type TextConfigKey = "name" | "device_id";
-type ActionConfigKey = "tap_action" | "hold_action" | "double_tap_action";
+type ActionTextProperty = "navigation_path" | "url_path" | "service";
 type BooleanConfigKey =
   | "compact"
   | "show_diagnostics"
@@ -21,13 +31,6 @@ type BooleanConfigKey =
   | "show_dangerous_actions"
   | "show_unavailable"
   | "show_optional";
-type EditorActionName =
-  | "none"
-  | "more-info"
-  | "toggle"
-  | "navigate"
-  | "url"
-  | "call-service";
 
 const TEXT_FIELDS: Array<{ key: TextConfigKey; labelKey: string }> = [
   { key: "name", labelKey: "editor.name" },
@@ -47,15 +50,6 @@ const ACTION_FIELDS: Array<{ key: ActionConfigKey; labelKey: string }> = [
   { key: "tap_action", labelKey: "editor.tap_action" },
   { key: "hold_action", labelKey: "editor.hold_action" },
   { key: "double_tap_action", labelKey: "editor.double_tap_action" },
-];
-
-const ACTION_OPTIONS: EditorActionName[] = [
-  "more-info",
-  "toggle",
-  "navigate",
-  "url",
-  "call-service",
-  "none",
 ];
 
 @customElement("unifi-drive-card-editor")
@@ -207,6 +201,7 @@ export class UnifiDriveCardEditor extends LitElement {
         <label>
           <span>${localize(this.hass, field.labelKey)}</span>
           <select
+            data-action-key=${field.key}
             .value=${actionName}
             @change=${(event: Event) => this._actionTypeChanged(field.key, event)}
           >
@@ -223,6 +218,8 @@ export class UnifiDriveCardEditor extends LitElement {
               <label>
                 <span>${localize(this.hass, "editor.action_entity")}</span>
                 <ha-entity-picker
+                  data-action-key=${field.key}
+                  data-action-property="entity"
                   .hass=${this.hass}
                   .value=${typeof action?.entity === "string" ? action.entity : ""}
                   @value-changed=${(event: CustomEvent<{ value?: string }>) =>
@@ -238,7 +235,21 @@ export class UnifiDriveCardEditor extends LitElement {
           ? this._actionTextField(field.key, "url_path", "editor.url_path")
           : ""}
         ${actionName === "call-service"
-          ? this._actionTextField(field.key, "service", "editor.service")
+          ? html`
+              ${this._actionTextField(field.key, "service", "editor.service")}
+              ${this._actionTargetEntityField(field.key)}
+              ${this._actionTargetTextField(
+                field.key,
+                "area_id",
+                "editor.service_target_area",
+              )}
+              ${this._actionTargetTextField(
+                field.key,
+                "device_id",
+                "editor.service_target_device",
+              )}
+              ${this._actionDataField(field.key)}
+            `
           : ""}
       </div>
     `;
@@ -246,7 +257,7 @@ export class UnifiDriveCardEditor extends LitElement {
 
   private _actionTextField(
     key: ActionConfigKey,
-    property: "navigation_path" | "url_path" | "service",
+    property: ActionTextProperty,
     labelKey: string,
   ) {
     const action = this._config[key];
@@ -257,9 +268,63 @@ export class UnifiDriveCardEditor extends LitElement {
         <span>${localize(this.hass, labelKey)}</span>
         <input
           type="text"
+          data-action-key=${key}
+          data-action-property=${property}
           .value=${typeof value === "string" ? value : ""}
           @input=${(event: Event) => this._actionPropertyChanged(key, property, event)}
         />
+      </label>
+    `;
+  }
+
+  private _actionTargetEntityField(key: ActionConfigKey) {
+    const action = this._config[key];
+    return html`
+      <label>
+        <span>${localize(this.hass, "editor.service_target_entity")}</span>
+        <ha-entity-picker
+          data-action-key=${key}
+          data-action-property="target_entity"
+          .hass=${this.hass}
+          .value=${targetFieldToString(action?.target, "entity_id")}
+          @value-changed=${(event: CustomEvent<{ value?: string }>) =>
+            this._actionTargetEntityChanged(key, event)}
+        ></ha-entity-picker>
+      </label>
+    `;
+  }
+
+  private _actionTargetTextField(
+    key: ActionConfigKey,
+    field: Exclude<ActionTargetField, "entity_id">,
+    labelKey: string,
+  ) {
+    const action = this._config[key];
+    return html`
+      <label>
+        <span>${localize(this.hass, labelKey)}</span>
+        <input
+          type="text"
+          data-action-key=${key}
+          data-action-property=${`target_${field}`}
+          .value=${targetFieldToString(action?.target, field)}
+          @input=${(event: Event) => this._actionTargetTextChanged(key, field, event)}
+        />
+      </label>
+    `;
+  }
+
+  private _actionDataField(key: ActionConfigKey) {
+    const action = this._config[key];
+    return html`
+      <label>
+        <span>${localize(this.hass, "editor.service_data")}</span>
+        <textarea
+          data-action-key=${key}
+          data-action-property="data"
+          .value=${formatActionData(action?.data)}
+          @input=${(event: Event) => this._actionDataChanged(key, event)}
+        ></textarea>
       </label>
     `;
   }
@@ -322,12 +387,48 @@ export class UnifiDriveCardEditor extends LitElement {
 
   private _actionPropertyChanged(
     key: ActionConfigKey,
-    property: "navigation_path" | "url_path" | "service",
+    property: ActionTextProperty,
     event: Event,
   ): void {
     this._updateActionConfig(key, {
       [property]: (event.target as HTMLInputElement).value || undefined,
     });
+  }
+
+  private _actionTargetEntityChanged(
+    key: ActionConfigKey,
+    event: CustomEvent<{ value?: string }>,
+  ): void {
+    this._updateActionTarget(key, "entity_id", event.detail.value);
+  }
+
+  private _actionTargetTextChanged(
+    key: ActionConfigKey,
+    field: Exclude<ActionTargetField, "entity_id">,
+    event: Event,
+  ): void {
+    this._updateActionTarget(key, field, (event.target as HTMLInputElement).value);
+  }
+
+  private _updateActionTarget(
+    key: ActionConfigKey,
+    field: ActionTargetField,
+    value: string | undefined,
+  ): void {
+    this._updateActionConfig(key, {
+      target: updateActionTargetField(this._config[key]?.target, field, value),
+    });
+  }
+
+  private _actionDataChanged(key: ActionConfigKey, event: Event): void {
+    const target = event.target as HTMLTextAreaElement;
+    const parsed = parseActionData(target.value);
+    target.classList.toggle("invalid", !parsed.valid);
+    target.toggleAttribute("aria-invalid", !parsed.valid);
+    if (!parsed.valid) {
+      return;
+    }
+    this._updateActionConfig(key, { data: parsed.value });
   }
 
   private _updateActionConfig(key: ActionConfigKey, patch: Record<string, unknown>): void {
@@ -370,7 +471,8 @@ export class UnifiDriveCardEditor extends LitElement {
 
     input[type="text"],
     input[type="number"],
-    select {
+    select,
+    textarea {
       box-sizing: border-box;
       width: 100%;
       min-height: 40px;
@@ -381,8 +483,19 @@ export class UnifiDriveCardEditor extends LitElement {
       color: var(--primary-text-color);
     }
 
+    textarea {
+      min-height: 84px;
+      resize: vertical;
+      font-family: var(--code-font-family, monospace);
+    }
+
+    textarea.invalid {
+      border-color: var(--error-color);
+    }
+
     input:focus-visible,
-    select:focus-visible {
+    select:focus-visible,
+    textarea:focus-visible {
       outline: 2px solid var(--primary-color);
       outline-offset: 2px;
     }
@@ -508,29 +621,4 @@ function updateEntityOverride(
     delete next[definition.key];
   }
   return next;
-}
-
-function actionNameFromConfig(
-  action: ActionConfig | undefined,
-  key: ActionConfigKey,
-): EditorActionName {
-  if (!action) {
-    return key === "tap_action" ? "more-info" : "none";
-  }
-  const name = action.action;
-  return isActionName(name) ? name : "none";
-}
-
-function actionConfigFromEditor(
-  key: ActionConfigKey,
-  action: ActionConfig,
-): ActionConfig | undefined {
-  if (action.action === "none") {
-    return key === "tap_action" ? { action: "none" } : undefined;
-  }
-  return action;
-}
-
-function isActionName(value: unknown): value is EditorActionName {
-  return typeof value === "string" && ACTION_OPTIONS.includes(value as EditorActionName);
 }
