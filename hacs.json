@@ -1,5 +1,5 @@
 {
-  "name": "UniFi Drive Card",
+  "name": "Drive Storage Card",
   "render_readme": true,
   "filename": "ha-unifi-drive-card.js"
 }

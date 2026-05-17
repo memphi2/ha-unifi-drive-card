@@ -10,7 +10,7 @@
 
 1. Add this repository as a HACS custom repository.
 2. Select the dashboard/Lovelace category.
-3. Install `UniFi Drive Card`.
+3. Install `Drive Storage Card`.
 4. Reload the Home Assistant dashboard.
 
 Resource URL:

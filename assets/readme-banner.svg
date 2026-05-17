@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420" role="img" aria-labelledby="title desc">
-  <title id="title">UniFi Drive Card</title>
-  <desc id="desc">Mushroom-style Home Assistant Lovelace card banner with a UniFi Drive storage dashboard preview.</desc>
+  <title id="title">Drive Storage Card</title>
+  <desc id="desc">Mushroom-style Home Assistant Lovelace card banner with a compatible storage dashboard preview.</desc>
   <defs>
     <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
       <stop offset="0" stop-color="#0b6f8f"/>
@@ -22,7 +22,7 @@
 
   <g transform="translate(78 82)">
     <rect x="0" y="0" width="490" height="236" rx="28" fill="#ffffff" opacity="0.14"/>
-    <text x="0" y="46" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="54" font-weight="800" fill="#ffffff">UniFi Drive Card</text>
+    <text x="0" y="46" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="54" font-weight="800" fill="#ffffff">Drive Storage Card</text>
     <text x="0" y="91" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="24" font-weight="600" fill="#e8fbff">Mushroom-style control for Home Assistant</text>
     <g transform="translate(0 128)">
       <rect x="0" y="0" width="142" height="38" rx="19" fill="#ffffff" opacity="0.22"/>
@@ -43,7 +43,7 @@
     <g transform="translate(30 28)">
       <circle cx="33" cy="33" r="33" fill="#d7f5f3"/>
       <path d="M33 15 C46 32 52 43 52 52 C52 63 44 72 33 72 C22 72 14 63 14 52 C14 43 20 32 33 15 Z" fill="#168eaa"/>
-      <text x="84" y="29" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="23" font-weight="800" fill="#16343f">UniFi Drive</text>
+      <text x="84" y="29" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="23" font-weight="800" fill="#16343f">Storage system</text>
       <text x="84" y="57" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="16" fill="#5a6c72">Connected UNAS storage</text>
       <rect x="0" y="90" width="370" height="70" rx="20" fill="#f7fbfb"/>
       <text x="22" y="119" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="15" fill="#5a6c72">Storage usage</text>

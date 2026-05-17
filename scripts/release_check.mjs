@@ -1,0 +1,82 @@
+#!/usr/bin/env node
+import { readFile } from "node:fs/promises";
+
+const EXPECTED_VERSION = "0.1.0";
+const EXPECTED_TAG = `v${EXPECTED_VERSION}`;
+const EXPECTED_FILENAME = "ha-unifi-drive-card.js";
+const failures = [];
+
+function pass(message) {
+  console.log(`PASS: ${message}`);
+}
+
+function fail(message) {
+  failures.push(message);
+}
+
+async function readJson(file) {
+  return JSON.parse(await readFile(file, "utf8"));
+}
+
+function requireIncludes(file, content, expected, message) {
+  if (content.includes(expected)) {
+    pass(message);
+  } else {
+    fail(`${file} is missing ${expected}`);
+  }
+}
+
+const pkg = await readJson("package.json");
+const lock = await readJson("package-lock.json");
+const hacs = await readJson("hacs.json");
+const changelog = await readFile("CHANGELOG.md", "utf8");
+const releaseNotesPath = `release-notes/${EXPECTED_TAG}.md`;
+const releaseNotes = await readFile(releaseNotesPath, "utf8");
+const releaseWorkflow = await readFile(".github/workflows/release.yml", "utf8");
+const legal = await readFile("docs/legal.md", "utf8");
+const readme = await readFile("README.md", "utf8");
+const notices = await readFile("THIRD_PARTY_NOTICES.md", "utf8");
+
+if (pkg.version === EXPECTED_VERSION && lock.version === EXPECTED_VERSION) {
+  pass("package and lockfile versions match 0.1.0");
+} else {
+  fail("package.json and package-lock.json must both be version 0.1.0");
+}
+
+if (pkg.license === "MIT" && notices.includes("BSD 3-Clause License")) {
+  pass("project license and bundled runtime notice are present");
+} else {
+  fail("license metadata or third-party notices are incomplete");
+}
+
+if (typeof pkg.repository?.url === "string" && typeof pkg.bugs?.url === "string") {
+  pass("package repository and issue URLs are present");
+} else {
+  fail("package repository and bugs URLs are required for release");
+}
+
+if (hacs.filename === EXPECTED_FILENAME && hacs.name === "Drive Storage Card") {
+  pass("HACS metadata is release-ready");
+} else {
+  fail("hacs.json must use the stable bundle filename and trademark-neutral display name");
+}
+
+requireIncludes("CHANGELOG.md", changelog, "## 0.1.0 - 2026-05-17", "changelog has dated 0.1.0 entry");
+requireIncludes(releaseNotesPath, releaseNotes, "# Drive Storage Card 0.1.0", "release notes exist");
+requireIncludes(releaseNotesPath, releaseNotes, "Built with Codex", "release notes credit Codex");
+requireIncludes(".github/workflows/release.yml", releaseWorkflow, `body_path: release-notes/${"${{ github.ref_name }}.md"}`, "release workflow uses tag-specific notes");
+requireIncludes(".github/workflows/release.yml", releaseWorkflow, EXPECTED_FILENAME, "release workflow uploads JS asset");
+requireIncludes(".github/workflows/release.yml", releaseWorkflow, `${EXPECTED_FILENAME}.map`, "release workflow uploads sourcemap asset");
+requireIncludes(".github/workflows/release.yml", releaseWorkflow, "ha-unifi-drive-card.zip", "release workflow uploads ZIP asset");
+requireIncludes("docs/legal.md", legal, "affiliated with, sponsored by or endorsed", "legal disclaimer is present");
+requireIncludes("docs/legal.md", legal, "does not include Ubiquiti, UniFi, Home Assistant or HACS logos", "logo/trade-dress statement is present");
+requireIncludes("README.md", readme, "## Trademark Notice", "README trademark notice is present");
+
+if (failures.length) {
+  for (const failure of failures) {
+    console.error(`FAIL: ${failure}`);
+  }
+  process.exitCode = 1;
+} else {
+  pass("0.1.0 release metadata is ready");
+}

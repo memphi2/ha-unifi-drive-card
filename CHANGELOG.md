@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0 - Unreleased
+## 0.1.0 - 2026-05-17
 
 ### Added
 
@@ -13,6 +13,7 @@
 - Local validation with TypeScript, ESLint, Vitest, Vite, HACS compatibility,
   license checks and Chromium render smoke.
 - Live Home Assistant smoke with install/uninstall support.
+- Release notes, license notices, trademark hygiene and release metadata checks.
 
 ### Notes
 

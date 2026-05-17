@@ -1,15 +1,15 @@
 <p align="center">
-  <img src="assets/readme-banner.svg" alt="UniFi Drive Card - Home Assistant Lovelace card" width="100%">
+  <img src="assets/readme-banner.svg" alt="Drive Storage Card - Home Assistant Lovelace card" width="100%">
 </p>
 
-# UniFi Drive Card
+# Drive Storage Card
 
 [![CI](https://github.com/memphi2/ha-unifi-drive-card/actions/workflows/ci.yml/badge.svg)](https://github.com/memphi2/ha-unifi-drive-card/actions/workflows/ci.yml)
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/docs/faq/custom_repositories)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 Mushroom-style Lovelace card for the `unifi_drive` Home Assistant integration.
-It discovers UniFi Drive / UNAS storage, pool, drive, snapshot, system and
+It discovers compatible UniFi Drive / UNAS storage, pool, drive, snapshot, system and
 update entities from Home Assistant registry metadata and renders them as one
 compact dashboard card.
 
@@ -136,4 +136,13 @@ Do not commit hostnames, IPs, tokens, passwords or screenshots with private data
 - [Development and smoke tests](docs/development.md)
 - [Legal notes](docs/legal.md)
 - [Release process](RELEASING.md)
+- [0.1.0 release notes](release-notes/v0.1.0.md)
 - [Changelog](CHANGELOG.md)
+
+## Trademark Notice
+
+UniFi and Ubiquiti are trademarks or registered trademarks of Ubiquiti Inc.
+Home Assistant is a trademark of its owner. This project is independent and is
+not affiliated with, sponsored by or endorsed by Ubiquiti, Home Assistant or
+HACS. Third-party names are used only to identify compatible products and
+software.

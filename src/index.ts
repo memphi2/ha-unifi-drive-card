@@ -10,7 +10,7 @@ declare global {
 window.customCards = window.customCards ?? [];
 window.customCards.push({
   type: "unifi-drive-card",
-  name: "UniFi Drive Card",
-  description: "Mushroom-style card for the UniFi Drive / UNAS integration",
+  name: "Drive Storage Card",
+  description: "Mushroom-style card for Home Assistant's unifi_drive integration",
   preview: true,
 });

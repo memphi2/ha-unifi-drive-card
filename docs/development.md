@@ -24,14 +24,15 @@ npm run build
 npm run compat
 npm run license-check
 npm run anonymization-check
+npm run release-check
 npm run security-audit
 npm run check
 npm run render-smoke
 ```
 
 `npm run check` runs type checking, linting, unit tests, production build, HACS
-compatibility, license notice validation, anonymization checks and a runtime
-dependency security audit.
+compatibility, license notice validation, anonymization checks, release metadata
+validation and a runtime dependency security audit.
 
 `npm run render-smoke` builds the bundle and verifies in Chromium that the card
 renders, groups dynamic UniFi Drive entities, hides dangerous actions by default
@@ -75,6 +76,7 @@ npm run smoke:install-uninstall
 | `scripts/render_smoke.mjs` | Browser smoke. |
 | `scripts/ha_card_smoke.mjs` | Live HA smoke and install/uninstall helper. |
 | `scripts/anonymization_check.mjs` | Guards committed text files against private LAN addresses and literal secrets. |
+| `scripts/release_check.mjs` | Validates 0.1.0 release metadata, notes and compliance gates. |
 
 ## Review Checklist
 

@@ -5,15 +5,24 @@
   "type": "module",
   "private": false,
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/memphi2/ha-unifi-drive-card.git"
+  },
+  "bugs": {
+    "url": "https://github.com/memphi2/ha-unifi-drive-card/issues"
+  },
+  "homepage": "https://github.com/memphi2/ha-unifi-drive-card#readme",
   "scripts": {
     "build": "vite build",
     "anonymization-check": "node scripts/anonymization_check.mjs",
-    "check": "npm run typecheck && npm run lint && npm run test && npm run build && npm run compat && npm run license-check && npm run anonymization-check && npm run security-audit",
+    "check": "npm run typecheck && npm run lint && npm run test && npm run build && npm run compat && npm run license-check && npm run anonymization-check && npm run release-check && npm run security-audit",
     "compat": "node scripts/compat_check.mjs",
     "ha:live-entity-audit": "node scripts/ha_live_entity_audit.mjs",
     "ha:storage-smoke": "node scripts/ha_storage_smoke.mjs",
     "license-check": "node scripts/license_check.mjs",
     "lint": "eslint . --max-warnings=0",
+    "release-check": "node scripts/release_check.mjs",
     "render-smoke": "npm run build && node scripts/render_smoke.mjs",
     "security-audit": "npm audit --omit=dev --audit-level=moderate",
     "smoke": "node scripts/ha_card_smoke.mjs",
