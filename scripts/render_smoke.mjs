@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* global document, getComputedStyle, PointerEvent, window */
+/* global document, getComputedStyle, PointerEvent, requestAnimationFrame, window */
 import http from "node:http";
 import { readFile } from "node:fs/promises";
 import puppeteer from "puppeteer-core";
@@ -144,7 +144,7 @@ const html = `<!doctype html>
       const baseConfig = {
         type: "custom:unifi-drive-card",
         name: "UniFi Drive",
-        sections: ["overview", "pools", "drives", "snapshots", "system", "updates"],
+        sections: ["overview", "storage", "pools", "drives", "snapshots", "system", "updates"],
         tap_action: { action: "more-info" },
         hold_action: { action: "navigate", navigation_path: "/lovelace/unifi-drive" },
         double_tap_action: { action: "toggle" }
@@ -180,7 +180,7 @@ try {
     args: ["--no-sandbox", "--disable-dev-shm-usage"],
   });
   const page = await browser.newPage();
-  await page.setViewport({ width: 900, height: 720, deviceScaleFactor: 1 });
+  await page.setViewport({ width: 1180, height: 760, deviceScaleFactor: 1 });
   const port = server.address().port;
   await page.goto(`http://127.0.0.1:${port}/`, {
     waitUntil: "domcontentloaded",
@@ -191,6 +191,29 @@ try {
     const card = document.querySelector("unifi-drive-card");
     const root = card.shadowRoot;
     const actionDetails = [];
+    const waitForLayout = () =>
+      new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const gridColumnCount = (element) =>
+      getComputedStyle(element).gridTemplateColumns
+        .split(" ")
+        .map((item) => item.trim())
+        .filter(Boolean).length;
+    card.style.width = "520px";
+    await waitForLayout();
+    const narrowColumnCount = gridColumnCount(root.querySelector(".unifi-card"));
+    card.style.width = "980px";
+    await waitForLayout();
+    const wideColumnCount = gridColumnCount(root.querySelector(".unifi-card"));
+    const wideEntityColumnCount = gridColumnCount(root.querySelector(".entity-list"));
+    const sectionRect = (selector) => {
+      const box = root.querySelector(selector).getBoundingClientRect();
+      return { left: Math.round(box.left), top: Math.round(box.top), width: Math.round(box.width) };
+    };
+    const wideSections = {
+      storage: sectionRect(".section-storage"),
+      system: sectionRect(".section-system"),
+      pools: sectionRect(".section-pools"),
+    };
     document.body.addEventListener("hass-action", (event) => {
       actionDetails.push(event.detail);
     });
@@ -236,6 +259,12 @@ try {
       hasShutdownByDefault: text.includes("Shut down"),
       prefixStillVisible: /UniFi Drive Storage Usage/.test(text),
       installButtons,
+      layout: {
+        narrowColumnCount,
+        wideColumnCount,
+        wideEntityColumnCount,
+        wideSections,
+      },
     };
   });
 
@@ -255,6 +284,20 @@ try {
   assert(!result.hasShutdownByDefault, "dangerous shutdown action rendered by default");
   assert(!result.prefixStillVisible, "device prefix was not normalized");
   assert(result.cardBox.width > 400 && result.cardBox.height > 280, "card layout looks collapsed");
+  assert(result.layout.narrowColumnCount === 1, "narrow dashboard width did not use single-column layout");
+  assert(result.layout.wideColumnCount >= 2, "wide dashboard width did not use multi-column layout");
+  assert(
+    result.layout.wideEntityColumnCount >= 2,
+    `wide entity rows did not flow horizontally (${result.layout.wideEntityColumnCount} columns)`,
+  );
+  assert(
+    Math.abs(result.layout.wideSections.storage.top - result.layout.wideSections.system.top) <= 2,
+    "wide dashboard width did not place storage and system blocks on the same row",
+  );
+  assert(
+    result.layout.wideSections.system.top < result.layout.wideSections.pools.top,
+    "wide dashboard width did not reorder system before group blocks",
+  );
   assert(result.iconStyles.length >= 6, "expected icon bubbles were not rendered");
   assert(result.actionDetails.some((item) => item.action === "tap"), "tap action missing");
   assert(result.actionDetails.some((item) => item.action === "double_tap"), "double tap action missing");

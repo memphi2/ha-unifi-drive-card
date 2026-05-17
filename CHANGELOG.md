@@ -9,6 +9,7 @@
 - Dynamic grouping for pools, drives, snapshot targets and backup task buttons.
 - Native controls for switches, buttons, numbers, selects, time entities and updates.
 - Safe dangerous-action handling for restart and shutdown.
+- Width-aware responsive layout that reorders blocks for narrow and wide dashboard cards.
 - Visual editor for sections, actions, entity overrides and hidden entities.
 - Local validation with TypeScript, ESLint, Vitest, Vite, HACS compatibility,
   license checks and Chromium render smoke.

@@ -10,7 +10,7 @@ import {
   UPDATE_KEYS,
 } from "./catalog";
 import { callEntityService, installUpdate, selectOption, serviceForToggle, setNumberValue, setTimeValue } from "./actions";
-import { actionEventConfig, type ActionTrigger } from "./card-actions";
+import { actionEventConfig, isActionEnabled, type ActionTrigger } from "./card-actions";
 import { normalizeConfig } from "./config";
 import { discoverEntities } from "./discovery";
 import { GROUP_KEYS, groupIcon } from "./entity-groups";
@@ -174,7 +174,7 @@ export class UnifiDriveCard extends LitElement {
       return nothing;
     }
     return html`
-      <section>
+      <section class="section-overview">
         <div class="metric-grid">
           ${tiles.map(({ definition, entityId, state }) => this._metricTile(definition, entityId, state))}
         </div>
@@ -188,9 +188,9 @@ export class UnifiDriveCard extends LitElement {
       return nothing;
     }
     return html`
-      <section>
+      <section class=${`section-${section}`}>
         <h3>${sectionLabel(section, this.hass)}</h3>
-        <div class="rows">${rows.slice(0, this._config.max_sensor_rows)}</div>
+        <div class="rows entity-list">${rows.slice(0, this._config.max_sensor_rows)}</div>
       </section>
     `;
   }
@@ -201,7 +201,7 @@ export class UnifiDriveCard extends LitElement {
       return nothing;
     }
     return html`
-      <section>
+      <section class=${`section-${section}`}>
         <h3>${sectionLabel(section, this.hass)}</h3>
         <div class="group-grid">${renderedGroups}</div>
       </section>
@@ -224,7 +224,7 @@ export class UnifiDriveCard extends LitElement {
           </div>
           ${group.type ? html`<span>${normalizeDisplayText(group.type) || group.type}</span>` : nothing}
         </div>
-        <div class="rows">${rows}</div>
+        <div class="rows group-rows">${rows}</div>
       </article>
     `;
   }
@@ -452,8 +452,8 @@ export class UnifiDriveCard extends LitElement {
   private _interactionOptions(entityId: string | undefined) {
     return {
       entityId,
-      hasDoubleTap: Boolean(this._config.double_tap_action),
-      hasHold: Boolean(this._config.hold_action),
+      hasDoubleTap: isActionEnabled(this._config.double_tap_action),
+      hasHold: isActionEnabled(this._config.hold_action),
       dispatch: (targetEntityId: string, trigger: ActionTrigger) =>
         this._fireAction(targetEntityId, trigger),
     };
@@ -570,6 +570,7 @@ export class UnifiDriveCard extends LitElement {
   static override styles = css`
     :host {
       display: block;
+      container-type: inline-size;
       --unifi-row-background: color-mix(
         in srgb,
         var(--card-background-color, var(--ha-card-background, #fff)) 92%,
@@ -582,6 +583,7 @@ export class UnifiDriveCard extends LitElement {
 
     .unifi-card {
       display: grid;
+      grid-template-columns: minmax(0, 1fr);
       gap: 16px;
       padding: 16px;
       overflow: hidden;
@@ -743,6 +745,7 @@ export class UnifiDriveCard extends LitElement {
     .group-grid {
       display: grid;
       gap: 8px;
+      min-width: 0;
     }
 
     .group-grid {
@@ -781,6 +784,7 @@ export class UnifiDriveCard extends LitElement {
     }
 
     .entity-row {
+      container-type: inline-size;
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
       gap: 8px;
@@ -803,7 +807,8 @@ export class UnifiDriveCard extends LitElement {
 
     .entity-main strong,
     .main span {
-      overflow-wrap: anywhere;
+      overflow-wrap: break-word;
+      word-break: normal;
     }
 
     .row-control {
@@ -932,6 +937,94 @@ export class UnifiDriveCard extends LitElement {
       }
     }
 
+    @container (min-width: 720px) {
+      .unifi-card {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+      }
+
+      header,
+      .error-banner,
+      .section-overview {
+        grid-column: 1 / -1;
+      }
+
+      .section-overview {
+        order: 10;
+      }
+
+      .section-storage {
+        order: 20;
+      }
+
+      .section-system {
+        order: 30;
+      }
+
+      .section-updates {
+        order: 40;
+      }
+
+      .section-diagnostics {
+        order: 50;
+      }
+
+      .section-pools {
+        order: 60;
+      }
+
+      .section-drives {
+        order: 70;
+      }
+
+      .section-snapshots {
+        order: 80;
+      }
+
+      .section-actions {
+        order: 90;
+      }
+
+      .metric-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .entity-list {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      }
+
+      .section-system .entity-list {
+        grid-template-columns: 1fr;
+      }
+
+      .group-grid {
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      }
+    }
+
+    @container (min-width: 1040px) {
+      .unifi-card {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .section-storage,
+      .section-system,
+      .section-updates,
+      .section-diagnostics,
+      .section-actions {
+        grid-column: span 1;
+      }
+
+      .section-pools,
+      .section-snapshots {
+        grid-column: span 2;
+      }
+
+      .metric-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      }
+    }
+
     @media (max-width: 560px) {
       .unifi-card {
         padding: 12px;
@@ -949,6 +1042,23 @@ export class UnifiDriveCard extends LitElement {
 
       .entity-row {
         grid-template-columns: 1fr;
+      }
+
+      .row-control {
+        justify-content: stretch;
+      }
+
+      .chip,
+      input,
+      select {
+        width: 100%;
+      }
+    }
+
+    @container (max-width: 340px) {
+      .entity-main,
+      .row-control {
+        grid-column: 1 / -1;
       }
 
       .row-control {

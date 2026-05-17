@@ -35,8 +35,9 @@ compatibility, license notice validation, anonymization checks, release metadata
 validation and a runtime dependency security audit.
 
 `npm run render-smoke` builds the bundle and verifies in Chromium that the card
-renders, groups dynamic UniFi Drive entities, hides dangerous actions by default
-and dispatches tap, double-tap and hold actions.
+renders, groups dynamic UniFi Drive entities, hides dangerous actions by
+default, flows from a narrow dashboard column into a reordered wide horizontal
+layout, and dispatches tap, double-tap and hold actions.
 
 ## Live Home Assistant Smoke
 

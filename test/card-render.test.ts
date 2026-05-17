@@ -88,6 +88,17 @@ describe("UnifiDriveCard rendering", () => {
       false,
     );
   });
+
+  it("marks sections and row lists for responsive wide layouts", async () => {
+    const card = await renderCard(hassFixture(), {
+      sections: ["overview", "storage", "pools", "drives", "snapshots"],
+    });
+
+    expect(card.shadowRoot?.querySelector(".section-overview")).toBeTruthy();
+    expect(card.shadowRoot?.querySelector(".section-storage .entity-list")).toBeTruthy();
+    expect(card.shadowRoot?.querySelector(".section-pools .group-grid")).toBeTruthy();
+    expect(card.shadowRoot?.querySelector(".group-card .group-rows")).toBeTruthy();
+  });
 });
 
 async function renderCard(hass: HomeAssistant, config: Record<string, unknown>) {

@@ -23,13 +23,17 @@ export function normalizeActionConfig(value: unknown): ActionConfig | undefined 
   return { ...value };
 }
 
+export function isActionEnabled(action: ActionConfig | undefined): action is ActionConfig {
+  return Boolean(action && action.action !== "none");
+}
+
 export function actionForTrigger(
   config: NormalizedUnifiDriveCardConfig,
   trigger: ActionTrigger,
   entityId: string,
 ): ActionConfig | undefined {
   const action = config[ACTION_CONFIG_KEY[trigger]];
-  if (!action) {
+  if (!isActionEnabled(action)) {
     return undefined;
   }
   return typeof action.entity === "string" ? { ...action } : { ...action, entity: entityId };

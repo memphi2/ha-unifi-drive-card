@@ -20,6 +20,7 @@ Built with Codex.
 - Automatic discovery for enabled `unifi_drive` entities.
 - Dynamic grouping for pools, drives, snapshot targets and backup tasks.
 - Safe defaults: shutdown/restart stay hidden until `show_dangerous_actions` is enabled.
+- Width-aware layout: dashboard column changes automatically reorder blocks into vertical or wide views.
 - Native controls for switches, buttons, numbers, selects, time entities and updates.
 - Home Assistant action support for tap, hold and double tap.
 - Visual editor for sections, entity overrides, hidden entities and actions.
@@ -105,6 +106,11 @@ Common options:
 | `entities` | `{}` | Per-key entity overrides. |
 | `compact` | `true` | Uses the compact layout by default. |
 | `max_sensor_rows` | `10` | Row limit for list sections. |
+
+The card is responsive to its own dashboard width. Narrow columns render as a
+vertical card; wider dashboard cards reorder the section blocks so storage,
+system and update blocks appear earlier in a horizontal dashboard layout, with
+multi-column entity rows where space allows.
 
 ## Validation
 

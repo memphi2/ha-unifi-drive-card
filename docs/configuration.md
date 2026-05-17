@@ -72,6 +72,14 @@ double_tap_action:
 | `hold_action` | action | unset | Action fired on long press. |
 | `double_tap_action` | action | unset | Action fired on double click. |
 
+## Responsive Layout
+
+The layout follows the available card width in the dashboard, not only the
+browser viewport. Narrow dashboard columns render vertically. Wider dashboard
+cards reorder section blocks so storage, system and update blocks move earlier
+into a horizontal layout, with multi-column entity rows and wider dynamic group
+sections where space allows.
+
 Service actions from the visual editor are written in Home Assistant's current
 `perform-action` format. The editor also supports service target entity, area
 and device fields plus JSON service data.
