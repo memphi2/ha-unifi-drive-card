@@ -143,7 +143,7 @@ const html = `<!doctype html>
       };
       const baseConfig = {
         type: "custom:unifi-drive-card",
-        name: "UniFi Drive",
+        name: "Drive Storage",
         sections: ["overview", "storage", "pools", "drives", "snapshots", "system", "updates"],
         tap_action: { action: "more-info" },
         hold_action: { action: "navigate", navigation_path: "/lovelace/unifi-drive" },
@@ -269,10 +269,22 @@ try {
   });
 
   if (screenshotPath) {
-    await page.screenshot({ path: screenshotPath, fullPage: true });
+    const cardBox = await (await page.$("unifi-drive-card"))?.boundingBox();
+    if (!cardBox) {
+      throw new Error("card screenshot target missing");
+    }
+    await page.screenshot({
+      path: screenshotPath,
+      clip: {
+        x: Math.max(0, Math.floor(cardBox.x)),
+        y: Math.max(0, Math.floor(cardBox.y)),
+        width: Math.ceil(cardBox.width),
+        height: Math.ceil(cardBox.height),
+      },
+    });
   }
   assert(result.customCards.some((item) => item.type === "unifi-drive-card"), "customCards metadata missing");
-  assert(result.text.includes("UniFi Drive"), "card title missing");
+  assert(result.text.includes("Drive Storage"), "card title missing");
   assert(result.text.includes("Pool 1"), "pool group missing");
   assert(result.text.includes("Disk 1"), "drive group missing");
   assert(result.text.includes("Shared"), "snapshot group missing");

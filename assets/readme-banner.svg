@@ -1,68 +1,101 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420" role="img" aria-labelledby="title desc">
   <title id="title">Drive Storage Card</title>
-  <desc id="desc">Mushroom-style Home Assistant Lovelace card banner with a compatible storage dashboard preview.</desc>
+  <desc id="desc">Dark Home Assistant dashboard banner showing the Drive Storage Card in a wide responsive layout.</desc>
   <defs>
-    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0" stop-color="#0b6f8f"/>
-      <stop offset="0.54" stop-color="#20a39e"/>
-      <stop offset="1" stop-color="#f2a541"/>
+    <linearGradient id="surface" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#242a33"/>
+      <stop offset="1" stop-color="#181c22"/>
     </linearGradient>
-    <linearGradient id="panel" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0" stop-color="#ffffff"/>
-      <stop offset="1" stop-color="#eef9f9"/>
-    </linearGradient>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%" color-interpolation-filters="sRGB">
-      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#05303a" flood-opacity="0.24"/>
+    <filter id="shadow" x="-10%" y="-12%" width="120%" height="130%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#05080c" flood-opacity="0.34"/>
     </filter>
   </defs>
 
-  <rect width="1200" height="420" rx="0" fill="url(#bg)"/>
-  <path d="M0 318 C150 268 272 370 440 318 C620 262 765 258 930 310 C1046 347 1125 332 1200 292 L1200 420 L0 420 Z" fill="#ffffff" opacity="0.17"/>
-  <path d="M56 82 C150 28 240 55 334 88 C468 134 606 101 733 64 C877 22 1015 38 1144 92" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.28"/>
+  <rect width="1200" height="420" fill="#161a20"/>
+  <path d="M0 341 H1200" stroke="#2f3947" stroke-width="1"/>
+  <path d="M0 89 H1200" stroke="#222b35" stroke-width="1"/>
+  <path d="M338 0 V420" stroke="#222b35" stroke-width="1"/>
+  <path d="M862 0 V420" stroke="#222b35" stroke-width="1"/>
 
-  <g transform="translate(78 82)">
-    <rect x="0" y="0" width="490" height="236" rx="28" fill="#ffffff" opacity="0.14"/>
-    <text x="0" y="46" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="54" font-weight="800" fill="#ffffff">Drive Storage Card</text>
-    <text x="0" y="91" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="24" font-weight="600" fill="#e8fbff">Mushroom-style control for Home Assistant</text>
-    <g transform="translate(0 128)">
-      <rect x="0" y="0" width="142" height="38" rx="19" fill="#ffffff" opacity="0.22"/>
-      <circle cx="25" cy="19" r="9" fill="#8df4df"/>
-      <text x="43" y="26" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="16" font-weight="700" fill="#ffffff">Lovelace</text>
-      <rect x="158" y="0" width="112" height="38" rx="19" fill="#ffffff" opacity="0.22"/>
-      <circle cx="183" cy="19" r="9" fill="#ffd37a"/>
-      <text x="201" y="26" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="16" font-weight="700" fill="#ffffff">HACS</text>
-      <rect x="286" y="0" width="156" height="38" rx="19" fill="#ffffff" opacity="0.22"/>
-      <circle cx="311" cy="19" r="9" fill="#a8d8ff"/>
-      <text x="329" y="26" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="16" font-weight="700" fill="#ffffff">TypeScript</text>
+  <g transform="translate(62 64)">
+    <rect x="0" y="0" width="62" height="62" rx="16" fill="#0ea5e9"/>
+    <path d="M19 20 H43 M19 31 H43 M19 42 H34" stroke="#ffffff" stroke-width="5" stroke-linecap="round"/>
+    <text x="0" y="110" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="56" font-weight="800" fill="#f7fbff">Drive Storage Card</text>
+    <text x="0" y="150" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="22" fill="#aeb9c8">Responsive Home Assistant storage card</text>
+    <g transform="translate(0 186)" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="15" font-weight="700">
+      <rect x="0" y="0" width="118" height="34" rx="8" fill="#213243" stroke="#34495e"/>
+      <text x="18" y="23" fill="#cdeeff">HACS</text>
+      <rect x="132" y="0" width="134" height="34" rx="8" fill="#24313c" stroke="#34495e"/>
+      <text x="150" y="23" fill="#d9e5f0">Lovelace</text>
+      <rect x="282" y="0" width="146" height="34" rx="8" fill="#2c2b3d" stroke="#45425d"/>
+      <text x="300" y="23" fill="#e3defe">TypeScript</text>
     </g>
-    <text x="0" y="212" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18" fill="#f4ffff" opacity="0.9">Storage, pools, drives, snapshots, updates and diagnostics.</text>
+    <text x="0" y="272" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="17" fill="#8d99a8">Blocks reorder automatically as the dashboard width changes.</text>
   </g>
 
-  <g transform="translate(657 52)" filter="url(#shadow)">
-    <rect x="0" y="0" width="430" height="316" rx="30" fill="url(#panel)"/>
-    <g transform="translate(30 28)">
-      <circle cx="33" cy="33" r="33" fill="#d7f5f3"/>
-      <path d="M33 15 C46 32 52 43 52 52 C52 63 44 72 33 72 C22 72 14 63 14 52 C14 43 20 32 33 15 Z" fill="#168eaa"/>
-      <text x="84" y="29" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="23" font-weight="800" fill="#16343f">Storage system</text>
-      <text x="84" y="57" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="16" fill="#5a6c72">Connected UNAS storage</text>
-      <rect x="0" y="90" width="370" height="70" rx="20" fill="#f7fbfb"/>
-      <text x="22" y="119" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="15" fill="#5a6c72">Storage usage</text>
-      <text x="22" y="148" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="34" font-weight="800" fill="#16343f">42%</text>
-      <rect x="234" y="107" width="48" height="36" rx="18" fill="#e8f5f5"/>
-      <text x="252" y="132" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="24" font-weight="800" fill="#168eaa">-</text>
-      <rect x="296" y="107" width="48" height="36" rx="18" fill="#168eaa"/>
-      <text x="313" y="132" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="24" font-weight="800" fill="#ffffff">+</text>
-      <g transform="translate(0 183)">
-        <rect x="0" y="0" width="115" height="72" rx="18" fill="#eaf7f3"/>
-        <text x="18" y="31" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="15" fill="#527166">Pool</text>
-        <text x="18" y="55" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="20" font-weight="800" fill="#198c64">On</text>
-        <rect x="128" y="0" width="115" height="72" rx="18" fill="#fff4dd"/>
-        <text x="146" y="31" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="15" fill="#7b673d">Drive</text>
-        <text x="146" y="55" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="20" font-weight="800" fill="#c9790d">31 C</text>
-        <rect x="256" y="0" width="115" height="72" rx="18" fill="#edf4ff"/>
-        <text x="274" y="31" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="15" fill="#536b8d">Snapshots</text>
-        <text x="274" y="55" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="20" font-weight="800" fill="#2771c4">On</text>
+  <g transform="translate(600 42)" filter="url(#shadow)">
+    <rect x="0" y="0" width="590" height="336" rx="18" fill="url(#surface)" stroke="#394453"/>
+    <g transform="translate(24 22)">
+      <circle cx="24" cy="24" r="18" fill="#0ea5e9"/>
+      <text x="58" y="21" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="22" font-weight="800" fill="#f7fbff">Drive Storage</text>
+      <text x="58" y="44" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="13" fill="#9eacbb">Status online</text>
+      <g transform="translate(490 2)">
+        <circle cx="28" cy="28" r="22" fill="none" stroke="#3a404a" stroke-width="5"/>
+        <path d="M28 6 A22 22 0 0 1 48 36" fill="none" stroke="#0ea5e9" stroke-width="5" stroke-linecap="round"/>
+        <text x="17" y="64" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="13" font-weight="800" fill="#f7fbff">42%</text>
       </g>
+    </g>
+
+    <g transform="translate(24 100)" font-family="Inter, Segoe UI, Arial, sans-serif">
+      <g>
+        <rect x="0" y="0" width="122" height="54" rx="8" fill="#252c36" stroke="#394453"/>
+        <circle cx="24" cy="27" r="15" fill="#114c5f"/>
+        <text x="50" y="24" font-size="12" fill="#9eacbb">Status</text>
+        <text x="50" y="43" font-size="17" font-weight="800" fill="#f7fbff">online</text>
+      </g>
+      <g transform="translate(134 0)">
+        <rect x="0" y="0" width="122" height="54" rx="8" fill="#252c36" stroke="#394453"/>
+        <circle cx="24" cy="27" r="15" fill="#4b2632"/>
+        <text x="50" y="24" font-size="12" fill="#9eacbb">Problem</text>
+        <text x="50" y="43" font-size="17" font-weight="800" fill="#f7fbff">Off</text>
+      </g>
+      <g transform="translate(268 0)">
+        <rect x="0" y="0" width="122" height="54" rx="8" fill="#252c36" stroke="#394453"/>
+        <circle cx="24" cy="27" r="15" fill="#13445b"/>
+        <text x="50" y="24" font-size="12" fill="#9eacbb">Usage</text>
+        <text x="50" y="43" font-size="17" font-weight="800" fill="#f7fbff">42%</text>
+      </g>
+      <g transform="translate(402 0)">
+        <rect x="0" y="0" width="140" height="54" rx="8" fill="#252c36" stroke="#394453"/>
+        <circle cx="24" cy="27" r="15" fill="#13445b"/>
+        <text x="50" y="24" font-size="12" fill="#9eacbb">Used storage</text>
+        <text x="50" y="43" font-size="17" font-weight="800" fill="#f7fbff">420 GiB</text>
+      </g>
+    </g>
+
+    <g transform="translate(24 176)" font-family="Inter, Segoe UI, Arial, sans-serif">
+      <text x="0" y="0" font-size="13" font-weight="800" fill="#9eacbb">STORAGE</text>
+      <text x="282" y="0" font-size="13" font-weight="800" fill="#9eacbb">SYSTEM</text>
+      <rect x="0" y="13" width="126" height="52" rx="8" fill="#252c36" stroke="#394453"/>
+      <circle cx="24" cy="39" r="15" fill="#13445b"/>
+      <text x="50" y="45" font-size="16" font-weight="800" fill="#f7fbff">Usage <tspan font-size="12" font-weight="500" fill="#9eacbb">42%</tspan></text>
+      <rect x="138" y="13" width="126" height="52" rx="8" fill="#252c36" stroke="#394453"/>
+      <circle cx="162" cy="39" r="15" fill="#13445b"/>
+      <text x="188" y="45" font-size="16" font-weight="800" fill="#f7fbff">Used <tspan font-size="12" font-weight="500" fill="#9eacbb">420 GiB</tspan></text>
+      <rect x="282" y="13" width="260" height="52" rx="8" fill="#252c36" stroke="#394453"/>
+      <circle cx="306" cy="39" r="15" fill="#0f4b46"/>
+      <text x="332" y="45" font-size="16" font-weight="800" fill="#f7fbff">Fan mode <tspan font-size="12" font-weight="500" fill="#9eacbb">Balance</tspan></text>
+    </g>
+
+    <g transform="translate(24 270)" font-family="Inter, Segoe UI, Arial, sans-serif">
+      <text x="0" y="0" font-size="13" font-weight="800" fill="#9eacbb">UPDATES</text>
+      <text x="282" y="0" font-size="13" font-weight="800" fill="#9eacbb">STORAGE POOLS</text>
+      <rect x="0" y="13" width="126" height="42" rx="8" fill="#252c36" stroke="#394453"/>
+      <text x="18" y="39" font-size="15" font-weight="800" fill="#f7fbff">OS update</text>
+      <rect x="138" y="13" width="126" height="42" rx="8" fill="#252c36" stroke="#394453"/>
+      <text x="156" y="39" font-size="15" font-weight="800" fill="#f7fbff">Drive update</text>
+      <rect x="282" y="13" width="260" height="42" rx="8" fill="#252c36" stroke="#394453"/>
+      <text x="300" y="39" font-size="15" font-weight="800" fill="#f7fbff">Pool 1 <tspan font-size="12" font-weight="500" fill="#9eacbb">healthy</tspan></text>
     </g>
   </g>
 </svg>
