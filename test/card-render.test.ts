@@ -64,6 +64,19 @@ describe("UnifiDriveCard rendering", () => {
     });
   });
 
+  it("renders precise time controls and numeric bounds", async () => {
+    const card = await renderCard(hassFixture(), {
+      sections: ["snapshots"],
+    });
+    const number = card.shadowRoot?.querySelector("input.number") as HTMLInputElement;
+    const time = card.shadowRoot?.querySelector("input.time") as HTMLInputElement;
+
+    expect(number.getAttribute("min")).toBe("1");
+    expect(number.getAttribute("max")).toBe("8");
+    expect(number.getAttribute("step")).toBe("2");
+    expect(time.getAttribute("step")).toBe("1");
+  });
+
   it("provides a stub config from UniFi Drive entities", () => {
     const config = UnifiDriveCard.getStubConfig(hassFixture());
     expect(config).toEqual({
@@ -143,6 +156,19 @@ function hassFixture(): HomeAssistant {
       target_name: "Shared",
       target_type: "shared",
     }),
+    "number.snapshot_limit": entity("7", {
+      target_key: "shared_main",
+      target_name: "Shared",
+      target_type: "shared",
+      min: 1,
+      max: 8,
+      step: 2,
+    }),
+    "time.snapshot_time": entity("02:30:45", {
+      target_key: "shared_main",
+      target_name: "Shared",
+      target_type: "shared",
+    }),
     "select.fan": entity("Balance", {
       friendly_name: "Fan mode",
       options: ["Quiet", "Balance", "Cooling"],
@@ -159,6 +185,8 @@ function hassFixture(): HomeAssistant {
       "sensor.pool_status": registry("pool_status"),
       "sensor.drive_temperature": registry("drive_temperature"),
       "switch.snapshots": registry("snapshot_enabled"),
+      "number.snapshot_limit": registry("snapshot_limit"),
+      "time.snapshot_time": registry("snapshot_schedule_time"),
       "select.fan": registry("fan_mode"),
       "button.shutdown": registry("shutdown"),
     },

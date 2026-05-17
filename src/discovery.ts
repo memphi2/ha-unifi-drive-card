@@ -176,7 +176,10 @@ function findBaseEntity(
       if (["system_status", "overall_status", "usage_percent"].includes(translationKey)) {
         score += 60;
       }
-      if (/(system_status|overall_status|usage_percent|unifi_drive)/.test(objectId)) {
+      if (
+        hasBaseEntityEvidence(objectId) ||
+        hasBaseEntityEvidence(hass.states[entityId]?.attributes.friendly_name)
+      ) {
         score += 20;
       }
       return { entityId, score };
@@ -191,6 +194,15 @@ function inferredDeviceId(hass: HomeAssistant): string | undefined {
     .filter(([, registry]) => registry.platform === INTEGRATION_DOMAIN)
     .map(([, registry]) => registry.device_id)
     .find((deviceId): deviceId is string => typeof deviceId === "string" && deviceId.length > 0);
+}
+
+function hasBaseEntityEvidence(value: unknown): boolean {
+  if (typeof value !== "string") {
+    return false;
+  }
+  return /(^|_)(system_status|overall_status|usage_percent|unifi_drive|unas)($|_)/.test(
+    slugify(value),
+  );
 }
 
 function discoverEntityForDefinition(
@@ -291,13 +303,18 @@ function dynamicDefinitionMatches(
     .map(slugify);
 
   return candidates.some((candidate) =>
-    [...aliases, ...extraAliases.map(slugify)].some(
-      (alias) =>
-        candidate === alias ||
-        candidate.endsWith(`_${alias}`) ||
-        candidate.includes(`_${alias}_`) ||
-        candidate.includes(alias),
+    [...aliases, ...extraAliases.map(slugify)].some((alias) =>
+      slugContainsAlias(candidate, alias),
     ),
+  );
+}
+
+function slugContainsAlias(candidate: string, alias: string): boolean {
+  return (
+    candidate === alias ||
+    candidate.startsWith(`${alias}_`) ||
+    candidate.endsWith(`_${alias}`) ||
+    candidate.includes(`_${alias}_`)
   );
 }
 

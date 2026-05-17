@@ -1,5 +1,7 @@
-import { clamp, numericAttribute, parseFiniteNumber, roundToStep } from "./format";
+import { numericAttribute, parseFiniteNumber, roundToStepWithinBounds } from "./format";
 import type { HassEntity, HomeAssistant } from "./types";
+
+const TIME_VALUE_PATTERN = /^([01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/;
 
 export function serviceForToggle(state: HassEntity | undefined): "turn_on" | "turn_off" {
   return state?.state === "on" ? "turn_off" : "turn_on";
@@ -28,11 +30,7 @@ export async function setNumberValue(
   const min = numericAttribute(state, "min");
   const max = numericAttribute(state, "max");
   const step = numericAttribute(state, "step") ?? 1;
-  const value = roundToStep(
-    clamp(parsed, min ?? Number.NEGATIVE_INFINITY, max ?? Number.POSITIVE_INFINITY),
-    step,
-    min ?? 0,
-  );
+  const value = roundToStepWithinBounds(parsed, step, min, max);
   return callEntityService(hass, entityId, "set_value", { value });
 }
 
@@ -49,7 +47,7 @@ export async function setTimeValue(
   entityId: string,
   value: string,
 ): Promise<unknown> {
-  if (!/^\d{2}:\d{2}(:\d{2})?$/.test(value)) {
+  if (!TIME_VALUE_PATTERN.test(value)) {
     return undefined;
   }
   return callEntityService(hass, entityId, "set_value", { time: value });
