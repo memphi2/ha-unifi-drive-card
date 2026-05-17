@@ -146,6 +146,7 @@ const html = `<!doctype html>
       const baseConfig = {
         type: "custom:unifi-drive-card",
         name: "Drive Storage",
+        compact: true,
         sections: ["overview", "storage", "pools", "drives", "snapshots", "system", "updates"],
         tap_action: { action: "more-info" },
         hold_action: { action: "navigate", navigation_path: "/lovelace/unifi-drive" },
@@ -252,6 +253,7 @@ try {
     return {
       actionDetails,
       text,
+      isCompact: root.querySelector("ha-card")?.classList.contains("compact") === true,
       cardBox: {
         width: cardBox.width,
         height: cardBox.height,
@@ -299,6 +301,7 @@ try {
     });
   }
   assert(result.customCards.some((item) => item.type === "unifi-drive-card"), "customCards metadata missing");
+  assert(result.isCompact, "render smoke fixture is not in compact mode");
   assert(result.text.includes("Drive Storage"), "card title missing");
   assert(result.text.includes("Pool 1"), "pool group missing");
   assert(result.text.includes("Disk 1"), "drive group missing");
