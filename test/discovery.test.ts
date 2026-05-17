@@ -86,6 +86,45 @@ describe("discoverEntities", () => {
     });
   });
 
+  it("does not classify generic drive status aliases as pool status", () => {
+    const hass: HomeAssistant = {
+      states: {
+        "sensor.disk_1_status": entity("healthy", {
+          friendly_name: "Disk 1 Status",
+        }),
+        "sensor.pool_1_status": entity("healthy", {
+          friendly_name: "Pool 1 Status",
+        }),
+      },
+      entities: {
+        "sensor.disk_1_status": registry(
+          "dev-a",
+          "drive_status",
+          "unifi_drive_entry_drive_disk-1_status",
+        ),
+        "sensor.pool_1_status": registry(
+          "dev-a",
+          "pool_status",
+          "unifi_drive_entry_pool_pool-1_status",
+        ),
+      },
+      callService: async () => undefined,
+    };
+
+    const discovered = discoverEntities(hass, normalizeConfig({ device_id: "dev-a" }));
+
+    expect(discovered.groups.drive).toHaveLength(1);
+    expect(discovered.groups.drive[0]).toMatchObject({
+      id: "disk-1",
+      entityIds: { drive_status: "sensor.disk_1_status" },
+    });
+    expect(discovered.groups.pool).toHaveLength(1);
+    expect(discovered.groups.pool[0]).toMatchObject({
+      id: "pool-1",
+      entityIds: { pool_status: "sensor.pool_1_status" },
+    });
+  });
+
   it("honors explicit overrides before discovery", () => {
     const hass: HomeAssistant = {
       states: {

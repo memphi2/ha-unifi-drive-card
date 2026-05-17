@@ -276,6 +276,9 @@ function dynamicDefinitionMatches(
   if (!entityId.startsWith(`${definition.domain}.`)) {
     return false;
   }
+  if (definition.dynamic && !hasDynamicKindEvidence(entityId, state, registry, definition.dynamic)) {
+    return false;
+  }
   const aliases = definitionAliases(definition);
   const extraAliases = DYNAMIC_KEY_ALIASES[definition.key] ?? [];
   const candidates = [
@@ -296,6 +299,29 @@ function dynamicDefinitionMatches(
         candidate.includes(alias),
     ),
   );
+}
+
+function hasDynamicKindEvidence(
+  entityId: string,
+  state: HassEntity,
+  registry: HassRegistryEntity | undefined,
+  kind: EntityGroupKind,
+): boolean {
+  if (attributeText(state, groupIdAttribute(kind)) || attributeText(state, groupNameAttribute(kind))) {
+    return true;
+  }
+  const uniqueId = slugify(registry?.unique_id ?? "");
+  if (uniqueId.includes(`_${kind}_`)) {
+    return true;
+  }
+  const objectId = objectIdFromEntityId(entityId);
+  if (objectId.startsWith(`${kind}_`) || objectId.includes(`_${kind}_`)) {
+    return true;
+  }
+  if (kind === "drive") {
+    return objectId.startsWith("disk_") || objectId.includes("_disk_");
+  }
+  return false;
 }
 
 function groupForEntity(
@@ -384,7 +410,7 @@ function groupIdFromUniqueId(
     if (uniqueId.endsWith(suffix)) {
       const stripped = uniqueId.slice(0, -suffix.length);
       const marker = `_${kind}_`;
-      const markerIndex = stripped.indexOf(marker);
+      const markerIndex = stripped.lastIndexOf(marker);
       if (markerIndex >= 0) {
         return stripped.slice(markerIndex + marker.length);
       }

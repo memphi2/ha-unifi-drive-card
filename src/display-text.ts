@@ -3,7 +3,7 @@ import type { EntityDefinition, HassEntity, HomeAssistant } from "./types";
 
 const TEXT_UNAVAILABLE_STATES = new Set(["unavailable"]);
 const DEVICE_PREFIX_PATTERN =
-  /^(?:(?:ubiquiti|unifi)\s+)?(?:unifi[\s_-]*)?drive(?:\s*\/\s*unas|\s+unas)?\b/i;
+  /^(?:ubiquiti\s+)?(?:unifi[\s_-]*drive|unas)(?:\s*\/\s*unas|\s+unas)?\b/i;
 const DEVICE_PREFIX_DECORATION =
   /^(?:\s*(?:card|integration|unas|storage|system))?(?:\s*[-:–—/|]\s*|\s+|$)/i;
 
