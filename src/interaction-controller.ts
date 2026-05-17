@@ -10,6 +10,8 @@ interface ActionInteractionOptions {
 interface PendingHold {
   entityId: string;
   timer: number;
+  dispatch: (entityId: string, trigger: ActionTrigger) => void;
+  ready: boolean;
 }
 
 export class EntityActionController {
@@ -61,15 +63,20 @@ export class EntityActionController {
     this.clearSuppressedClick();
     const timer = window.setTimeout(() => {
       this.clearPendingTap(entityId);
-      this.suppressedClickEntityId = entityId;
-      this.pendingHold = undefined;
-      options.dispatch(entityId, "hold");
+      if (this.pendingHold?.entityId === entityId) {
+        this.pendingHold.ready = true;
+      }
     }, HOLD_ACTION_DELAY_MS);
-    this.pendingHold = { entityId, timer };
+    this.pendingHold = { entityId, timer, dispatch: options.dispatch, ready: false };
   }
 
-  public handlePointerEnd(): void {
+  public handlePointerEnd(dispatchReadyHold = true): void {
+    const pendingHold = this.pendingHold;
     this.clearPendingHold();
+    if (dispatchReadyHold && pendingHold?.ready) {
+      this.suppressedClickEntityId = pendingHold.entityId;
+      pendingHold.dispatch(pendingHold.entityId, "hold");
+    }
     if (this.suppressedClickEntityId) {
       this.scheduleSuppressedClickReset();
     }

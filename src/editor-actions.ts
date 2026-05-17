@@ -58,7 +58,12 @@ export function actionConfigFromEditor(
   }
   if (action === "call-service") {
     config.action = "perform-action";
-    copyStringProperty(value, config, "perform_action", value.service ?? value.perform_action);
+    copyStringProperty(
+      value,
+      config,
+      "perform_action",
+      Object.prototype.hasOwnProperty.call(value, "service") ? value.service : value.perform_action,
+    );
     copyPlainObjectProperty(value, config, "target");
     copyPlainObjectProperty(value, config, "data");
   }
@@ -120,9 +125,9 @@ function copyStringProperty(
   source: Record<string, unknown>,
   target: NonNullable<UnifiDriveCardConfig["tap_action"]>,
   property: string,
-  sourceValue = source[property],
+  sourceValue?: unknown,
 ): void {
-  const value = sourceValue;
+  const value = arguments.length >= 4 ? sourceValue : source[property];
   if (typeof value === "string" && value.trim()) {
     target[property] = value.trim();
   }

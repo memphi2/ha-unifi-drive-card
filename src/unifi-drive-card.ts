@@ -120,7 +120,7 @@ export class UnifiDriveCard extends LitElement {
           @click=${(event: MouseEvent) => this._handleTapAction(event, discovered.baseEntity)}
           @dblclick=${(event: MouseEvent) => this._handleDoubleTapAction(event, discovered.baseEntity)}
           @pointerdown=${(event: PointerEvent) => this._startHoldAction(event, discovered.baseEntity)}
-          @pointerup=${this._cancelHoldAction}
+          @pointerup=${this._finishHoldAction}
           @pointerleave=${this._cancelHoldAction}
           @pointercancel=${this._cancelHoldAction}
         >
@@ -241,7 +241,7 @@ export class UnifiDriveCard extends LitElement {
         @click=${(event: MouseEvent) => this._handleTapAction(event, entityId)}
         @dblclick=${(event: MouseEvent) => this._handleDoubleTapAction(event, entityId)}
         @pointerdown=${(event: PointerEvent) => this._startHoldAction(event, entityId)}
-        @pointerup=${this._cancelHoldAction}
+        @pointerup=${this._finishHoldAction}
         @pointerleave=${this._cancelHoldAction}
         @pointercancel=${this._cancelHoldAction}
       >
@@ -285,7 +285,7 @@ export class UnifiDriveCard extends LitElement {
           @click=${(event: MouseEvent) => this._handleTapAction(event, entityId)}
           @dblclick=${(event: MouseEvent) => this._handleDoubleTapAction(event, entityId)}
           @pointerdown=${(event: PointerEvent) => this._startHoldAction(event, entityId)}
-          @pointerup=${this._cancelHoldAction}
+          @pointerup=${this._finishHoldAction}
           @pointerleave=${this._cancelHoldAction}
           @pointercancel=${this._cancelHoldAction}
         >
@@ -445,8 +445,12 @@ export class UnifiDriveCard extends LitElement {
     this._actions.handlePointerDown(event, this._interactionOptions(entityId));
   }
 
-  private _cancelHoldAction = (): void => {
+  private _finishHoldAction = (): void => {
     this._actions.handlePointerEnd();
+  };
+
+  private _cancelHoldAction = (): void => {
+    this._actions.handlePointerEnd(false);
   };
 
   private _interactionOptions(entityId: string | undefined) {

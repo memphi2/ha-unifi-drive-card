@@ -28,6 +28,20 @@ describe("editor action helpers", () => {
     });
   });
 
+  it("clears a previously configured service action from editor input", () => {
+    const action = actionConfigFromEditor("tap_action", {
+      action: "call-service",
+      perform_action: "script.unifi_drive_backup",
+      service: undefined,
+      target: { entity_id: "button.backup_now" },
+    });
+
+    expect(action).toEqual({
+      action: "perform-action",
+      target: { entity_id: "button.backup_now" },
+    });
+  });
+
   it("normalizes target fields and validates service data JSON", () => {
     const target = updateActionTargetField(undefined, "area_id", "bathroom, wellness");
 

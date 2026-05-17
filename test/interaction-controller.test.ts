@@ -55,6 +55,7 @@ describe("EntityActionController", () => {
 
     controller.handlePointerDown(pointerEvent(), options);
     await vi.advanceTimersByTimeAsync(550);
+    expect(dispatch).not.toHaveBeenCalled();
     controller.handlePointerEnd();
     await vi.advanceTimersByTimeAsync(400);
     controller.handleClick(clickEvent(), options);
@@ -62,6 +63,27 @@ describe("EntityActionController", () => {
     expect(dispatch).toHaveBeenCalledTimes(2);
     expect(dispatch).toHaveBeenNthCalledWith(1, "sensor.water", "hold");
     expect(dispatch).toHaveBeenNthCalledWith(2, "sensor.water", "tap");
+    controller.clear();
+    vi.useRealTimers();
+  });
+
+  it("cancels a ready hold when the pointer leaves before release", async () => {
+    vi.useFakeTimers();
+    const controller = new EntityActionController();
+    const dispatch = vi.fn();
+    const options = {
+      entityId: "sensor.water",
+      hasDoubleTap: false,
+      hasHold: true,
+      dispatch,
+    };
+
+    controller.handlePointerDown(pointerEvent(), options);
+    await vi.advanceTimersByTimeAsync(550);
+    controller.handlePointerEnd(false);
+    await vi.advanceTimersByTimeAsync(400);
+
+    expect(dispatch).not.toHaveBeenCalled();
     controller.clear();
     vi.useRealTimers();
   });

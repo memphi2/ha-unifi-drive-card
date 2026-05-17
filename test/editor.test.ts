@@ -104,4 +104,32 @@ describe("UnifiDriveCardEditor", () => {
     expect(dataInput.classList.contains("invalid")).toBe(true);
     expect(listener).not.toHaveBeenCalled();
   });
+
+  it("allows clearing a configured service action", async () => {
+    const editor = document.createElement("unifi-drive-card-editor") as UnifiDriveCardEditor;
+    const listener = vi.fn();
+    editor.addEventListener("config-changed", listener);
+    editor.setConfig({
+      tap_action: {
+        action: "perform-action",
+        perform_action: "script.unifi_drive_backup",
+        target: { entity_id: "button.backup_now" },
+      },
+    });
+    document.body.append(editor);
+    await editor.updateComplete;
+
+    const serviceInput = editor.shadowRoot?.querySelector(
+      'input[data-action-key="tap_action"][data-action-property="service"]',
+    ) as HTMLInputElement;
+    serviceInput.value = "";
+    serviceInput.dispatchEvent(new Event("input"));
+    await editor.updateComplete;
+
+    const config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
+    expect(config.tap_action).toEqual({
+      action: "perform-action",
+      target: { entity_id: "button.backup_now" },
+    });
+  });
 });
