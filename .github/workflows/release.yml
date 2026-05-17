@@ -1,0 +1,62 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Set up Chrome
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Run full validation
+        env:
+          CHROME_BIN: ${{ steps.setup-chrome.outputs.chrome-path }}
+        run: |
+          npm run check
+          npm run render-smoke
+
+      - name: Package HACS asset
+        run: |
+          mkdir -p release
+          cp dist/ha-unifi-drive-card.js release/ha-unifi-drive-card.js
+          cp dist/ha-unifi-drive-card.js.map release/ha-unifi-drive-card.js.map
+          (cd release && zip -r ha-unifi-drive-card.zip ha-unifi-drive-card.js ha-unifi-drive-card.js.map)
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ha-unifi-drive-card
+          path: |
+            release/ha-unifi-drive-card.js
+            release/ha-unifi-drive-card.js.map
+            release/ha-unifi-drive-card.zip
+
+      - name: Publish GitHub release for tags
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/ha-unifi-drive-card.js
+            release/ha-unifi-drive-card.js.map
+            release/ha-unifi-drive-card.zip
