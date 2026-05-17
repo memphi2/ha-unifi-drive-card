@@ -73,10 +73,18 @@ export function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
-export function roundToStep(value: number, step: number): number {
+export function roundToStep(value: number, step: number, offset = 0): number {
   if (!Number.isFinite(step) || step <= 0) {
     return value;
   }
-  const decimals = Math.max(0, String(step).split(".")[1]?.length ?? 0);
-  return Number((Math.round(value / step) * step).toFixed(decimals));
+  const decimals = Math.max(decimalPlaces(step), decimalPlaces(offset));
+  return Number((offset + Math.round((value - offset) / step) * step).toFixed(decimals));
+}
+
+function decimalPlaces(value: number): number {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+  const [, decimals = ""] = String(value).split(".");
+  return decimals.length;
 }

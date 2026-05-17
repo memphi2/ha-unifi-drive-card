@@ -17,6 +17,20 @@ describe("actions", () => {
     });
   });
 
+  it("rounds number values from the entity minimum", async () => {
+    const hass = mockHass();
+    await setNumberValue(
+      hass,
+      "number.snapshot_limit",
+      { state: "1", attributes: { min: 1, max: 9, step: 2 } },
+      "2.2",
+    );
+    expect(hass.callService).toHaveBeenCalledWith("number", "set_value", {
+      entity_id: "number.snapshot_limit",
+      value: 3,
+    });
+  });
+
   it("ignores invalid number input", async () => {
     const hass = mockHass();
     await setNumberValue(hass, "number.snapshot_limit", undefined, "");
@@ -34,6 +48,15 @@ describe("actions", () => {
     expect(hass.callService).toHaveBeenNthCalledWith(2, "time", "set_value", {
       entity_id: "time.snapshot_schedule",
       time: "02:30",
+    });
+  });
+
+  it("preserves seconds for time service payloads", async () => {
+    const hass = mockHass();
+    await setTimeValue(hass, "time.snapshot_schedule", "02:30:45");
+    expect(hass.callService).toHaveBeenCalledWith("time", "set_value", {
+      entity_id: "time.snapshot_schedule",
+      time: "02:30:45",
     });
   });
 

@@ -474,7 +474,12 @@ function isIntegrationEntity(hass: HomeAssistant, entityId: string): boolean {
   const state = hass.states[entityId];
   const objectId = objectIdFromEntityId(entityId);
   const friendly = String(state?.attributes.friendly_name ?? "");
-  return slugify(objectId).includes("unifi_drive") || slugify(friendly).includes("unifi_drive");
+  return hasIntegrationSlug(objectId) || hasIntegrationSlug(friendly);
+}
+
+function hasIntegrationSlug(value: string): boolean {
+  const slug = slugify(value);
+  return /(^|_)unifi_drive($|_)/.test(slug) || /(^|_)unas($|_)/.test(slug);
 }
 
 function attributeText(state: HassEntity, key: string): string | undefined {

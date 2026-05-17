@@ -31,6 +31,7 @@ export async function setNumberValue(
   const value = roundToStep(
     clamp(parsed, min ?? Number.NEGATIVE_INFINITY, max ?? Number.POSITIVE_INFINITY),
     step,
+    min ?? 0,
   );
   return callEntityService(hass, entityId, "set_value", { value });
 }
@@ -51,7 +52,7 @@ export async function setTimeValue(
   if (!/^\d{2}:\d{2}(:\d{2})?$/.test(value)) {
     return undefined;
   }
-  return callEntityService(hass, entityId, "set_value", { time: value.slice(0, 5) });
+  return callEntityService(hass, entityId, "set_value", { time: value });
 }
 
 export async function installUpdate(

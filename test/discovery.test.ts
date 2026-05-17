@@ -125,6 +125,26 @@ describe("discoverEntities", () => {
     });
   });
 
+  it("discovers UNAS fallback entities without registry metadata", () => {
+    const hass: HomeAssistant = {
+      states: {
+        "sensor.unas_system_status": entity("online", {
+          friendly_name: "UNAS System Status",
+        }),
+        "sensor.unas_usage": entity("42", {
+          friendly_name: "UNAS Storage Usage",
+        }),
+      },
+      callService: async () => undefined,
+    };
+
+    const discovered = discoverEntities(hass, normalizeConfig({}));
+
+    expect(discovered.baseEntity).toBe("sensor.unas_system_status");
+    expect(discovered.entityIds.system_status).toBe("sensor.unas_system_status");
+    expect(discovered.entityIds.usage_percent).toBe("sensor.unas_usage");
+  });
+
   it("honors explicit overrides before discovery", () => {
     const hass: HomeAssistant = {
       states: {
