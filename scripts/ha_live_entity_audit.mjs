@@ -25,7 +25,10 @@ const expectedKeySet = new Set(
 );
 const optionalExpectedKeys = new Set([
   "button.wake_on_lan",
+  "sensor.drive_status",
+  "sensor.pool_status",
 ]);
+const knownKeySet = new Set([...expectedKeySet, ...optionalExpectedKeys]);
 
 function pass(message) {
   console.log(`PASS: ${message}`);
@@ -160,7 +163,7 @@ try {
             return `${domain}.${entity.translation_key}`;
           }),
       );
-      const unknownKeys = [...liveKeys].filter((key) => !expectedKeySet.has(key));
+      const unknownKeys = [...liveKeys].filter((key) => !knownKeySet.has(key));
       const missingKeys = [...expectedKeySet].filter(
         (key) => !liveKeys.has(key) && !optionalExpectedKeys.has(key),
       );

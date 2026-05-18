@@ -187,15 +187,11 @@ async function validateHaStates(accessToken) {
   const states = await requestJson(`${baseUrl}/api/states`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
-  const unifiStates = states.filter((state) => {
-    const entityId = String(state.entity_id || "").toLowerCase();
-    const friendlyName = String(state.attributes?.friendly_name || "").toLowerCase();
-    return (
-      entityId.includes("unifi_drive") ||
-      friendlyName.includes("unifi drive") ||
-      friendlyName.includes("unas")
-    );
-  });
+  const registry = await registryEntities();
+  const registryEntityIds = new Set(registry.map((entity) => entity.entity_id));
+  const unifiStates = registryEntityIds.size
+    ? states.filter((state) => registryEntityIds.has(state.entity_id))
+    : states.filter(isUnifiDriveState);
   const hasStorage = unifiStates.some((state) =>
     /^(binary_sensor|sensor)\./.test(String(state.entity_id)),
   );
@@ -212,6 +208,31 @@ async function validateHaStates(accessToken) {
     throw new Error("no UniFi Drive control entities found");
   }
   pass(`HA API exposes ${unifiStates.length} UniFi Drive-like states`);
+}
+
+async function registryEntities() {
+  if (!configDir) {
+    return [];
+  }
+  try {
+    const registryPath = path.join(configDir, ".storage", "core.entity_registry");
+    const registry = JSON.parse(await readFile(registryPath, "utf8"));
+    return (registry?.data?.entities ?? []).filter(
+      (entity) => entity.platform === "unifi_drive",
+    );
+  } catch {
+    return [];
+  }
+}
+
+function isUnifiDriveState(state) {
+  const entityId = String(state.entity_id || "").toLowerCase();
+  const friendlyName = String(state.attributes?.friendly_name || "").toLowerCase();
+  return (
+    entityId.includes("unifi_drive") ||
+    friendlyName.includes("unifi drive") ||
+    friendlyName.includes("unas")
+  );
 }
 
 async function cleanDeployDir() {
