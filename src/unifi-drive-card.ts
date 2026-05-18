@@ -529,14 +529,19 @@ export class UnifiDriveCard extends LitElement {
   }
 
   private _headerIconClass(problem?: HassEntity): string {
-    const tone = problem && !isUnavailable(problem) && booleanState(problem) ? "alert" : "storage";
+    const problemState = problem?.state.trim().toLowerCase();
+    const hasProblem = Boolean(problem && (isUnavailable(problem) || booleanState(problem)));
+    const tone = hasProblem ? "alert" : problemState === "off" ? "ok" : "neutral";
+    const animate = Boolean(
+      problem && !isUnavailable(problem) && booleanState(problem) && this._config.show_icon_animations,
+    );
     return [
       "icon-bubble",
       "primary",
       tone,
       "active",
-      this._config.show_icon_animations ? `motion-${tone}` : "",
-      this._config.show_icon_animations ? "animated" : "",
+      animate ? `motion-${tone}` : "",
+      animate ? "animated" : "",
     ]
       .filter(Boolean)
       .join(" ");

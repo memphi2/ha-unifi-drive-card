@@ -140,6 +140,68 @@ describe("UnifiDriveCard rendering", () => {
     expect(visibleText(card)).not.toContain("System Status");
   });
 
+  it("colors problem tiles by current state", async () => {
+    const healthyCard = await renderCard(hassFixture(), {
+      sections: ["overview"],
+      overview_entities: ["storage_problem"],
+    });
+    const healthyIcon = healthyCard.shadowRoot?.querySelector(".metric .icon-bubble") as HTMLElement;
+    const healthyHeaderIcon = healthyCard.shadowRoot?.querySelector("header .icon-bubble") as HTMLElement;
+
+    expect(healthyIcon.className).toContain("ok");
+    expect(healthyIcon.className).not.toContain("alert");
+    expect(healthyIcon.className).not.toContain("animated");
+    expect(healthyHeaderIcon.className).toContain("ok");
+    expect(healthyHeaderIcon.className).not.toContain("alert");
+    expect(healthyHeaderIcon.className).not.toContain("animated");
+
+    const failing = hassFixture();
+    failing.states["binary_sensor.problem"] = entity("on", {
+      friendly_name: "UniFi Drive Storage Problem",
+    });
+    const failingCard = await renderCard(failing, {
+      sections: ["overview"],
+      overview_entities: ["storage_problem"],
+    });
+    const failingIcon = failingCard.shadowRoot?.querySelector(".metric .icon-bubble") as HTMLElement;
+    const failingHeaderIcon = failingCard.shadowRoot?.querySelector("header .icon-bubble") as HTMLElement;
+
+    expect(failingIcon.className).toContain("alert");
+    expect(failingIcon.className).toContain("animated");
+    expect(failingHeaderIcon.className).toContain("alert");
+    expect(failingHeaderIcon.className).toContain("animated");
+
+    const unknown = hassFixture();
+    unknown.states["binary_sensor.problem"] = entity("unknown", {
+      friendly_name: "UniFi Drive Storage Problem",
+    });
+    const unknownCard = await renderCard(unknown, {
+      sections: ["overview"],
+      overview_entities: ["storage_problem"],
+    });
+    const unknownIcon = unknownCard.shadowRoot?.querySelector(".metric .icon-bubble") as HTMLElement;
+    const unknownHeaderIcon = unknownCard.shadowRoot?.querySelector("header .icon-bubble") as HTMLElement;
+
+    expect(unknownIcon.className).toContain("neutral");
+    expect(unknownIcon.className).not.toContain("ok");
+    expect(unknownHeaderIcon.className).toContain("neutral");
+    expect(unknownHeaderIcon.className).not.toContain("ok");
+
+    const unavailable = hassFixture();
+    unavailable.states["binary_sensor.problem"] = entity("unavailable", {
+      friendly_name: "UniFi Drive Storage Problem",
+    });
+    const unavailableCard = await renderCard(unavailable, {
+      sections: ["overview"],
+      overview_entities: ["storage_problem"],
+      show_unavailable: true,
+    });
+    const unavailableHeaderIcon = unavailableCard.shadowRoot?.querySelector("header .icon-bubble") as HTMLElement;
+
+    expect(unavailableHeaderIcon.className).toContain("alert");
+    expect(unavailableHeaderIcon.className).not.toContain("animated");
+  });
+
   it("can render DHE-style display tiles for dense sections", async () => {
     const card = await renderCard(hassFixture(), {
       sections: ["storage"],
