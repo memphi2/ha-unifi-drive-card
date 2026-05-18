@@ -82,7 +82,6 @@ export const cardStyles = css`
   .content-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    grid-auto-flow: row dense;
   }
 
   .compact section {

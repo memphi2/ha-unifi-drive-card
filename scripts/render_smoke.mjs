@@ -205,6 +205,11 @@ try {
     await waitForLayout();
     const narrowColumnCount = gridColumnCount(root.querySelector(".content-grid"));
     card.style.width = "980px";
+    card.setConfig({
+      ...window.__baseConfig,
+      sections: ["storage", "system", "pools"]
+    });
+    await card.updateComplete;
     await waitForLayout();
     const wideColumnCount = gridColumnCount(root.querySelector(".content-grid"));
     const wideEntityColumnCount = gridColumnCount(root.querySelector(".entity-list"));
@@ -342,7 +347,7 @@ try {
   );
   assert(
     result.layout.wideSections.system.top < result.layout.wideSections.pools.top,
-    "wide dashboard width did not reorder system before group blocks",
+    "wide dashboard width did not preserve configured section order",
   );
   assert(result.iconStyles.length >= 6, "expected icon bubbles were not rendered");
   assert(result.actionDetails.some((item) => item.action === "tap"), "tap action missing");
