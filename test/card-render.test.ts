@@ -130,13 +130,16 @@ describe("UnifiDriveCard rendering", () => {
   it("renders configured overview entities in order", async () => {
     const card = await renderCard(hassFixture(), {
       sections: ["overview"],
+      overview_columns: 4,
       overview_entities: ["used_storage", "usage_percent"],
     });
     const metrics = [...(card.shadowRoot?.querySelectorAll(".metric") ?? [])];
+    const grid = card.shadowRoot?.querySelector(".metric-grid") as HTMLElement;
 
     expect(metrics).toHaveLength(2);
     expect(metrics[0]?.textContent).toContain("Used Storage");
     expect(metrics[1]?.textContent).toContain("Usage");
+    expect(grid.style.getPropertyValue("--unifi-overview-columns").trim()).toBe("4");
     expect(visibleText(card)).not.toContain("System Status");
   });
 
@@ -154,6 +157,19 @@ describe("UnifiDriveCard rendering", () => {
     expect(healthyHeaderIcon.className).toContain("ok");
     expect(healthyHeaderIcon.className).not.toContain("alert");
     expect(healthyHeaderIcon.className).not.toContain("animated");
+
+    const noError = hassFixture();
+    noError.states["binary_sensor.problem"] = entity("kein_fehler", {
+      friendly_name: "UniFi Drive Storage Problem",
+    });
+    const noErrorCard = await renderCard(noError, {
+      sections: ["overview"],
+      overview_entities: ["storage_problem"],
+    });
+    const noErrorHeaderIcon = noErrorCard.shadowRoot?.querySelector("header .icon-bubble") as HTMLElement;
+
+    expect(noErrorHeaderIcon.className).toContain("ok");
+    expect(noErrorHeaderIcon.className).not.toContain("alert");
 
     const failing = hassFixture();
     failing.states["binary_sensor.problem"] = entity("on", {

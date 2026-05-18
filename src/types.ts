@@ -86,6 +86,7 @@ export interface UnifiDriveCardConfig {
   show_dangerous_actions?: boolean;
   show_icon_animations?: boolean;
   show_display_buttons?: boolean;
+  overview_columns?: number;
   max_sensor_rows?: number;
   sections?: SectionId[];
   overview_entities?: EntityKey[];
@@ -110,6 +111,7 @@ export interface NormalizedUnifiDriveCardConfig
       | "show_dangerous_actions"
       | "show_icon_animations"
       | "show_display_buttons"
+      | "overview_columns"
       | "max_sensor_rows"
     >
   > {

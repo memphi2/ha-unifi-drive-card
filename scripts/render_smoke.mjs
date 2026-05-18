@@ -201,9 +201,24 @@ try {
         .split(" ")
         .map((item) => item.trim())
         .filter(Boolean).length;
+    card.style.width = "320px";
+    await waitForLayout();
+    const narrowMetricColumnCount = gridColumnCount(root.querySelector(".metric-grid"));
     card.style.width = "520px";
     await waitForLayout();
     const narrowColumnCount = gridColumnCount(root.querySelector(".content-grid"));
+    card.style.width = "720px";
+    card.setConfig({
+      ...window.__baseConfig,
+      overview_columns: 4
+    });
+    await card.updateComplete;
+    await waitForLayout();
+    const configuredMetricColumnCount = gridColumnCount(root.querySelector(".metric-grid"));
+    card.setConfig(window.__baseConfig);
+    await card.updateComplete;
+    await waitForLayout();
+    const defaultMetricColumnCount = gridColumnCount(root.querySelector(".metric-grid"));
     card.style.width = "980px";
     card.setConfig({
       ...window.__baseConfig,
@@ -290,6 +305,9 @@ try {
         narrowColumnCount,
         wideColumnCount,
         wideEntityColumnCount,
+        narrowMetricColumnCount,
+        defaultMetricColumnCount,
+        configuredMetricColumnCount,
         displayTileCount,
         wideSections,
       },
@@ -346,6 +364,18 @@ try {
   assert(result.cardBox.width > 400 && result.cardBox.height > 280, "card layout looks collapsed");
   assert(result.layout.narrowColumnCount === 1, "narrow dashboard width did not use single-column layout");
   assert(result.layout.wideColumnCount >= 2, "wide dashboard width did not use multi-column layout");
+  assert(
+    result.layout.narrowMetricColumnCount === 1,
+    `narrow overview did not collapse to one column (${result.layout.narrowMetricColumnCount})`,
+  );
+  assert(
+    result.layout.defaultMetricColumnCount === 3,
+    `default overview did not use three columns (${result.layout.defaultMetricColumnCount})`,
+  );
+  assert(
+    result.layout.configuredMetricColumnCount === 4,
+    `configured overview columns were ignored (${result.layout.configuredMetricColumnCount})`,
+  );
   assert(
     result.layout.wideEntityColumnCount >= 2,
     `wide entity rows did not flow horizontally (${result.layout.wideEntityColumnCount} columns)`,

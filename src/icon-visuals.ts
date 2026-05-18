@@ -75,7 +75,7 @@ function iconTone(definition: EntityDefinition, state?: HassEntity): IconTone {
     if (state?.state === "on") {
       return "update";
     }
-    return state && normalizedState(state) === "off" ? "ok" : "neutral";
+    return state && normalizeStateToken(state.state) === "off" ? "ok" : "neutral";
   }
   if (key.includes("snapshot")) {
     return "snapshot";
@@ -152,7 +152,7 @@ function isStatusDefinition(definition: EntityDefinition): boolean {
 }
 
 function isAttentionState(definition: EntityDefinition, state: HassEntity): boolean {
-  if (ATTENTION_STATES.has(normalizedState(state))) {
+  if (isAlarmState(state.state)) {
     return true;
   }
   if (definition.domain === "binary_sensor" || definition.domain === "switch") {
@@ -162,16 +162,20 @@ function isAttentionState(definition: EntityDefinition, state: HassEntity): bool
   if (numeric !== undefined && isAttentionDefinition(definition)) {
     return numeric > 0;
   }
-  return ATTENTION_STATES.has(normalizedState(state));
+  return false;
 }
 
 function isHealthyState(state: HassEntity): boolean {
-  return HEALTHY_STATES.has(normalizedState(state));
+  return isOkState(state.state) || isZeroState(state.state);
 }
 
 function isClearState(definition: EntityDefinition, state: HassEntity): boolean {
   const numeric = numericStateValue(state);
-  return isHealthyState(state) || (isAttentionDefinition(definition) && numeric === 0);
+  return (
+    isHealthyState(state) ||
+    (isAttentionDefinition(definition) && numeric === 0) ||
+    (isAttentionDefinition(definition) && isClearAttentionState(state.state))
+  );
 }
 
 function numericStateValue(state: HassEntity): number | undefined {
@@ -179,23 +183,64 @@ function numericStateValue(state: HassEntity): number | undefined {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
-function normalizedState(state: HassEntity): string {
-  return state.state.trim().toLowerCase().replace(/[\s-]+/g, "_");
+function isOkState(value: string): boolean {
+  return OK_STATE_TOKENS.has(normalizeStateToken(value));
 }
 
-const HEALTHY_STATES = new Set([
+function isClearAttentionState(value: string): boolean {
+  const state = normalizeStateToken(value);
+  return CLEAR_ATTENTION_STATE_TOKENS.has(state);
+}
+
+function isZeroState(value: string): boolean {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) && numeric === 0;
+}
+
+function isAlarmState(value: string): boolean {
+  const state = normalizeStateToken(value);
+  if (!state || isOkState(state) || isZeroState(state) || isClearAttentionState(state)) {
+    return false;
+  }
+  const numeric = Number(state);
+  if (Number.isFinite(numeric)) {
+    return numeric !== 0;
+  }
+  return (
+    ALARM_STATE_TOKENS.has(state) || ALARM_STATE_PARTS.some((part) => state.includes(part))
+  );
+}
+
+function normalizeStateToken(value: string): string {
+  return value.trim().toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ");
+}
+
+const OK_STATE_TOKENS = new Set([
+  "0",
   "available",
   "connected",
+  "fehlerfrei",
+  "false",
   "healthy",
   "idle",
+  "kein fehler",
+  "keine stoerung",
+  "keine störung",
+  "none",
+  "no error",
+  "no fault",
   "normal",
   "off",
   "ok",
   "online",
   "ready",
+  "verbunden",
 ]);
 
-const ATTENTION_STATES = new Set([
+const CLEAR_ATTENTION_STATE_TOKENS = new Set(["false", "off"]);
+
+const ALARM_STATE_TOKENS = new Set([
+  "alarm",
   "alert",
   "critical",
   "degraded",
@@ -203,10 +248,27 @@ const ATTENTION_STATES = new Set([
   "error",
   "failed",
   "failure",
+  "fault",
+  "fehler",
+  "getrennt",
+  "nicht verbunden",
   "offline",
   "on",
   "problem",
+  "stoerung",
+  "störung",
+  "target below inlet",
   "unhealthy",
   "unavailable",
   "warning",
 ]);
+
+const ALARM_STATE_PARTS = [
+  "alarm",
+  "error",
+  "fault",
+  "fehler",
+  "problem",
+  "stoerung",
+  "störung",
+];

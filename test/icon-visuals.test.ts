@@ -18,6 +18,16 @@ describe("icon visuals", () => {
     expect(className).not.toContain("animated");
   });
 
+  it("treats explicit no-error status text as green instead of alert", () => {
+    for (const state of ["No Error", "none", "kein_fehler", "0.0"]) {
+      expect(iconVisualState(definition("storage_problem"), entity(state))).toMatchObject({
+        tone: "ok",
+        active: true,
+        animated: false,
+      });
+    }
+  });
+
   it("renders problem entities red and animated when active", () => {
     const visual = iconVisualState(definition("storage_problem"), entity("on"));
     const className = iconVisualClass(definition("storage_problem"), entity("on"));
@@ -79,7 +89,17 @@ describe("icon visuals", () => {
       active: true,
       animated: false,
     });
+    expect(iconVisualState(definition("system_status"), entity("verbunden"))).toMatchObject({
+      tone: "ok",
+      active: true,
+      animated: false,
+    });
     expect(iconVisualState(definition("overall_status"), entity("degraded"))).toMatchObject({
+      tone: "alert",
+      active: true,
+      animated: true,
+    });
+    expect(iconVisualState(definition("overall_status"), entity("stoerung"))).toMatchObject({
       tone: "alert",
       active: true,
       animated: true,

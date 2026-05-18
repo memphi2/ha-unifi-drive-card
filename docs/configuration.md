@@ -26,6 +26,7 @@ show_optional: false
 show_diagnostics: true
 show_dangerous_actions: false
 show_icon_animations: true
+overview_columns: 3
 max_sensor_rows: 10
 sections:
   - overview
@@ -64,6 +65,7 @@ double_tap_action:
 | `show_diagnostics` | boolean | `true` | Enables diagnostics. |
 | `show_dangerous_actions` | boolean | `false` | Shows restart/shutdown actions with confirmation. |
 | `show_icon_animations` | boolean | `true` | Enables animated icon states. |
+| `overview_columns` | number | `3` | Sets the default overview tile columns, bounded from 1 to 6. Very narrow cards still collapse to one column. |
 | `max_sensor_rows` | number | `10` | Limits row-heavy sections. |
 | `sections` | list | all | Ordered visible sections. |
 | `hide_entities` | list | `[]` | Known entity keys to hide. |

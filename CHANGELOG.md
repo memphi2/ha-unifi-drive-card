@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- Aligned the visual editor and overview layout with the DHE Connect card, including
+  device picker controls, collapsible action rows, selected/available tile groups
+  and configurable overview columns.
+- Refined state-aware icon colors so explicit no-error states render green while
+  real error, warning and problem states render red.
+
 ## 0.1.0 - 2026-05-17
 
 ### Added

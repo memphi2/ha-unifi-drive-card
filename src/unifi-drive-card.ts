@@ -31,7 +31,7 @@ import {
   numericState,
 } from "./format";
 import { EntityActionController } from "./interaction-controller";
-import { iconVisualClass } from "./icon-visuals";
+import { iconVisualClass, iconVisualState } from "./icon-visuals";
 import { localize, sectionLabel } from "./i18n";
 import { isVisibleRenderable } from "./rendering";
 import { ServiceCallGuard, serviceActionKey } from "./service-call-guard";
@@ -203,7 +203,10 @@ export class UnifiDriveCard extends LitElement {
     return this._renderCardSection(
       "overview",
       html`
-        <div class="metric-grid">
+        <div
+          class="metric-grid"
+          style=${`--unifi-overview-columns: ${this._config.overview_columns};`}
+        >
           ${tiles.map(({ definition, entityId, state }) =>
             this._metricTile(definition, entityId, state),
           )}
@@ -529,19 +532,19 @@ export class UnifiDriveCard extends LitElement {
   }
 
   private _headerIconClass(problem?: HassEntity): string {
-    const problemState = problem?.state.trim().toLowerCase();
-    const hasProblem = Boolean(problem && (isUnavailable(problem) || booleanState(problem)));
-    const tone = hasProblem ? "alert" : problemState === "off" ? "ok" : "neutral";
-    const animate = Boolean(
-      problem && !isUnavailable(problem) && booleanState(problem) && this._config.show_icon_animations,
+    const problemDefinition = ENTITY_DEFINITION_BY_KEY.storage_problem ?? FALLBACK_ENTITY_DEFINITION;
+    const visual = iconVisualState(
+      problemDefinition,
+      problem,
+      this._config.show_icon_animations,
     );
     return [
       "icon-bubble",
       "primary",
-      tone,
-      "active",
-      animate ? `motion-${tone}` : "",
-      animate ? "animated" : "",
+      visual.tone,
+      visual.active ? "active" : "",
+      visual.animated ? `motion-${visual.motion}` : "",
+      visual.animated ? "animated" : "",
     ]
       .filter(Boolean)
       .join(" ");
