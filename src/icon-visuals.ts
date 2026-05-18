@@ -1,7 +1,7 @@
 import { booleanState, isUnavailable } from "./format";
 import type { EntityDefinition, HassEntity } from "./types";
 
-export type IconTone =
+type IconTone =
   | "action"
   | "alert"
   | "drive"
@@ -14,7 +14,7 @@ export type IconTone =
   | "temperature"
   | "update";
 
-export interface IconVisualState {
+interface IconVisualState {
   tone: IconTone;
   motion: IconTone;
   active: boolean;

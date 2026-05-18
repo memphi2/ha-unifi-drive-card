@@ -1,4 +1,4 @@
-export type BusyChangeListener = (keys: ReadonlySet<string>) => void;
+type BusyChangeListener = (keys: ReadonlySet<string>) => void;
 
 export class ServiceCallGuard {
   private readonly activeKeys = new Set<string>();

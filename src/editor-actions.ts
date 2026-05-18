@@ -3,7 +3,7 @@ import type { UnifiDriveCardConfig } from "./types";
 export type ActionConfigKey = "tap_action" | "hold_action" | "double_tap_action";
 export type ActionTargetField = "entity_id" | "area_id" | "device_id";
 
-export type EditorActionName =
+type EditorActionName =
   | "none"
   | "more-info"
   | "toggle"
@@ -20,7 +20,7 @@ export const ACTION_OPTIONS: EditorActionName[] = [
   "none",
 ];
 
-export interface ParsedActionData {
+interface ParsedActionData {
   valid: boolean;
   value?: Record<string, unknown>;
 }

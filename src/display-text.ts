@@ -23,12 +23,12 @@ export function normalizeDisplayText(value: unknown, fallback = ""): string {
   return deviceNameSuffix(fallbackText) || fallbackText;
 }
 
-export function hasDeviceNamePrefix(value: unknown): boolean {
+function hasDeviceNamePrefix(value: unknown): boolean {
   const text = textValue(value);
   return Boolean(text && DEVICE_PREFIX_PATTERN.test(text));
 }
 
-export function deviceNameSuffix(value: unknown): string {
+function deviceNameSuffix(value: unknown): string {
   let text = textValue(value);
   if (!text) {
     return "";

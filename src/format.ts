@@ -1,9 +1,7 @@
 import type { HassEntity, HomeAssistant } from "./types";
 export {
-  deviceNameSuffix,
   entityDisplayName as friendlyName,
   entityDisplayState as displayState,
-  hasDeviceNamePrefix,
   normalizeDisplayText,
   stripDeviceNamePrefix,
 } from "./display-text";
@@ -64,11 +62,11 @@ export function booleanState(state?: HassEntity): boolean {
   return state?.state === "on" || state?.state === "heat" || state?.state === "playing";
 }
 
-export function clamp(value: number, min: number, max: number): number {
+function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
-export function roundToStep(value: number, step: number, offset = 0): number {
+function roundToStep(value: number, step: number, offset = 0): number {
   if (!Number.isFinite(step) || step <= 0) {
     return value;
   }

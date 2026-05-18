@@ -41,7 +41,7 @@ export function normalizeConfig(
   };
 }
 
-export function normalizeSections(sections: SectionId[] | undefined): SectionId[] {
+function normalizeSections(sections: SectionId[] | undefined): SectionId[] {
   if (!sections?.length) {
     return [...DEFAULT_SECTIONS];
   }
@@ -49,7 +49,7 @@ export function normalizeSections(sections: SectionId[] | undefined): SectionId[
   return normalized.length ? normalized : [...DEFAULT_SECTIONS];
 }
 
-export function normalizeOverviewEntities(keys: EntityKey[] | undefined): EntityKey[] {
+function normalizeOverviewEntities(keys: EntityKey[] | undefined): EntityKey[] {
   if (!Array.isArray(keys)) {
     return [...OVERVIEW_KEYS];
   }

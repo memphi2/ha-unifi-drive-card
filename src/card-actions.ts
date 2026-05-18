@@ -5,7 +5,7 @@ export type ActionTrigger = "tap" | "hold" | "double_tap";
 export const HOLD_ACTION_DELAY_MS = 500;
 export const DOUBLE_TAP_DELAY_MS = 250;
 
-export const ACTION_CONFIG_KEY: Record<
+const ACTION_CONFIG_KEY: Record<
   ActionTrigger,
   "tap_action" | "hold_action" | "double_tap_action"
 > = {

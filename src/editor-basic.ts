@@ -41,7 +41,7 @@ interface BooleanField {
   labelKey: string;
 }
 
-export interface EditorBasicContext {
+interface EditorBasicContext {
   hass?: HomeAssistant;
   config: NormalizedUnifiDriveCardConfig;
   deviceChanged: (event: Event) => void;

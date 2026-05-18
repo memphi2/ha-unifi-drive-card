@@ -2,7 +2,7 @@ import { booleanState, isUnavailable, normalizeDisplayText } from "./format";
 import { localize } from "./i18n";
 import type { HassEntity, HomeAssistant } from "./types";
 
-export interface HeaderStatusInput {
+interface HeaderStatusInput {
   system?: HassEntity;
   storage?: HassEntity;
   problem?: HassEntity;

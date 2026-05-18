@@ -117,7 +117,7 @@ export function discoverEntities(
   };
 }
 
-export function explicitEntity(
+function explicitEntity(
   config: NormalizedUnifiDriveCardConfig,
   key: EntityKey,
   domain: EntityDomain,
@@ -139,7 +139,7 @@ export function explicitEntity(
   return undefined;
 }
 
-export function isAutoDiscoverable(hass: HomeAssistant, entityId: string): boolean {
+function isAutoDiscoverable(hass: HomeAssistant, entityId: string): boolean {
   const registry = registryEntry(hass, entityId);
   return !registry?.disabled_by && !registry?.hidden_by && registry?.hidden !== true;
 }
