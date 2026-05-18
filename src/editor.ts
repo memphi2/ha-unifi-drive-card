@@ -20,7 +20,11 @@ import {
   type BasicNumberConfigKey,
 } from "./editor-basic";
 import {
+  activeOverviewEntities,
   moveItem,
+  moveActiveOverviewEntity,
+  reorderActiveOverviewEntity,
+  reorderItem,
   renderOverviewEntityEditor,
   renderSectionOrderEditor,
   toggleListItem,
@@ -28,9 +32,13 @@ import {
 } from "./editor-ordering";
 import { editorStyles } from "./editor-styles";
 import { entityLabel, localize, sectionLabel } from "./i18n";
+import {
+  checkedFromEvent,
+  inputStringFromEvent,
+  pickerValueFromEvent,
+} from "./editor-shared";
 import type {
   EntityDefinition,
-  EntityDomain,
   EntityKey,
   HomeAssistant,
   SectionId,
@@ -38,12 +46,6 @@ import type {
 } from "./types";
 
 type ActionTextProperty = "navigation_path" | "url_path" | "service";
-type PickerValueDetail = {
-  value?: unknown;
-  device_id?: unknown;
-  deviceId?: unknown;
-};
-
 interface ActionField {
   key: ActionConfigKey;
   labelKey: string;
@@ -55,16 +57,6 @@ const ACTION_FIELDS: ActionField[] = [
   { key: "double_tap_action", labelKey: "editor.double_tap_action" },
 ];
 
-const PICKER_DOMAINS: EntityDomain[] = [
-  "binary_sensor",
-  "button",
-  "number",
-  "select",
-  "sensor",
-  "switch",
-  "time",
-  "update",
-];
 
 @customElement("unifi-drive-card-editor")
 export class UnifiDriveCardEditor extends LitElement {
@@ -82,7 +74,6 @@ export class UnifiDriveCardEditor extends LitElement {
         ${renderBasicEditor({
           hass: this.hass,
           config: this._config,
-          includeDomains: PICKER_DOMAINS,
           deviceChanged: this._deviceChanged,
           entityChanged: this._entityChanged,
           nameChanged: this._nameChanged,
@@ -325,16 +316,18 @@ export class UnifiDriveCardEditor extends LitElement {
   }
 
   private _entityChanged = (event: Event): void => {
-    this._updateConfig({ entity: pickerValue(event) });
+    this._updateConfig({ entity: pickerValueFromEvent(event) });
   };
 
   private _deviceChanged = (event: Event): void => {
-    this._updateConfig({ device_id: pickerValue(event) });
+    const deviceId = pickerValueFromEvent(event);
+    if (deviceId) {
+      this._updateConfig({ device_id: deviceId });
+    }
   };
 
   private _nameChanged = (event: Event): void => {
-    const target = event.target as HTMLInputElement;
-    this._updateConfig({ name: target.value || undefined });
+    this._updateConfig({ name: inputStringFromEvent(event) || undefined });
   };
 
   private _checkboxChanged(key: BasicBooleanConfigKey, checked: boolean): void {
@@ -362,7 +355,7 @@ export class UnifiDriveCardEditor extends LitElement {
       entities: updateEntityOverride(
         this._config.entities,
         definition,
-        pickerValue(event),
+        pickerValueFromEvent(event),
       ),
     });
   }
@@ -373,7 +366,7 @@ export class UnifiDriveCardEditor extends LitElement {
   }
 
   private _actionEntityChanged(key: ActionConfigKey, event: Event): void {
-    this._updateActionConfig(key, { entity: pickerValue(event) });
+    this._updateActionConfig(key, { entity: pickerValueFromEvent(event) });
   }
 
   private _actionPropertyChanged(
@@ -393,7 +386,7 @@ export class UnifiDriveCardEditor extends LitElement {
   }
 
   private _actionTargetEntityChanged(key: ActionConfigKey, event: Event): void {
-    this._updateActionTarget(key, "entity_id", pickerValue(event));
+    this._updateActionTarget(key, "entity_id", pickerValueFromEvent(event));
   }
 
   private _actionTargetTextChanged(
@@ -453,7 +446,7 @@ export class UnifiDriveCardEditor extends LitElement {
 
   private _moveOverviewEntity(key: EntityKey, direction: -1 | 1): void {
     const activeEntityKeys = this._activeOverviewEntityKeys();
-    const overview_entities = moveOverviewEntityByOffset(
+    const overview_entities = moveActiveOverviewEntity(
       this._config.overview_entities,
       key,
       direction,
@@ -464,7 +457,7 @@ export class UnifiDriveCardEditor extends LitElement {
 
   private _reorderOverviewEntity(source: EntityKey, target: EntityKey): void {
     const activeEntityKeys = this._activeOverviewEntityKeys();
-    const overview_entities = reorderOverviewEntity(
+    const overview_entities = reorderActiveOverviewEntity(
       this._config.overview_entities,
       source,
       target,
@@ -494,72 +487,6 @@ function definitionsForSection(section: SectionId): EntityDefinition[] {
   );
 }
 
-function activeOverviewEntities(keys: EntityKey[], activeKeys: Set<EntityKey>): EntityKey[] {
-  return keys.filter((key) => activeKeys.has(key));
-}
-
-function moveOverviewEntityByOffset(
-  keys: EntityKey[],
-  key: EntityKey,
-  direction: -1 | 1,
-  activeKeys: Set<EntityKey> | undefined,
-): EntityKey[] {
-  if (!activeKeys) {
-    return moveItem(keys, key, direction);
-  }
-  const activeSelection = activeOverviewEntities(keys, activeKeys);
-  const movedActiveSelection = moveItem(activeSelection, key, direction);
-  const nextActiveSelection = [...movedActiveSelection];
-  return keys.map((entry) =>
-    activeKeys.has(entry) ? (nextActiveSelection.shift() ?? entry) : entry,
-  );
-}
-
-function reorderOverviewEntity(
-  keys: EntityKey[],
-  source: EntityKey,
-  target: EntityKey,
-  activeKeys: Set<EntityKey> | undefined,
-): EntityKey[] {
-  if (!activeKeys) {
-    return reorderItem(keys, source, target);
-  }
-  const activeSelection = activeOverviewEntities(keys, activeKeys);
-  const movedActiveSelection = reorderItem(activeSelection, source, target);
-  const nextActiveSelection = [...movedActiveSelection];
-  return keys.map((entry) =>
-    activeKeys.has(entry) ? (nextActiveSelection.shift() ?? entry) : entry,
-  );
-}
-
-function reorderItem<T>(items: T[], source: T, target: T): T[] {
-  if (source === target) {
-    return [...items];
-  }
-  const next = [...items];
-  const sourceIndex = next.indexOf(source);
-  const targetIndex = next.indexOf(target);
-  if (sourceIndex < 0 || targetIndex < 0) {
-    return next;
-  }
-  const [entry] = next.splice(sourceIndex, 1);
-  const isAdjacentDownwardMove = sourceIndex + 1 === targetIndex;
-  const insertIndex =
-    sourceIndex < targetIndex && !isAdjacentDownwardMove ? targetIndex - 1 : targetIndex;
-  next.splice(insertIndex, 0, entry as T);
-  return next;
-}
-
-function pickerValue(event: Event): string | undefined {
-  const detail = (event as CustomEvent<PickerValueDetail>).detail;
-  const detailValue = detail?.value ?? detail?.device_id ?? detail?.deviceId;
-  if (typeof detailValue === "string") {
-    return detailValue || undefined;
-  }
-  const targetValue = (event.target as { value?: unknown } | null)?.value;
-  return typeof targetValue === "string" ? targetValue || undefined : undefined;
-}
-
 function actionCardOpen(
   key: ActionConfigKey,
   action: UnifiDriveCardConfig["tap_action"],
@@ -573,10 +500,6 @@ function actionCardOpen(
   }
   const keys = Object.keys(action);
   return !(action.action === "more-info" && keys.length === 1);
-}
-
-function checkedFromEvent(event: Event): boolean {
-  return Boolean((event.target as { checked?: boolean }).checked);
 }
 
 function entityOverride(

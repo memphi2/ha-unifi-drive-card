@@ -1,6 +1,22 @@
 import { html } from "lit";
 import { localize } from "./i18n";
-import type { EntityDomain, HomeAssistant, NormalizedUnifiDriveCardConfig } from "./types";
+import { checkedFromEvent, textInputValue } from "./editor-shared";
+import {
+  INTEGRATION_DOMAIN,
+  type EntityDomain,
+  type HomeAssistant,
+  type NormalizedUnifiDriveCardConfig,
+} from "./types";
+const ANCHOR_ENTITY_DOMAINS: EntityDomain[] = [
+  "binary_sensor",
+  "button",
+  "number",
+  "select",
+  "sensor",
+  "switch",
+  "time",
+  "update",
+];
 
 export type BasicNumberConfigKey = "overview_columns" | "max_sensor_rows";
 export type BasicBooleanConfigKey =
@@ -28,13 +44,19 @@ interface BooleanField {
 export interface EditorBasicContext {
   hass?: HomeAssistant;
   config: NormalizedUnifiDriveCardConfig;
-  includeDomains: EntityDomain[];
   deviceChanged: (event: Event) => void;
   entityChanged: (event: Event) => void;
   nameChanged: (event: Event) => void;
   numberChanged: (key: BasicNumberConfigKey, event: Event) => void;
   checkboxChanged: (key: BasicBooleanConfigKey, checked: boolean) => void;
 }
+
+const DRIVE_DEVICE_SELECTOR = {
+  device: {
+    filter: [{ integration: INTEGRATION_DOMAIN }],
+    entity: [{ domain: "sensor" }],
+  },
+};
 
 const NUMBER_FIELDS: NumberField[] = [
   { key: "overview_columns", labelKey: "editor.overview_columns", min: "1", max: "6", step: "1" },
@@ -56,22 +78,22 @@ export function renderBasicEditor(context: EditorBasicContext) {
     <section class="editor-section basic-editor">
       <h3>${localize(context.hass, "editor.basic_settings")}</h3>
       <div class="ha-form-list">
-        <ha-device-picker
+        <ha-selector
           class="ha-picker-control"
           .hass=${context.hass}
           .label=${localize(context.hass, "editor.device")}
           .helper=${localize(context.hass, "editor.device_help")}
-          .includeDomains=${context.includeDomains}
+          .selector=${DRIVE_DEVICE_SELECTOR}
           .value=${context.config.device_id ?? ""}
+          .required=${true}
           @value-changed=${context.deviceChanged}
-          @device-picked=${context.deviceChanged}
-        ></ha-device-picker>
+        ></ha-selector>
         <ha-entity-picker
           class="ha-picker-control"
           .hass=${context.hass}
           .label=${localize(context.hass, "editor.anchor_entity")}
           .value=${context.config.entity ?? ""}
-          .includeDomains=${context.includeDomains}
+          .includeDomains=${ANCHOR_ENTITY_DOMAINS}
           @value-changed=${context.entityChanged}
         ></ha-entity-picker>
         <label class="ha-form-row">
@@ -127,12 +149,4 @@ function checkbox(context: EditorBasicContext, field: BooleanField) {
       </button>
     </div>
   `;
-}
-
-function textInputValue(value: unknown): string {
-  return typeof value === "string" ? value : "";
-}
-
-function checkedFromEvent(event: Event): boolean {
-  return Boolean((event.target as { checked?: boolean }).checked);
 }

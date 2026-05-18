@@ -84,19 +84,6 @@ export function entityDisplayState(hass: HomeAssistant, state?: HassEntity): str
     : value;
 }
 
-export function cardDisplayTitle(
-  configuredName: unknown,
-  definition: EntityDefinition,
-  state: HassEntity | undefined,
-  hass: HomeAssistant,
-): string {
-  const fallback = entityDisplayName(definition, state, hass);
-  if (typeof configuredName === "string" && configuredName.trim()) {
-    return normalizeDisplayText(configuredName, fallback) || fallback;
-  }
-  return fallback;
-}
-
 function formattedEntityName(
   hass: HomeAssistant | undefined,
   state: HassEntity | undefined,

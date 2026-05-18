@@ -1,6 +1,7 @@
 import { html } from "lit";
 import { DEFAULT_SECTIONS, ENTITY_DEFINITIONS } from "./catalog";
 import { entityLabel, localize, sectionLabel } from "./i18n";
+import { checkedFromEvent } from "./editor-shared";
 import type { EntityDefinition, EntityKey, HomeAssistant, SectionId } from "./types";
 
 export interface EditorOrderingContext {
@@ -102,9 +103,59 @@ export function moveItem<T>(items: T[], item: T, direction: -1 | 1): T[] {
   return next;
 }
 
+export function activeOverviewEntities(keys: EntityKey[], activeKeys: Set<EntityKey>): EntityKey[] {
+  return keys.filter((key) => activeKeys.has(key));
+}
+
+export function moveActiveOverviewEntity(
+  keys: EntityKey[],
+  key: EntityKey,
+  direction: -1 | 1,
+  activeKeys: Set<EntityKey> | undefined,
+): EntityKey[] {
+  if (!activeKeys) {
+    return moveItem(keys, key, direction);
+  }
+  const activeSelection = activeOverviewEntities(keys, activeKeys);
+  const movedActiveSelection = moveItem(activeSelection, key, direction);
+  return replaceActiveOverviewEntities(keys, activeKeys, movedActiveSelection);
+}
+
+export function reorderItem<T>(items: T[], source: T, target: T): T[] {
+  if (source === target) {
+    return [...items];
+  }
+  const next = [...items];
+  const sourceIndex = next.indexOf(source);
+  const targetIndex = next.indexOf(target);
+  if (sourceIndex < 0 || targetIndex < 0) {
+    return next;
+  }
+  const [entry] = next.splice(sourceIndex, 1);
+  next.splice(targetIndex, 0, entry as T);
+  return next;
+}
+
+export function reorderActiveOverviewEntity(
+  keys: EntityKey[],
+  source: EntityKey,
+  target: EntityKey,
+  activeKeys: Set<EntityKey> | undefined,
+): EntityKey[] {
+  if (!activeKeys) {
+    return reorderItem(keys, source, target);
+  }
+  const activeSelection = activeOverviewEntities(keys, activeKeys);
+  const movedActiveSelection = reorderItem(activeSelection, source, target);
+  return replaceActiveOverviewEntities(keys, activeKeys, movedActiveSelection);
+}
+
 function sectionToggle(context: EditorOrderingContext, section: SectionId) {
   const checked = context.sections.includes(section);
   const selectedIndex = context.sections.indexOf(section);
+  const moveUpLabel = localize(context.hass, "editor.move_up");
+  const moveDownLabel = localize(context.hass, "editor.move_down");
+  const dragLabel = localize(context.hass, "editor.drag_to_reorder");
   return html`
     <div
       class="order-row section-order-row"
@@ -126,40 +177,18 @@ function sectionToggle(context: EditorOrderingContext, section: SectionId) {
           ${sectionLabel(section, context.hass)}
         </button>
       </div>
-      <div class="order-actions">
-        <button
-          class="icon-button"
-          type="button"
-          title=${localize(context.hass, "editor.move_up")}
-          aria-label=${localize(context.hass, "editor.move_up")}
-          ?disabled=${!checked || selectedIndex <= 0}
-          @click=${() => context.moveSection(section, -1)}
-        >
-          <ha-icon icon="mdi:chevron-up"></ha-icon>
-        </button>
-        <button
-          class="icon-button"
-          type="button"
-          title=${localize(context.hass, "editor.move_down")}
-          aria-label=${localize(context.hass, "editor.move_down")}
-          ?disabled=${!checked || selectedIndex < 0 || selectedIndex >= context.sections.length - 1}
-          @click=${() => context.moveSection(section, 1)}
-        >
-          <ha-icon icon="mdi:chevron-down"></ha-icon>
-        </button>
-        <button
-          class="drag-handle"
-          type="button"
-          title=${localize(context.hass, "editor.drag_to_reorder")}
-          aria-label=${localize(context.hass, "editor.drag_to_reorder")}
-          draggable=${checked ? "true" : "false"}
-          ?disabled=${!checked}
-          @dragstart=${(event: DragEvent) =>
-            setDragData(event, SECTION_DRAG_TYPE, section)}
-        >
-          <ha-icon icon="mdi:drag"></ha-icon>
-        </button>
-      </div>
+      ${orderActionButtons({
+        moveUpLabel,
+        moveDownLabel,
+        dragLabel,
+        moveUpDisabled: !checked || selectedIndex <= 0,
+        moveDownDisabled: !checked || selectedIndex < 0 || selectedIndex >= context.sections.length - 1,
+        dragDisabled: !checked,
+        draggable: checked,
+        onMoveUp: () => context.moveSection(section, -1),
+        onMoveDown: () => context.moveSection(section, 1),
+        onDragStart: (event: DragEvent) => setDragData(event, SECTION_DRAG_TYPE, section),
+      })}
     </div>
   `;
 }
@@ -171,6 +200,9 @@ function overviewEntityToggle(
 ) {
   const checked = selected.has(definition.key);
   const selectedIndex = context.overviewEntities.indexOf(definition.key);
+  const moveUpLabel = localize(context.hass, "editor.move_up");
+  const moveDownLabel = localize(context.hass, "editor.move_down");
+  const dragLabel = localize(context.hass, "editor.drag_to_reorder");
   return html`
     <div
       class="overview-entity-toggle"
@@ -195,41 +227,82 @@ function overviewEntityToggle(
       </div>
       ${checked
         ? html`
-            <div class="order-actions">
-              <button
-                class="icon-button"
-                type="button"
-                title=${localize(context.hass, "editor.move_up")}
-                aria-label=${localize(context.hass, "editor.move_up")}
-                ?disabled=${selectedIndex <= 0}
-                @click=${() => context.moveOverviewEntity(definition.key, -1)}
-              >
-                <ha-icon icon="mdi:chevron-up"></ha-icon>
-              </button>
-              <button
-                class="icon-button"
-                type="button"
-                title=${localize(context.hass, "editor.move_down")}
-                aria-label=${localize(context.hass, "editor.move_down")}
-                ?disabled=${selectedIndex >= context.overviewEntities.length - 1}
-                @click=${() => context.moveOverviewEntity(definition.key, 1)}
-              >
-                <ha-icon icon="mdi:chevron-down"></ha-icon>
-              </button>
-              <button
-                class="drag-handle"
-                type="button"
-                title=${localize(context.hass, "editor.drag_to_reorder")}
-                aria-label=${localize(context.hass, "editor.drag_to_reorder")}
-                draggable="true"
-                @dragstart=${(event: DragEvent) =>
-                  setDragData(event, OVERVIEW_DRAG_TYPE, definition.key)}
-              >
-                <ha-icon icon="mdi:drag"></ha-icon>
-              </button>
-            </div>
+            ${orderActionButtons({
+              moveUpLabel,
+              moveDownLabel,
+              dragLabel,
+              moveUpDisabled: selectedIndex <= 0,
+              moveDownDisabled:
+                selectedIndex >= context.overviewEntities.length - 1,
+              dragDisabled: false,
+              draggable: true,
+              onMoveUp: () => context.moveOverviewEntity(definition.key, -1),
+              onMoveDown: () => context.moveOverviewEntity(definition.key, 1),
+              onDragStart: (event: DragEvent) =>
+                setDragData(event, OVERVIEW_DRAG_TYPE, definition.key),
+            })}
           `
         : ""}
+    </div>
+  `;
+}
+
+function orderActionButtons({
+  moveUpLabel,
+  moveDownLabel,
+  dragLabel,
+  moveUpDisabled,
+  moveDownDisabled,
+  dragDisabled,
+  draggable,
+  onMoveUp,
+  onMoveDown,
+  onDragStart,
+}: {
+  moveUpLabel: string;
+  moveDownLabel: string;
+  dragLabel: string;
+  moveUpDisabled: boolean;
+  moveDownDisabled: boolean;
+  dragDisabled: boolean;
+  draggable: boolean;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  onDragStart: (event: DragEvent) => void;
+}) {
+  return html`
+    <div class="order-actions">
+      <button
+        class="icon-button"
+        type="button"
+        title=${moveUpLabel}
+        aria-label=${moveUpLabel}
+        ?disabled=${moveUpDisabled}
+        @click=${onMoveUp}
+      >
+        <ha-icon icon="mdi:chevron-up"></ha-icon>
+      </button>
+      <button
+        class="icon-button"
+        type="button"
+        title=${moveDownLabel}
+        aria-label=${moveDownLabel}
+        ?disabled=${moveDownDisabled}
+        @click=${onMoveDown}
+      >
+        <ha-icon icon="mdi:chevron-down"></ha-icon>
+      </button>
+      <button
+        class="drag-handle"
+        type="button"
+        title=${dragLabel}
+        aria-label=${dragLabel}
+        draggable=${draggable ? "true" : "false"}
+        ?disabled=${dragDisabled}
+        @dragstart=${onDragStart}
+      >
+        <ha-icon icon="mdi:drag"></ha-icon>
+      </button>
     </div>
   `;
 }
@@ -240,6 +313,17 @@ function orderedSectionsForEditor(selectedSections: SectionId[]): SectionId[] {
     ...selectedSections,
     ...DEFAULT_SECTIONS.filter((section) => !selected.has(section)),
   ];
+}
+
+function replaceActiveOverviewEntities(
+  keys: EntityKey[],
+  activeKeys: Set<EntityKey>,
+  nextActiveSelection: EntityKey[],
+): EntityKey[] {
+  const nextActive = [...nextActiveSelection];
+  return keys.map((entry) =>
+    activeKeys.has(entry) ? (nextActive.shift() ?? entry) : entry,
+  );
 }
 
 function setDragData(event: DragEvent, type: string, value: string): void {
@@ -289,10 +373,6 @@ function dropOverviewEntity(
   if (source) {
     context.reorderOverviewEntity(source, target);
   }
-}
-
-function checkedFromEvent(event: Event): boolean {
-  return Boolean((event.target as { checked?: boolean }).checked);
 }
 
 function entityDefinitionsForOverview(activeKeys: Set<EntityKey> | undefined): EntityDefinition[] {

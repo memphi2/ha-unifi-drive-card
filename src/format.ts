@@ -1,6 +1,5 @@
 import type { HassEntity, HomeAssistant } from "./types";
 export {
-  cardDisplayTitle,
   deviceNameSuffix,
   entityDisplayName as friendlyName,
   entityDisplayState as displayState,
@@ -10,10 +9,6 @@ export {
 } from "./display-text";
 
 const UNAVAILABLE_STATES = new Set(["unavailable"]);
-
-export function domainFromEntityId(entityId: string): string {
-  return entityId.split(".", 1)[0] ?? "";
-}
 
 export function objectIdFromEntityId(entityId: string): string {
   return entityId.includes(".") ? entityId.split(".").slice(1).join(".") : entityId;

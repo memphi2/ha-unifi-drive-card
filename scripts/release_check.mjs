@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 import { readFile } from "node:fs/promises";
 
-const EXPECTED_VERSION = "0.1.0";
-const EXPECTED_TAG = `v${EXPECTED_VERSION}`;
 const EXPECTED_FILENAME = "ha-unifi-drive-card.js";
 const failures = [];
 
@@ -28,6 +26,8 @@ function requireIncludes(file, content, expected, message) {
 
 const pkg = await readJson("package.json");
 const lock = await readJson("package-lock.json");
+const EXPECTED_VERSION = pkg.version;
+const EXPECTED_TAG = `v${EXPECTED_VERSION}`;
 const hacs = await readJson("hacs.json");
 const changelog = await readFile("CHANGELOG.md", "utf8");
 const releaseNotesPath = `release-notes/${EXPECTED_TAG}.md`;
@@ -38,9 +38,9 @@ const readme = await readFile("README.md", "utf8");
 const notices = await readFile("THIRD_PARTY_NOTICES.md", "utf8");
 
 if (pkg.version === EXPECTED_VERSION && lock.version === EXPECTED_VERSION) {
-  pass("package and lockfile versions match 0.1.0");
+  pass(`package and lockfile versions match ${EXPECTED_VERSION}`);
 } else {
-  fail("package.json and package-lock.json must both be version 0.1.0");
+  fail("package.json and package-lock.json must both be release version");
 }
 
 if (pkg.license === "MIT" && notices.includes("BSD 3-Clause License")) {
@@ -61,8 +61,8 @@ if (hacs.filename === EXPECTED_FILENAME && hacs.name === "Drive Storage Card") {
   fail("hacs.json must use the stable bundle filename and trademark-neutral display name");
 }
 
-requireIncludes("CHANGELOG.md", changelog, "## 0.1.0 - 2026-05-17", "changelog has dated 0.1.0 entry");
-requireIncludes(releaseNotesPath, releaseNotes, "# Drive Storage Card 0.1.0", "release notes exist");
+requireIncludes("CHANGELOG.md", changelog, `## ${EXPECTED_VERSION} -`, "changelog has dated release entry");
+requireIncludes(releaseNotesPath, releaseNotes, `# Drive Storage Card ${EXPECTED_VERSION}`, "release notes exist");
 requireIncludes(releaseNotesPath, releaseNotes, "Built with Codex", "release notes credit Codex");
 requireIncludes(".github/workflows/release.yml", releaseWorkflow, `body_path: release-notes/${"${{ github.ref_name }}.md"}`, "release workflow uses tag-specific notes");
 requireIncludes(".github/workflows/release.yml", releaseWorkflow, EXPECTED_FILENAME, "release workflow uploads JS asset");
@@ -78,5 +78,5 @@ if (failures.length) {
   }
   process.exitCode = 1;
 } else {
-  pass("0.1.0 release metadata is ready");
+  pass(`${EXPECTED_TAG} release metadata is ready`);
 }

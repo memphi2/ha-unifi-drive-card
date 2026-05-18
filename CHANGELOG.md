@@ -4,11 +4,21 @@
 
 ### Changed
 
-- Aligned the visual editor and overview layout with the DHE Connect card, including
-  device picker controls, collapsible action rows, selected/available tile groups
-  and configurable overview columns.
-- Refined state-aware icon colors so explicit no-error states render green while
-  real error, warning and problem states render red.
+- None pending.
+
+## 0.1.1 - 2026-05-18
+
+### Changed
+
+- Deepened editor modularization by extracting shared parsing helpers and common
+  action/render helpers, keeping behavior aligned to DHE-style editor patterns.
+- Refined entity and action editing paths to use shared selector parsing and safer
+  event handling.
+- Reworked overview and section order controls into reusable UI handlers while
+  preserving drag/drop and move behavior.
+- Consolidated editor unit tests with shared helpers and clearer setup helpers.
+- Improved release validation resilience by making release checks version-aware.
+- Refined editor test stability for action/configuration workflows and drop targets.
 
 ## 0.1.0 - 2026-05-17
 

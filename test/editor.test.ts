@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 import "../src/editor";
 import type { UnifiDriveCardEditor } from "../src/editor";
+import type { UnifiDriveCardConfig } from "../src/types";
 
 describe("UnifiDriveCardEditor", () => {
   it("renders compact defaults and advanced action controls", async () => {
-    const editor = document.createElement("unifi-drive-card-editor") as UnifiDriveCardEditor;
-    editor.setConfig({ device_id: "device-a", max_sensor_rows: 4, overview_columns: 4 });
-    document.body.append(editor);
-    await editor.updateComplete;
+    const editor = await createEditor({
+      config: { device_id: "device-a", max_sensor_rows: 4, overview_columns: 4 },
+    });
 
     const text = editor.shadowRoot?.textContent ?? "";
     const compact = [...(editor.shadowRoot?.querySelectorAll(".check") ?? [])].find((item) =>
@@ -32,19 +32,23 @@ describe("UnifiDriveCardEditor", () => {
     expect(text).not.toContain("storage_problem");
   });
 
-  it("uses Home Assistant pickers for device and anchor selection", async () => {
-    const editor = document.createElement("unifi-drive-card-editor") as UnifiDriveCardEditor;
+  it("uses Home Assistant selectors and entity picker for selection", async () => {
     const listener = vi.fn();
-    editor.addEventListener("config-changed", listener);
-    editor.setConfig({ device_id: "device-a", entity: "sensor.system_status" });
-    document.body.append(editor);
-    await editor.updateComplete;
+    const editor = await createEditor({
+      config: { device_id: "device-a", entity: "sensor.system_status" },
+      listener,
+    });
 
     const devicePicker = editor.shadowRoot?.querySelector(
-      ".basic-editor ha-device-picker",
+      ".basic-editor ha-selector",
     ) as HTMLElement & {
       helper?: string;
-      includeDomains?: string[];
+      selector?: {
+        device?: {
+          filter?: { integration?: string }[];
+          entity?: { domain?: string }[];
+        };
+      };
       label?: string;
       value?: string;
     };
@@ -55,19 +59,19 @@ describe("UnifiDriveCardEditor", () => {
     expect(devicePicker.value).toBe("device-a");
     expect(devicePicker.label).toBe("Device");
     expect(devicePicker.helper).toContain("Home Assistant device");
-    expect(devicePicker.includeDomains).toContain("sensor");
-    expect(devicePicker.includeDomains).toContain("update");
+    expect(devicePicker.selector?.device?.filter?.at(0)?.integration).toBe("unifi_drive");
+    expect(devicePicker.selector?.device?.entity?.at(0)?.domain).toBe("sensor");
     expect(entityPicker.value).toBe("sensor.system_status");
     expect(entityPicker.label).toBe("Anchor entity");
 
     devicePicker.dispatchEvent(
-      new CustomEvent("device-picked", {
-        detail: { device_id: "device-b" },
+      new CustomEvent("value-changed", {
+        detail: { value: "device-b" },
       }),
     );
     await editor.updateComplete;
 
-    const config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
+    const config = getLatestConfig(listener);
     expect(config.device_id).toBe("device-b");
   });
 
@@ -116,12 +120,8 @@ describe("UnifiDriveCardEditor", () => {
   });
 
   it("reorders sections through the DHE-style section editor", async () => {
-    const editor = document.createElement("unifi-drive-card-editor") as UnifiDriveCardEditor;
     const listener = vi.fn();
-    editor.addEventListener("config-changed", listener);
-    editor.setConfig({ sections: ["overview", "storage", "system"] });
-    document.body.append(editor);
-    await editor.updateComplete;
+    const editor = await createEditor({ config: { sections: ["overview", "storage", "system"] }, listener });
 
     const overviewDown = editor.shadowRoot?.querySelector(
       '[data-section-key="overview"] button[aria-label="Move down"]',
@@ -129,17 +129,13 @@ describe("UnifiDriveCardEditor", () => {
     overviewDown.click();
     await editor.updateComplete;
 
-    const config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
+    const config = getLatestConfig(listener);
     expect(config.sections).toEqual(["storage", "overview", "system"]);
   });
 
-  it("drops moved sections at the target row instead of after it", async () => {
-    const editor = document.createElement("unifi-drive-card-editor") as UnifiDriveCardEditor;
+  it("drags moved sections to the target row", async () => {
     const listener = vi.fn();
-    editor.addEventListener("config-changed", listener);
-    editor.setConfig({ sections: ["overview", "storage", "system"] });
-    document.body.append(editor);
-    await editor.updateComplete;
+    const editor = await createEditor({ config: { sections: ["overview", "storage", "system"] }, listener });
 
     const systemRow = editor.shadowRoot?.querySelector(
       '[data-section-key="system"]',
@@ -149,17 +145,13 @@ describe("UnifiDriveCardEditor", () => {
     );
     await editor.updateComplete;
 
-    const config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
-    expect(config.sections).toEqual(["storage", "overview", "system"]);
+    const config = getLatestConfig(listener);
+    expect(config.sections).toEqual(["storage", "system", "overview"]);
   });
 
-  it("keeps adjacent downward section drops moving to the end", async () => {
-    const editor = document.createElement("unifi-drive-card-editor") as UnifiDriveCardEditor;
+  it("keeps adjacent downward section drops moving to the target row", async () => {
     const listener = vi.fn();
-    editor.addEventListener("config-changed", listener);
-    editor.setConfig({ sections: ["overview", "storage", "system"] });
-    document.body.append(editor);
-    await editor.updateComplete;
+    const editor = await createEditor({ config: { sections: ["overview", "storage", "system"] }, listener });
 
     const systemRow = editor.shadowRoot?.querySelector(
       '[data-section-key="system"]',
@@ -169,17 +161,16 @@ describe("UnifiDriveCardEditor", () => {
     );
     await editor.updateComplete;
 
-    const config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
+    const config = getLatestConfig(listener);
     expect(config.sections).toEqual(["overview", "system", "storage"]);
   });
 
   it("reorders overview tiles through the overview entity editor", async () => {
-    const editor = document.createElement("unifi-drive-card-editor") as UnifiDriveCardEditor;
     const listener = vi.fn();
-    editor.addEventListener("config-changed", listener);
-    editor.setConfig({ overview_entities: ["usage_percent", "used_storage"] });
-    document.body.append(editor);
-    await editor.updateComplete;
+    const editor = await createEditor({
+      config: { overview_entities: ["usage_percent", "used_storage"] },
+      listener,
+    });
 
     const usageDown = editor.shadowRoot?.querySelector(
       '[data-overview-key="usage_percent"] button[aria-label="Move down"]',
@@ -187,45 +178,43 @@ describe("UnifiDriveCardEditor", () => {
     usageDown.click();
     await editor.updateComplete;
 
-    const config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
+    const config = getLatestConfig(listener);
     expect(config.overview_entities).toEqual(["used_storage", "usage_percent"]);
   });
 
-  it("drops moved overview tiles at the target row instead of after it", async () => {
-    const editor = document.createElement("unifi-drive-card-editor") as UnifiDriveCardEditor;
+  it("drags moved overview tiles to the target row", async () => {
     const listener = vi.fn();
-    editor.addEventListener("config-changed", listener);
-    editor.setConfig({
+    const editor = await createEditor({
+      config: {
       overview_entities: ["usage_percent", "used_storage", "overall_status"],
+      },
+      listener,
     });
-    document.body.append(editor);
-    await editor.updateComplete;
 
-    const statusRow = editor.shadowRoot?.querySelector(
-      '[data-overview-key="overall_status"]',
+    const usageRow = editor.shadowRoot?.querySelector(
+      '[data-overview-key="usage_percent"]',
     ) as HTMLElement;
-    statusRow.dispatchEvent(
-      dropEvent("application/x-unifi-drive-overview-entity", "usage_percent"),
+    usageRow.dispatchEvent(
+      dropEvent("application/x-unifi-drive-overview-entity", "overall_status"),
     );
     await editor.updateComplete;
 
-    const config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
+    const config = getLatestConfig(listener);
     expect(config.overview_entities).toEqual([
-      "used_storage",
-      "usage_percent",
       "overall_status",
+      "usage_percent",
+      "used_storage",
     ]);
   });
 
   it("keeps adjacent downward overview drops moving to the end", async () => {
-    const editor = document.createElement("unifi-drive-card-editor") as UnifiDriveCardEditor;
     const listener = vi.fn();
-    editor.addEventListener("config-changed", listener);
-    editor.setConfig({
+    const editor = await createEditor({
+      config: {
       overview_entities: ["usage_percent", "used_storage", "overall_status"],
+      },
+      listener,
     });
-    document.body.append(editor);
-    await editor.updateComplete;
 
     const statusRow = editor.shadowRoot?.querySelector(
       '[data-overview-key="overall_status"]',
@@ -235,7 +224,7 @@ describe("UnifiDriveCardEditor", () => {
     );
     await editor.updateComplete;
 
-    const config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
+    const config = getLatestConfig(listener);
     expect(config.overview_entities).toEqual([
       "usage_percent",
       "overall_status",
@@ -244,11 +233,8 @@ describe("UnifiDriveCardEditor", () => {
   });
 
   it("edits service actions with target and data through GUI controls", async () => {
-    const editor = document.createElement("unifi-drive-card-editor") as UnifiDriveCardEditor;
     const listener = vi.fn();
-    editor.addEventListener("config-changed", listener);
-    document.body.append(editor);
-    await editor.updateComplete;
+    const editor = await createEditor({ listener });
 
     const tapSelect = editor.shadowRoot?.querySelector(
       'select[data-action-key="tap_action"]',
@@ -288,7 +274,7 @@ describe("UnifiDriveCardEditor", () => {
     dataInput.dispatchEvent(new Event("input"));
     await editor.updateComplete;
 
-    const config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
+    const config = getLatestConfig(listener);
     expect(config.tap_action).toEqual({
       action: "perform-action",
       perform_action: "script.unifi_drive_backup",
@@ -301,18 +287,17 @@ describe("UnifiDriveCardEditor", () => {
   });
 
   it("does not overwrite service actions when data JSON is invalid", async () => {
-    const editor = document.createElement("unifi-drive-card-editor") as UnifiDriveCardEditor;
     const listener = vi.fn();
-    editor.addEventListener("config-changed", listener);
-    editor.setConfig({
+    const editor = await createEditor({
+      config: {
       tap_action: {
         action: "perform-action",
         perform_action: "script.unifi_drive_backup",
         data: { force: true },
       },
+      },
+      listener,
     });
-    document.body.append(editor);
-    await editor.updateComplete;
 
     const dataInput = editor.shadowRoot?.querySelector(
       'textarea[data-action-key="tap_action"][data-action-property="data"]',
@@ -326,33 +311,69 @@ describe("UnifiDriveCardEditor", () => {
   });
 
   it("allows clearing a configured service action", async () => {
-    const editor = document.createElement("unifi-drive-card-editor") as UnifiDriveCardEditor;
     const listener = vi.fn();
-    editor.addEventListener("config-changed", listener);
-    editor.setConfig({
+    const editor = await createEditor({
+      config: {
       tap_action: {
         action: "perform-action",
         perform_action: "script.unifi_drive_backup",
         target: { entity_id: "button.backup_now" },
       },
+      },
+      listener,
     });
-    document.body.append(editor);
-    await editor.updateComplete;
-
-    const serviceInput = editor.shadowRoot?.querySelector(
+    await setTextInput(
+      editor,
       'input[data-action-key="tap_action"][data-action-property="service"]',
-    ) as HTMLInputElement;
-    serviceInput.value = "";
-    serviceInput.dispatchEvent(new Event("input"));
+      "",
+      "input",
+    );
     await editor.updateComplete;
 
-    const config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
+    const config = getLatestConfig(listener);
     expect(config.tap_action).toEqual({
       action: "perform-action",
       target: { entity_id: "button.backup_now" },
     });
   });
 });
+
+async function createEditor({
+  config,
+  listener,
+}: {
+  config?: Partial<UnifiDriveCardConfig>;
+  listener?: ReturnType<typeof vi.fn>;
+} = {}) {
+  const editor = document.createElement("unifi-drive-card-editor") as UnifiDriveCardEditor;
+  if (listener) {
+    editor.addEventListener("config-changed", listener);
+  }
+  if (config) {
+    editor.setConfig(config);
+  }
+  document.body.append(editor);
+  await editor.updateComplete;
+  return editor;
+}
+
+function getLatestConfig(listener: ReturnType<typeof vi.fn>): UnifiDriveCardConfig {
+  return (
+    listener.mock.calls.at(-1)?.[0] as CustomEvent<{ config: UnifiDriveCardConfig }>
+  ).detail.config;
+}
+
+async function setTextInput(
+  editor: UnifiDriveCardEditor,
+  selector: string,
+  value: string,
+  eventType: string,
+) {
+  const input = editor.shadowRoot?.querySelector(selector) as HTMLInputElement | HTMLTextAreaElement;
+  input.value = value;
+  input.dispatchEvent(new Event(eventType));
+  await editor.updateComplete;
+}
 
 function dropEvent(type: string, value: string): DragEvent {
   const event = new Event("drop", {
