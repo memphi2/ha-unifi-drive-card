@@ -37,12 +37,11 @@ Built with Codex.
 type: custom:unifi-drive-card
 ```
 
-The card can auto-discover the first enabled UniFi Drive entity. For multi-device
-systems, set an anchor entity or device ID:
+The card can auto-discover entities, but for multi-device setups set the Home
+Assistant device explicitly:
 
 ```yaml
 type: custom:unifi-drive-card
-entity: sensor.unifi_drive_system_status
 device_id: your_home_assistant_device_id
 ```
 
@@ -81,7 +80,6 @@ show_diagnostics: true
 show_dangerous_actions: false
 show_icon_animations: true
 overview_columns: 3
-max_sensor_rows: 10
 sections:
   - overview
   - storage
@@ -104,14 +102,13 @@ Common options:
 | Option | Default | Purpose |
 | --- | --- | --- |
 | `entity` | auto-discovered | Optional anchor entity for discovery. |
-| `device_id` | registry device | Restricts discovery to one HA device. |
+| `device_id` | required | Restricts discovery to one HA device. |
 | `sections` | all sections | Ordered visible sections. |
 | `show_dangerous_actions` | `false` | Shows restart/shutdown actions with confirmation. |
 | `hide_entities` | `[]` | Known entity keys to hide. |
 | `entities` | `{}` | Per-key entity overrides. |
 | `compact` | `true` | Uses the compact layout by default. |
 | `overview_columns` | `3` | Default overview tile columns, bounded from 1 to 6 and collapsed to one column in very narrow cards. |
-| `max_sensor_rows` | `10` | Row limit for list sections. |
 
 The card is responsive to its own dashboard width. Narrow columns render as a
 vertical card; wider dashboard cards reorder the section blocks so storage,
@@ -148,7 +145,7 @@ Do not commit hostnames, IPs, tokens, passwords or screenshots with private data
 - [Development and smoke tests](docs/development.md)
 - [Legal notes](docs/legal.md)
 - [Release process](RELEASING.md)
-- [0.1.0 release notes](release-notes/v0.1.0.md)
+- [0.2.1 release notes](release-notes/v0.2.1.md)
 - [Changelog](CHANGELOG.md)
 
 ## Compliance Notice

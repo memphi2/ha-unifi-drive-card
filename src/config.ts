@@ -34,7 +34,6 @@ export function normalizeConfig(
     show_icon_animations: config.show_icon_animations ?? true,
     show_display_buttons: config.show_display_buttons ?? false,
     overview_columns: boundedInteger(config.overview_columns, 3, 1, 6),
-    max_sensor_rows: positiveInteger(config.max_sensor_rows, 10),
     sections: normalizeSections(config.sections),
     overview_entities: normalizeOverviewEntities(config.overview_entities),
     hide_entities: Array.isArray(config.hide_entities) ? [...config.hide_entities] : [],
@@ -59,12 +58,6 @@ export function normalizeOverviewEntities(keys: EntityKey[] | undefined): Entity
 
 function uniqueKnownItems<T extends string>(items: T[], knownItems: Set<string>): T[] {
   return [...new Set(items.filter((item) => knownItems.has(item)))];
-}
-
-function positiveInteger(value: number | undefined, fallback: number): number {
-  return typeof value === "number" && Number.isInteger(value) && value > 0
-    ? value
-    : fallback;
 }
 
 function boundedInteger(

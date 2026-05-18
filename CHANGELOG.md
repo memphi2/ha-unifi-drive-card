@@ -6,6 +6,15 @@
 
 - None pending.
 
+## 0.2.1 - 2026-05-18
+
+### Changed
+
+- Removed obsolete `max_sensor_rows` setting and stopped truncating list/button rows.
+- Made the device picker in the editor the required discovery selector for multi-device setups.
+- Swapped at-risk drive icon assignments to non-empty Material Design Icons to avoid blank icon rendering.
+- Kept release metadata and discovery behavior in sync with the next patch release.
+
 ## 0.2.0 - 2026-05-18
 
 ### Changed

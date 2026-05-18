@@ -8,11 +8,12 @@ The card works from YAML or the Home Assistant visual editor.
 type: custom:unifi-drive-card
 ```
 
-For multiple UniFi Drive devices, set either `entity` or `device_id`:
+For multiple UniFi Drive devices, set `device_id` (and optionally an anchor entity):
 
 ```yaml
 type: custom:unifi-drive-card
 entity: sensor.unifi_drive_system_status
+device_id: your_home_assistant_device_id
 ```
 
 ## Full Example
@@ -27,7 +28,6 @@ show_diagnostics: true
 show_dangerous_actions: false
 show_icon_animations: true
 overview_columns: 3
-max_sensor_rows: 10
 sections:
   - overview
   - storage
@@ -57,7 +57,7 @@ double_tap_action:
 | --- | --- | --- | --- |
 | `type` | string | required | Must be `custom:unifi-drive-card`. |
 | `entity` | string | auto | Optional anchor entity for registry discovery. |
-| `device_id` | string | auto | Restricts discovery to one Home Assistant device. |
+| `device_id` | string | required | Restricts discovery to one Home Assistant device. |
 | `name` | string | `UniFi Drive` | Card title. |
 | `compact` | boolean | `true` | Reduces vertical spacing. Set to `false` for the roomier layout. |
 | `show_unavailable` | boolean | `false` | Shows unavailable entities. |
@@ -66,7 +66,6 @@ double_tap_action:
 | `show_dangerous_actions` | boolean | `false` | Shows restart/shutdown actions with confirmation. |
 | `show_icon_animations` | boolean | `true` | Enables animated icon states. |
 | `overview_columns` | number | `3` | Sets the default overview tile columns, bounded from 1 to 6. Very narrow cards still collapse to one column. |
-| `max_sensor_rows` | number | `10` | Limits row-heavy sections. |
 | `sections` | list | all | Ordered visible sections. |
 | `hide_entities` | list | `[]` | Known entity keys to hide. |
 | `entities` | map | `{}` | Entity ID overrides by key. |

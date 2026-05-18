@@ -321,9 +321,7 @@ export class UnifiDriveCardEditor extends LitElement {
 
   private _deviceChanged = (event: Event): void => {
     const deviceId = pickerValueFromEvent(event);
-    if (deviceId) {
-      this._updateConfig({ device_id: deviceId });
-    }
+    this._updateConfig({ device_id: deviceId });
   };
 
   private _nameChanged = (event: Event): void => {

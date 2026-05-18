@@ -6,7 +6,7 @@ import type { UnifiDriveCardConfig } from "../src/types";
 describe("UnifiDriveCardEditor", () => {
   it("renders compact defaults and advanced action controls", async () => {
     const editor = await createEditor({
-      config: { device_id: "device-a", max_sensor_rows: 4, overview_columns: 4 },
+      config: { device_id: "device-a", overview_columns: 4 },
     });
 
     const text = editor.shadowRoot?.textContent ?? "";
@@ -17,7 +17,6 @@ describe("UnifiDriveCardEditor", () => {
     expect(text).toContain("Device and layout");
     expect(text).toContain("Device");
     expect(text).toContain("Overview columns");
-    expect(text).toContain("Max sensor rows");
     expect(text).toContain("Icon animations");
     expect(text).toContain("Display tiles");
     expect(text).toContain("Sections");
@@ -49,6 +48,7 @@ describe("UnifiDriveCardEditor", () => {
           entity?: { domain?: string }[];
         };
       };
+      required?: boolean;
       label?: string;
       value?: string;
     };
@@ -59,6 +59,7 @@ describe("UnifiDriveCardEditor", () => {
     expect(devicePicker.value).toBe("device-a");
     expect(devicePicker.label).toBe("Device");
     expect(devicePicker.helper).toContain("Home Assistant device");
+    expect(devicePicker.required).toBe(true);
     expect(devicePicker.selector?.device?.filter?.at(0)?.integration).toBe("unifi_drive");
     expect(devicePicker.selector?.device?.entity?.at(0)?.domain).toBe("sensor");
     expect(entityPicker.value).toBe("sensor.system_status");

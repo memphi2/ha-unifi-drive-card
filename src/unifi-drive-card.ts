@@ -251,10 +251,7 @@ export class UnifiDriveCard extends LitElement {
   }
 
   private _entityRowList(discovered: DiscoveredEntities, keys: string[]): Renderable {
-    const rows = keys
-      .map((key) => this._entityRow(discovered, key))
-      .filter(isVisibleRenderable)
-      .slice(0, this._config.max_sensor_rows);
+    const rows = keys.map((key) => this._entityRow(discovered, key)).filter(isVisibleRenderable);
     return rows.length ? html`<div class="rows entity-list">${rows}</div>` : nothing;
   }
 
@@ -263,10 +260,7 @@ export class UnifiDriveCard extends LitElement {
     keys: string[],
     variant: string,
   ): Renderable {
-    const buttons = keys
-      .map((key) => this._displayButton(discovered, key))
-      .filter(isVisibleRenderable)
-      .slice(0, this._config.max_sensor_rows);
+    const buttons = keys.map((key) => this._displayButton(discovered, key)).filter(isVisibleRenderable);
     if (!buttons.length) {
       return nothing;
     }
@@ -382,7 +376,7 @@ export class UnifiDriveCard extends LitElement {
     const control = this._rowControl(definition, entityId, state);
     const busy = this._isEntityBusy(entityId);
     return html`
-      <div class="entity-row ${busy ? "busy" : ""}" aria-busy=${String(busy)}>
+      <div class="entity-row ${busy ? "busy" : ""}" aria-busy=${String(busy)} data-entity-key=${definition.key}>
         <button
           class="entity-main entity-action"
           type="button"

@@ -18,7 +18,7 @@ const ANCHOR_ENTITY_DOMAINS: EntityDomain[] = [
   "update",
 ];
 
-export type BasicNumberConfigKey = "overview_columns" | "max_sensor_rows";
+export type BasicNumberConfigKey = "overview_columns";
 export type BasicBooleanConfigKey =
   | "compact"
   | "show_diagnostics"
@@ -60,7 +60,6 @@ const DRIVE_DEVICE_SELECTOR = {
 
 const NUMBER_FIELDS: NumberField[] = [
   { key: "overview_columns", labelKey: "editor.overview_columns", min: "1", max: "6", step: "1" },
-  { key: "max_sensor_rows", labelKey: "editor.max_sensor_rows", min: "1", step: "1" },
 ];
 
 const BOOLEAN_FIELDS: BooleanField[] = [

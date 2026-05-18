@@ -14,7 +14,6 @@ describe("normalizeConfig", () => {
     expect(config.compact).toBe(true);
     expect(config.tap_action).toEqual({ action: "more-info" });
     expect(config.overview_columns).toBe(3);
-    expect(config.max_sensor_rows).toBe(10);
     expect(config.overview_entities).toEqual(OVERVIEW_KEYS);
     expect(config.show_display_buttons).toBe(false);
   });
