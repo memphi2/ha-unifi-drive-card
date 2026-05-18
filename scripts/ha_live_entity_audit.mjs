@@ -115,15 +115,11 @@ async function registryEntities() {
   if (!configDir) {
     return [];
   }
-  try {
-    const registryPath = path.join(configDir, ".storage", "core.entity_registry");
-    const registry = JSON.parse(await readFile(registryPath, "utf8"));
-    return (registry?.data?.entities ?? []).filter(
-      (entity) => entity.platform === "unifi_drive",
-    );
-  } catch {
-    return [];
-  }
+  const registryPath = path.join(configDir, ".storage", "core.entity_registry");
+  const registry = JSON.parse(await readFile(registryPath, "utf8"));
+  return (registry?.data?.entities ?? []).filter(
+    (entity) => entity.platform === "unifi_drive",
+  );
 }
 
 try {
