@@ -13,6 +13,7 @@ describe("normalizeConfig", () => {
     expect(config.show_dangerous_actions).toBe(false);
     expect(config.compact).toBe(true);
     expect(config.tap_action).toEqual({ action: "more-info" });
+    expect(config.overview_columns).toBe(3);
     expect(config.max_sensor_rows).toBe(10);
     expect(config.overview_entities).toEqual(OVERVIEW_KEYS);
     expect(config.show_display_buttons).toBe(false);
@@ -21,6 +22,13 @@ describe("normalizeConfig", () => {
   it("allows compact mode to be disabled explicitly", () => {
     const config = normalizeConfig({ compact: false });
     expect(config.compact).toBe(false);
+  });
+
+  it("bounds overview columns like the DHE card", () => {
+    expect(normalizeConfig({ overview_columns: 0 }).overview_columns).toBe(1);
+    expect(normalizeConfig({ overview_columns: 4 }).overview_columns).toBe(4);
+    expect(normalizeConfig({ overview_columns: 12 }).overview_columns).toBe(6);
+    expect(normalizeConfig({ overview_columns: 2.5 }).overview_columns).toBe(3);
   });
 
   it("filters invalid sections", () => {

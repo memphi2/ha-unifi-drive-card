@@ -170,7 +170,7 @@ export const cardStyles = css`
   }
 
   .metric-grid {
-    grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+    grid-template-columns: repeat(var(--unifi-overview-columns, 3), minmax(0, 1fr));
   }
 
   .metric {
@@ -302,7 +302,7 @@ export const cardStyles = css`
   }
 
   .display-button-grid {
-    grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
   }
 
   .display-button-tile {
@@ -689,16 +689,12 @@ export const cardStyles = css`
       grid-column: span 5;
     }
 
-    .metric-grid {
-      grid-template-columns: repeat(auto-fit, minmax(156px, 1fr));
-    }
-
     .rows.entity-list {
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     }
 
     .display-button-grid {
-      grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
     }
 
     .group-grid {
@@ -725,6 +721,12 @@ export const cardStyles = css`
     .content-grid > [data-section="drives"],
     .content-grid > [data-section="snapshots"] {
       grid-column: span 2;
+    }
+  }
+
+  @container (max-width: 360px) {
+    .metric-grid {
+      grid-template-columns: minmax(0, 1fr);
     }
   }
 

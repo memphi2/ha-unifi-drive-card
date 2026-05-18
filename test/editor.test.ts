@@ -5,16 +5,18 @@ import type { UnifiDriveCardEditor } from "../src/editor";
 describe("UnifiDriveCardEditor", () => {
   it("renders compact defaults and advanced action controls", async () => {
     const editor = document.createElement("unifi-drive-card-editor") as UnifiDriveCardEditor;
-    editor.setConfig({ device_id: "device-a", max_sensor_rows: 4 });
+    editor.setConfig({ device_id: "device-a", max_sensor_rows: 4, overview_columns: 4 });
     document.body.append(editor);
     await editor.updateComplete;
 
     const text = editor.shadowRoot?.textContent ?? "";
-    const compact = [...(editor.shadowRoot?.querySelectorAll("label.check") ?? [])].find((item) =>
+    const compact = [...(editor.shadowRoot?.querySelectorAll(".check") ?? [])].find((item) =>
       item.textContent?.includes("Compact"),
     );
 
-    expect(text).toContain("Anchor entity");
+    expect(text).toContain("Device and layout");
+    expect(text).toContain("Device");
+    expect(text).toContain("Overview columns");
     expect(text).toContain("Max sensor rows");
     expect(text).toContain("Icon animations");
     expect(text).toContain("Display tiles");
@@ -23,7 +25,94 @@ describe("UnifiDriveCardEditor", () => {
     expect(text).toContain("Tap action");
     expect(text).toContain("Hold action");
     expect(text).toContain("Entities");
-    expect(compact?.querySelector("input")?.checked).toBe(true);
+    const compactSwitch = compact?.querySelector("ha-switch") as
+      | (HTMLElement & { checked?: boolean })
+      | null;
+    expect(compactSwitch?.checked).toBe(true);
+    expect(text).not.toContain("storage_problem");
+  });
+
+  it("uses Home Assistant pickers for device and anchor selection", async () => {
+    const editor = document.createElement("unifi-drive-card-editor") as UnifiDriveCardEditor;
+    const listener = vi.fn();
+    editor.addEventListener("config-changed", listener);
+    editor.setConfig({ device_id: "device-a", entity: "sensor.system_status" });
+    document.body.append(editor);
+    await editor.updateComplete;
+
+    const devicePicker = editor.shadowRoot?.querySelector(
+      ".basic-editor ha-device-picker",
+    ) as HTMLElement & {
+      helper?: string;
+      includeDomains?: string[];
+      label?: string;
+      value?: string;
+    };
+    const entityPicker = editor.shadowRoot?.querySelector(
+      ".basic-editor ha-entity-picker",
+    ) as HTMLElement & { includeDomains?: string[]; label?: string; value?: string };
+
+    expect(devicePicker.value).toBe("device-a");
+    expect(devicePicker.label).toBe("Device");
+    expect(devicePicker.helper).toContain("Home Assistant device");
+    expect(devicePicker.includeDomains).toContain("sensor");
+    expect(devicePicker.includeDomains).toContain("update");
+    expect(entityPicker.value).toBe("sensor.system_status");
+    expect(entityPicker.label).toBe("Anchor entity");
+
+    devicePicker.dispatchEvent(
+      new CustomEvent("device-picked", {
+        detail: { device_id: "device-b" },
+      }),
+    );
+    await editor.updateComplete;
+
+    const config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
+    expect(config.device_id).toBe("device-b");
+  });
+
+  it("keeps default action rows collapsed until configured", async () => {
+    const editor = document.createElement("unifi-drive-card-editor") as UnifiDriveCardEditor;
+    document.body.append(editor);
+    await editor.updateComplete;
+
+    const tap = editor.shadowRoot?.querySelector(
+      '[data-action-card-key="tap_action"]',
+    ) as HTMLDetailsElement;
+    const hold = editor.shadowRoot?.querySelector(
+      '[data-action-card-key="hold_action"]',
+    ) as HTMLDetailsElement;
+    const doubleTap = editor.shadowRoot?.querySelector(
+      '[data-action-card-key="double_tap_action"]',
+    ) as HTMLDetailsElement;
+
+    expect(tap.open).toBe(false);
+    expect(hold.open).toBe(false);
+    expect(doubleTap.open).toBe(false);
+  });
+
+  it("opens action rows when they contain custom action configuration", async () => {
+    const editor = document.createElement("unifi-drive-card-editor") as UnifiDriveCardEditor;
+    editor.setConfig({
+      tap_action: { action: "toggle" },
+      hold_action: { action: "navigate", navigation_path: "/lovelace/unifi-drive" },
+    });
+    document.body.append(editor);
+    await editor.updateComplete;
+
+    const tap = editor.shadowRoot?.querySelector(
+      '[data-action-card-key="tap_action"]',
+    ) as HTMLDetailsElement;
+    const hold = editor.shadowRoot?.querySelector(
+      '[data-action-card-key="hold_action"]',
+    ) as HTMLDetailsElement;
+    const doubleTap = editor.shadowRoot?.querySelector(
+      '[data-action-card-key="double_tap_action"]',
+    ) as HTMLDetailsElement;
+
+    expect(tap.open).toBe(true);
+    expect(hold.open).toBe(true);
+    expect(doubleTap.open).toBe(false);
   });
 
   it("reorders sections through the DHE-style section editor", async () => {

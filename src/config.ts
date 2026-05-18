@@ -33,6 +33,7 @@ export function normalizeConfig(
     show_dangerous_actions: config.show_dangerous_actions ?? false,
     show_icon_animations: config.show_icon_animations ?? true,
     show_display_buttons: config.show_display_buttons ?? false,
+    overview_columns: boundedInteger(config.overview_columns, 3, 1, 6),
     max_sensor_rows: positiveInteger(config.max_sensor_rows, 10),
     sections: normalizeSections(config.sections),
     overview_entities: normalizeOverviewEntities(config.overview_entities),
@@ -64,4 +65,16 @@ function positiveInteger(value: number | undefined, fallback: number): number {
   return typeof value === "number" && Number.isInteger(value) && value > 0
     ? value
     : fallback;
+}
+
+function boundedInteger(
+  value: number | undefined,
+  fallback: number,
+  min: number,
+  max: number,
+): number {
+  if (typeof value !== "number" || !Number.isInteger(value)) {
+    return fallback;
+  }
+  return Math.min(max, Math.max(min, value));
 }

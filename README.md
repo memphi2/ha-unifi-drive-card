@@ -80,6 +80,7 @@ show_optional: false
 show_diagnostics: true
 show_dangerous_actions: false
 show_icon_animations: true
+overview_columns: 3
 max_sensor_rows: 10
 sections:
   - overview
@@ -109,6 +110,7 @@ Common options:
 | `hide_entities` | `[]` | Known entity keys to hide. |
 | `entities` | `{}` | Per-key entity overrides. |
 | `compact` | `true` | Uses the compact layout by default. |
+| `overview_columns` | `3` | Default overview tile columns, bounded from 1 to 6 and collapsed to one column in very narrow cards. |
 | `max_sensor_rows` | `10` | Row limit for list sections. |
 
 The card is responsive to its own dashboard width. Narrow columns render as a
