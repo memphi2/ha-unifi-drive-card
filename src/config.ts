@@ -45,9 +45,7 @@ export function normalizeSections(sections: SectionId[] | undefined): SectionId[
   if (!sections?.length) {
     return [...DEFAULT_SECTIONS];
   }
-  const normalized = [
-    ...new Set(sections.filter((section): section is SectionId => SECTION_SET.has(section))),
-  ];
+  const normalized = uniqueKnownItems(sections, SECTION_SET);
   return normalized.length ? normalized : [...DEFAULT_SECTIONS];
 }
 
@@ -55,7 +53,11 @@ export function normalizeOverviewEntities(keys: EntityKey[] | undefined): Entity
   if (!Array.isArray(keys)) {
     return [...OVERVIEW_KEYS];
   }
-  return [...new Set(keys.filter((key) => OVERVIEW_ENTITY_KEY_SET.has(key)))];
+  return uniqueKnownItems(keys, OVERVIEW_ENTITY_KEY_SET);
+}
+
+function uniqueKnownItems<T extends string>(items: T[], knownItems: Set<string>): T[] {
+  return [...new Set(items.filter((item) => knownItems.has(item)))];
 }
 
 function positiveInteger(value: number | undefined, fallback: number): number {

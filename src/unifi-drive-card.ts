@@ -9,7 +9,14 @@ import {
   SYSTEM_KEYS,
   UPDATE_KEYS,
 } from "./catalog";
-import { callEntityService, installUpdate, selectOption, serviceForToggle, setNumberValue, setTimeValue } from "./actions";
+import {
+  callEntityService,
+  installUpdate,
+  selectOption,
+  serviceForToggle,
+  setNumberValue,
+  setTimeValue,
+} from "./actions";
 import { actionEventConfig, isActionEnabled, type ActionTrigger } from "./card-actions";
 import { normalizeConfig } from "./config";
 import { discoverEntities } from "./discovery";
@@ -193,28 +200,23 @@ export class UnifiDriveCard extends LitElement {
     if (!tiles.length) {
       return nothing;
     }
-    return html`
-      <section class="card-section" data-section="overview">
+    return this._renderCardSection(
+      "overview",
+      html`
         <div class="metric-grid">
-          ${tiles.map(({ definition, entityId, state }) => this._metricTile(definition, entityId, state))}
+          ${tiles.map(({ definition, entityId, state }) =>
+            this._metricTile(definition, entityId, state),
+          )}
         </div>
-      </section>
-    `;
+      `,
+    );
   }
 
   private _renderKeySection(section: SectionId, discovered: DiscoveredEntities, keys: string[]) {
     const content = this._config.show_display_buttons
       ? this._displayButtonGrid(discovered, keys, section)
       : this._entityRowList(discovered, keys);
-    if (!isVisibleRenderable(content)) {
-      return nothing;
-    }
-    return html`
-      <section class="card-section" data-section=${section}>
-        <h3>${sectionLabel(section, this.hass)}</h3>
-        ${content}
-      </section>
-    `;
+    return this._renderCardSection(section, content, sectionLabel(section, this.hass));
   }
 
   private _renderGroupSection(section: SectionId, groups: EntityGroup[]) {
@@ -222,10 +224,25 @@ export class UnifiDriveCard extends LitElement {
     if (!renderedGroups.length) {
       return nothing;
     }
+    return this._renderCardSection(
+      section,
+      html`<div class="group-grid">${renderedGroups}</div>`,
+      sectionLabel(section, this.hass),
+    );
+  }
+
+  private _renderCardSection(
+    section: SectionId,
+    content: Renderable,
+    title?: string,
+  ): Renderable {
+    if (!isVisibleRenderable(content)) {
+      return nothing;
+    }
     return html`
       <section class="card-section" data-section=${section}>
-        <h3>${sectionLabel(section, this.hass)}</h3>
-        <div class="group-grid">${renderedGroups}</div>
+        ${title ? html`<h3>${title}</h3>` : nothing}
+        ${content}
       </section>
     `;
   }

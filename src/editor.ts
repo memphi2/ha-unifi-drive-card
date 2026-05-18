@@ -82,6 +82,13 @@ const ACTION_FIELDS: ActionField[] = [
   { key: "double_tap_action", labelKey: "editor.double_tap_action" },
 ];
 
+const EDITOR_ENTITY_DEFINITIONS = ENTITY_DEFINITIONS.filter(
+  (definition) => !definition.dynamic,
+);
+const EDITOR_ENTITY_DEFINITION_BY_KEY = new Map(
+  EDITOR_ENTITY_DEFINITIONS.map((definition) => [definition.key, definition]),
+);
+
 @customElement("unifi-drive-card-editor")
 export class UnifiDriveCardEditor extends LitElement {
   @property({ attribute: false }) public hass?: HomeAssistant;
@@ -211,10 +218,10 @@ export class UnifiDriveCardEditor extends LitElement {
   private _overviewEntityEditor() {
     const selected = new Set(this._config.overview_entities);
     const selectedDefinitions = this._config.overview_entities
-      .map((key) => ENTITY_DEFINITIONS.find((definition) => definition.key === key))
+      .map((key) => EDITOR_ENTITY_DEFINITION_BY_KEY.get(key))
       .filter((definition): definition is EntityDefinition => Boolean(definition));
-    const availableDefinitions = ENTITY_DEFINITIONS.filter(
-      (definition) => !definition.dynamic && !selected.has(definition.key),
+    const availableDefinitions = EDITOR_ENTITY_DEFINITIONS.filter(
+      (definition) => !selected.has(definition.key),
     );
     return html`
       <section class="overview-editor">
@@ -299,9 +306,7 @@ export class UnifiDriveCardEditor extends LitElement {
   }
 
   private _entitySection(section: SectionId) {
-    const definitions = ENTITY_DEFINITIONS.filter(
-      (definition) => definition.section === section && !definition.dynamic,
-    );
+    const definitions = definitionsForSection(section);
     if (!definitions.length) {
       return "";
     }
@@ -652,6 +657,10 @@ function orderedSectionsForEditor(selectedSections: SectionId[]): SectionId[] {
     ...selectedSections,
     ...DEFAULT_SECTIONS.filter((section) => !selected.has(section)),
   ];
+}
+
+function definitionsForSection(section: SectionId): EntityDefinition[] {
+  return EDITOR_ENTITY_DEFINITIONS.filter((definition) => definition.section === section);
 }
 
 function moveItem<T>(items: T[], item: T, direction: -1 | 1): T[] {
