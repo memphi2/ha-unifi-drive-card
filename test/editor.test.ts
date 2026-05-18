@@ -133,6 +133,26 @@ describe("UnifiDriveCardEditor", () => {
     expect(config.sections).toEqual(["storage", "overview", "system"]);
   });
 
+  it("drops moved sections at the target row instead of after it", async () => {
+    const editor = document.createElement("unifi-drive-card-editor") as UnifiDriveCardEditor;
+    const listener = vi.fn();
+    editor.addEventListener("config-changed", listener);
+    editor.setConfig({ sections: ["overview", "storage", "system"] });
+    document.body.append(editor);
+    await editor.updateComplete;
+
+    const systemRow = editor.shadowRoot?.querySelector(
+      '[data-section-key="system"]',
+    ) as HTMLElement;
+    systemRow.dispatchEvent(
+      dropEvent("application/x-unifi-drive-section", "overview"),
+    );
+    await editor.updateComplete;
+
+    const config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
+    expect(config.sections).toEqual(["storage", "overview", "system"]);
+  });
+
   it("reorders overview tiles through the overview entity editor", async () => {
     const editor = document.createElement("unifi-drive-card-editor") as UnifiDriveCardEditor;
     const listener = vi.fn();
@@ -149,6 +169,32 @@ describe("UnifiDriveCardEditor", () => {
 
     const config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
     expect(config.overview_entities).toEqual(["used_storage", "usage_percent"]);
+  });
+
+  it("drops moved overview tiles at the target row instead of after it", async () => {
+    const editor = document.createElement("unifi-drive-card-editor") as UnifiDriveCardEditor;
+    const listener = vi.fn();
+    editor.addEventListener("config-changed", listener);
+    editor.setConfig({
+      overview_entities: ["usage_percent", "used_storage", "overall_status"],
+    });
+    document.body.append(editor);
+    await editor.updateComplete;
+
+    const statusRow = editor.shadowRoot?.querySelector(
+      '[data-overview-key="overall_status"]',
+    ) as HTMLElement;
+    statusRow.dispatchEvent(
+      dropEvent("application/x-unifi-drive-overview-entity", "usage_percent"),
+    );
+    await editor.updateComplete;
+
+    const config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
+    expect(config.overview_entities).toEqual([
+      "used_storage",
+      "usage_percent",
+      "overall_status",
+    ]);
   });
 
   it("edits service actions with target and data through GUI controls", async () => {
@@ -261,3 +307,19 @@ describe("UnifiDriveCardEditor", () => {
     });
   });
 });
+
+function dropEvent(type: string, value: string): DragEvent {
+  const event = new Event("drop", {
+    bubbles: true,
+    cancelable: true,
+    composed: true,
+  }) as DragEvent;
+  Object.defineProperty(event, "dataTransfer", {
+    value: {
+      dropEffect: "move",
+      effectAllowed: "move",
+      getData: (requestedType: string) => (requestedType === type ? value : ""),
+    },
+  });
+  return event;
+}
