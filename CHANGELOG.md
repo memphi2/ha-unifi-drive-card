@@ -6,6 +6,17 @@
 
 - None pending.
 
+## 0.2.2 - 2026-05-19
+
+### Changed
+
+- Removed redundant internal exports to reduce surface area for HACS packaging.
+- Refactored internal discovery/render helpers to avoid duplicate code paths.
+- Kept compact and responsive card behavior aligned with DHE-connect parity while
+  preserving dashboard resize-driven layout updates.
+- Updated release readiness and compliance checks as part of the final HACS
+  release prep.
+
 ## 0.2.1 - 2026-05-18
 
 ### Changed
