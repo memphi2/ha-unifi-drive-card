@@ -517,6 +517,16 @@ export const cardStyles = css`
     box-shadow: 0 8px 18px rgba(229, 57, 53, 0.26);
   }
 
+  .icon-bubble.primary.neutral {
+    background: linear-gradient(135deg, #546e7a, #78909c);
+    box-shadow: 0 8px 18px rgba(84, 110, 122, 0.24);
+  }
+
+  .icon-bubble.primary.ok {
+    background: linear-gradient(135deg, #2e7d32, #43a047);
+    box-shadow: 0 8px 18px rgba(67, 160, 71, 0.26);
+  }
+
   .icon-bubble.active {
     background: rgba(var(--unifi-icon-rgb), 0.28);
     box-shadow:
@@ -533,6 +543,14 @@ export const cardStyles = css`
     background: linear-gradient(135deg, #ef6c00, #e53935);
   }
 
+  .icon-bubble.primary.neutral.active {
+    background: linear-gradient(135deg, #546e7a, #78909c);
+  }
+
+  .icon-bubble.primary.ok.active {
+    background: linear-gradient(135deg, #2e7d32, #43a047);
+  }
+
   .icon-bubble.action {
     --unifi-icon-rgb: 92, 107, 192;
   }
@@ -547,6 +565,14 @@ export const cardStyles = css`
 
   .icon-bubble.network {
     --unifi-icon-rgb: 0, 172, 193;
+  }
+
+  .icon-bubble.neutral {
+    --unifi-icon-rgb: 120, 144, 156;
+  }
+
+  .icon-bubble.ok {
+    --unifi-icon-rgb: 67, 160, 71;
   }
 
   .icon-bubble.snapshot {

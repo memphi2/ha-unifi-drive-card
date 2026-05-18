@@ -266,6 +266,11 @@ try {
     const installButtons = [...root.querySelectorAll("button.chip")]
       .filter((element) => element.textContent.trim() === "Install")
       .map((element) => ({ disabled: element.disabled }));
+    const problemIconClass = [...root.querySelectorAll(".metric")]
+      .find((element) => element.textContent.includes("Problem"))
+      ?.querySelector(".icon-bubble")
+      ?.className;
+    const animatedIconCount = root.querySelectorAll(".icon-bubble.animated").length;
     return {
       actionDetails,
       text,
@@ -279,6 +284,8 @@ try {
       hasShutdownByDefault: text.includes("Shut down"),
       prefixStillVisible: /UniFi Drive Storage Usage/.test(text),
       installButtons,
+      problemIconClass,
+      animatedIconCount,
       layout: {
         narrowColumnCount,
         wideColumnCount,
@@ -328,6 +335,12 @@ try {
   assert(result.installButtons.length === 2, "expected two update install controls");
   assert(result.installButtons.some((item) => item.disabled === false), "available update install control missing");
   assert(result.installButtons.some((item) => item.disabled === true), "non-available update install control was not disabled");
+  assert(result.problemIconClass?.includes("ok"), "healthy problem entity did not render green");
+  assert(!result.problemIconClass?.includes("alert"), "healthy problem entity rendered as alert");
+  assert(
+    result.animatedIconCount > 0 && result.animatedIconCount < result.iconStyles.length,
+    "icon animations were not limited to active or attention states",
+  );
   assert(!result.hasShutdownByDefault, "dangerous shutdown action rendered by default");
   assert(!result.prefixStillVisible, "device prefix was not normalized");
   assert(result.cardBox.width > 400 && result.cardBox.height > 280, "card layout looks collapsed");
