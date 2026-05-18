@@ -149,10 +149,45 @@ Do not commit hostnames, IPs, tokens, passwords or screenshots with private data
 - [0.1.0 release notes](release-notes/v0.1.0.md)
 - [Changelog](CHANGELOG.md)
 
+## Compliance Notice
+
+This project is an independent, MIT-licensed Lovelace custom card. It ships
+frontend code only and does not include, modify or redistribute UniFi firmware,
+Home Assistant, HACS, Mushroom, or any vendor cloud service. Users remain
+responsible for complying with the terms that apply to their own Home Assistant
+installation, HACS setup, UniFi hardware, UniFi OS installation and local
+network policies.
+
+The repository avoids vendor logos, copied vendor UI, proprietary type styles,
+vendor trade dress, private hostnames, internal IP addresses, tokens and
+credentials in committed files. Screenshots and examples are generated from
+synthetic or redacted data. Live smoke tests must use environment variables and
+must not commit secrets.
+
+## Acknowledgements
+
+- Home Assistant provides the dashboard and custom-card platform this card is
+  built for.
+- HACS provides the custom repository distribution path used by many Home
+  Assistant installations.
+- Mushroom influenced the compact Home Assistant card style referenced in this
+  project description; no Mushroom source code, logos or assets are bundled.
+- Ubiquiti and the UniFi product ecosystem provide the compatible storage
+  devices and entities this card can display.
+- Lit and the related runtime packages are bundled under their original
+  open-source licenses; see [third-party notices](THIRD_PARTY_NOTICES.md).
+- Initial implementation and release hardening were built with Codex.
+
 ## Trademark Notice
 
-UniFi and Ubiquiti are trademarks or registered trademarks of Ubiquiti Inc.
-Home Assistant is a trademark of its owner. This project is independent and is
-not affiliated with, sponsored by or endorsed by Ubiquiti, Home Assistant or
-HACS. Third-party names are used only to identify compatible products and
-software.
+UniFi and Ubiquiti are trademarks or registered trademarks of Ubiquiti Inc. or
+its affiliates. Home Assistant, HACS and Mushroom are third-party names and may
+be trademarks or project identifiers of their respective owners. This project is
+independent and is not affiliated with, sponsored by or endorsed by Ubiquiti,
+Home Assistant, HACS or Mushroom.
+
+Third-party names are used only for truthful, descriptive compatibility
+references. `Drive Storage Card` is the user-facing project name; repository,
+custom element and Home Assistant identifiers such as `ha-unifi-drive-card`,
+`unifi-drive-card` and `unifi_drive` are retained for technical compatibility
+and should not be read as ownership of any third-party mark.
