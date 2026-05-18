@@ -107,10 +107,47 @@ describe("UnifiDriveCard rendering", () => {
       sections: ["overview", "storage", "pools", "drives", "snapshots"],
     });
 
-    expect(card.shadowRoot?.querySelector(".section-overview")).toBeTruthy();
-    expect(card.shadowRoot?.querySelector(".section-storage .entity-list")).toBeTruthy();
-    expect(card.shadowRoot?.querySelector(".section-pools .group-grid")).toBeTruthy();
+    expect(card.shadowRoot?.querySelector(".content-grid > .card-section")).toBeTruthy();
+    expect(card.shadowRoot?.querySelector('[data-section="overview"]')).toBeTruthy();
+    expect(card.shadowRoot?.querySelector('[data-section="storage"] .entity-list')).toBeTruthy();
+    expect(card.shadowRoot?.querySelector('[data-section="pools"] .group-grid')).toBeTruthy();
     expect(card.shadowRoot?.querySelector(".group-card .group-rows")).toBeTruthy();
+  });
+
+  it("uses configured section order as the rendered content order", async () => {
+    const card = await renderCard(hassFixture(), {
+      sections: ["system", "overview", "storage"],
+    });
+    const sections = [...(card.shadowRoot?.querySelectorAll(".content-grid > .card-section") ?? [])];
+
+    expect(sections.map((section) => section.getAttribute("data-section"))).toEqual([
+      "system",
+      "overview",
+      "storage",
+    ]);
+  });
+
+  it("renders configured overview entities in order", async () => {
+    const card = await renderCard(hassFixture(), {
+      sections: ["overview"],
+      overview_entities: ["used_storage", "usage_percent"],
+    });
+    const metrics = [...(card.shadowRoot?.querySelectorAll(".metric") ?? [])];
+
+    expect(metrics).toHaveLength(2);
+    expect(metrics[0]?.textContent).toContain("Used Storage");
+    expect(metrics[1]?.textContent).toContain("Usage");
+    expect(visibleText(card)).not.toContain("System Status");
+  });
+
+  it("can render DHE-style display tiles for dense sections", async () => {
+    const card = await renderCard(hassFixture(), {
+      sections: ["storage"],
+      show_display_buttons: true,
+    });
+
+    expect(card.shadowRoot?.querySelector('[data-section="storage"] .display-button-grid')).toBeTruthy();
+    expect(card.shadowRoot?.querySelectorAll(".display-button-tile")).toHaveLength(2);
   });
 });
 

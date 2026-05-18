@@ -21,17 +21,6 @@ export const FALLBACK_ENTITY_DEFINITION: EntityDefinition = {
   order: 0,
 };
 
-export const OVERVIEW_KEYS = [
-  "system_status",
-  "overall_status",
-  "storage_problem",
-  "usage_percent",
-  "used_storage",
-  "available_storage",
-  "read_throughput",
-  "write_throughput",
-];
-
 export const STORAGE_KEYS = [
   "usage_percent",
   "used_storage",

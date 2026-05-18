@@ -203,20 +203,36 @@ try {
         .filter(Boolean).length;
     card.style.width = "520px";
     await waitForLayout();
-    const narrowColumnCount = gridColumnCount(root.querySelector(".unifi-card"));
+    const narrowColumnCount = gridColumnCount(root.querySelector(".content-grid"));
     card.style.width = "980px";
+    card.setConfig({
+      ...window.__baseConfig,
+      sections: ["storage", "system", "pools"]
+    });
+    await card.updateComplete;
     await waitForLayout();
-    const wideColumnCount = gridColumnCount(root.querySelector(".unifi-card"));
+    const wideColumnCount = gridColumnCount(root.querySelector(".content-grid"));
     const wideEntityColumnCount = gridColumnCount(root.querySelector(".entity-list"));
     const sectionRect = (selector) => {
       const box = root.querySelector(selector).getBoundingClientRect();
       return { left: Math.round(box.left), top: Math.round(box.top), width: Math.round(box.width) };
     };
     const wideSections = {
-      storage: sectionRect(".section-storage"),
-      system: sectionRect(".section-system"),
-      pools: sectionRect(".section-pools"),
+      storage: sectionRect('[data-section="storage"]'),
+      system: sectionRect('[data-section="system"]'),
+      pools: sectionRect('[data-section="pools"]'),
     };
+    card.setConfig({
+      ...window.__baseConfig,
+      sections: ["storage"],
+      show_display_buttons: true
+    });
+    await card.updateComplete;
+    await waitForLayout();
+    const displayTileCount = root.querySelectorAll(".display-button-tile").length;
+    card.setConfig(window.__baseConfig);
+    await card.updateComplete;
+    await waitForLayout();
     document.body.addEventListener("hass-action", (event) => {
       actionDetails.push(event.detail);
     });
@@ -267,6 +283,7 @@ try {
         narrowColumnCount,
         wideColumnCount,
         wideEntityColumnCount,
+        displayTileCount,
         wideSections,
       },
     };
@@ -321,12 +338,16 @@ try {
     `wide entity rows did not flow horizontally (${result.layout.wideEntityColumnCount} columns)`,
   );
   assert(
+    result.layout.displayTileCount >= 2,
+    `display tile layout did not render (${result.layout.displayTileCount} tiles)`,
+  );
+  assert(
     Math.abs(result.layout.wideSections.storage.top - result.layout.wideSections.system.top) <= 2,
     "wide dashboard width did not place storage and system blocks on the same row",
   );
   assert(
     result.layout.wideSections.system.top < result.layout.wideSections.pools.top,
-    "wide dashboard width did not reorder system before group blocks",
+    "wide dashboard width did not preserve configured section order",
   );
   assert(result.iconStyles.length >= 6, "expected icon bubbles were not rendered");
   assert(result.actionDetails.some((item) => item.action === "tap"), "tap action missing");

@@ -85,8 +85,10 @@ export interface UnifiDriveCardConfig {
   show_diagnostics?: boolean;
   show_dangerous_actions?: boolean;
   show_icon_animations?: boolean;
+  show_display_buttons?: boolean;
   max_sensor_rows?: number;
   sections?: SectionId[];
+  overview_entities?: EntityKey[];
   hide_entities?: EntityKey[];
   entities?: Record<string, string | Record<string, string> | undefined>;
 }
@@ -107,6 +109,7 @@ export interface NormalizedUnifiDriveCardConfig
       | "show_diagnostics"
       | "show_dangerous_actions"
       | "show_icon_animations"
+      | "show_display_buttons"
       | "max_sensor_rows"
     >
   > {
@@ -118,6 +121,7 @@ export interface NormalizedUnifiDriveCardConfig
   hold_action?: ActionConfig;
   double_tap_action?: ActionConfig;
   sections: SectionId[];
+  overview_entities: EntityKey[];
   hide_entities: EntityKey[];
   entities: Record<string, string | Record<string, string> | undefined>;
 }

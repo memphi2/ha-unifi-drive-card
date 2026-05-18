@@ -1,4 +1,4 @@
-import { LitElement, css, html } from "lit";
+import { LitElement, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { DEFAULT_SECTIONS, ENTITY_DEFINITIONS } from "./catalog";
 import { normalizeConfig } from "./config";
@@ -13,6 +13,7 @@ import {
   type ActionConfigKey,
   type ActionTargetField,
 } from "./editor-actions";
+import { editorStyles } from "./editor-styles";
 import { entityLabel, localize, sectionLabel } from "./i18n";
 import type {
   EntityDefinition,
@@ -23,34 +24,70 @@ import type {
 } from "./types";
 
 type TextConfigKey = "name" | "device_id";
+type NumberConfigKey = "max_sensor_rows";
 type ActionTextProperty = "navigation_path" | "url_path" | "service";
 type BooleanConfigKey =
   | "compact"
   | "show_diagnostics"
   | "show_icon_animations"
+  | "show_display_buttons"
   | "show_dangerous_actions"
   | "show_unavailable"
   | "show_optional";
 
-const TEXT_FIELDS: Array<{ key: TextConfigKey; labelKey: string }> = [
+interface TextField {
+  key: TextConfigKey;
+  labelKey: string;
+}
+
+interface NumberField {
+  key: NumberConfigKey;
+  labelKey: string;
+  min: string;
+  step: string;
+}
+
+interface BooleanField {
+  key: BooleanConfigKey;
+  labelKey: string;
+}
+
+interface ActionField {
+  key: ActionConfigKey;
+  labelKey: string;
+}
+
+const TEXT_FIELDS: TextField[] = [
   { key: "name", labelKey: "editor.name" },
   { key: "device_id", labelKey: "editor.device_id" },
 ];
 
-const BOOLEAN_FIELDS: Array<{ key: BooleanConfigKey; labelKey: string }> = [
+const NUMBER_FIELDS: NumberField[] = [
+  { key: "max_sensor_rows", labelKey: "editor.max_sensor_rows", min: "1", step: "1" },
+];
+
+const BOOLEAN_FIELDS: BooleanField[] = [
   { key: "compact", labelKey: "editor.compact" },
   { key: "show_diagnostics", labelKey: "editor.diagnostics" },
   { key: "show_icon_animations", labelKey: "editor.icon_animations" },
+  { key: "show_display_buttons", labelKey: "editor.display_buttons" },
   { key: "show_dangerous_actions", labelKey: "editor.dangerous_actions" },
   { key: "show_unavailable", labelKey: "editor.unavailable" },
   { key: "show_optional", labelKey: "editor.optional_missing" },
 ];
 
-const ACTION_FIELDS: Array<{ key: ActionConfigKey; labelKey: string }> = [
+const ACTION_FIELDS: ActionField[] = [
   { key: "tap_action", labelKey: "editor.tap_action" },
   { key: "hold_action", labelKey: "editor.hold_action" },
   { key: "double_tap_action", labelKey: "editor.double_tap_action" },
 ];
+
+const EDITOR_ENTITY_DEFINITIONS = ENTITY_DEFINITIONS.filter(
+  (definition) => !definition.dynamic,
+);
+const EDITOR_ENTITY_DEFINITION_BY_KEY = new Map(
+  EDITOR_ENTITY_DEFINITIONS.map((definition) => [definition.key, definition]),
+);
 
 @customElement("unifi-drive-card-editor")
 export class UnifiDriveCardEditor extends LitElement {
@@ -83,18 +120,10 @@ export class UnifiDriveCardEditor extends LitElement {
           ></ha-entity-picker>
         </label>
         ${TEXT_FIELDS.map((field) => this._textField(field))}
-        <label>
-          <span>${localize(this.hass, "editor.max_sensor_rows")}</span>
-          <input
-            type="number"
-            min="1"
-            step="1"
-            .value=${String(this._config.max_sensor_rows)}
-            @input=${this._numberChanged}
-          />
-        </label>
+        <div class="numeric-grid">${NUMBER_FIELDS.map((field) => this._numberField(field))}</div>
         <div class="checks">${BOOLEAN_FIELDS.map((field) => this._checkbox(field))}</div>
-        <div class="sections">${DEFAULT_SECTIONS.map((section) => this._sectionToggle(section))}</div>
+        ${this._sectionOrderEditor()}
+        ${this._overviewEntityEditor()}
         <div class="action-grid">${ACTION_FIELDS.map((field) => this._actionField(field))}</div>
         <section class="entity-editor">
           <h3>${localize(this.hass, "editor.entities")}</h3>
@@ -104,7 +133,7 @@ export class UnifiDriveCardEditor extends LitElement {
     `;
   }
 
-  private _textField(field: { key: TextConfigKey; labelKey: string }) {
+  private _textField(field: TextField) {
     return html`
       <label>
         <span>${localize(this.hass, field.labelKey)}</span>
@@ -119,7 +148,151 @@ export class UnifiDriveCardEditor extends LitElement {
     `;
   }
 
-  private _checkbox(field: { key: BooleanConfigKey; labelKey: string }) {
+  private _numberField(field: NumberField) {
+    return html`
+      <label>
+        <span>${localize(this.hass, field.labelKey)}</span>
+        <input
+          type="number"
+          min=${field.min}
+          step=${field.step}
+          .value=${String(this._config[field.key])}
+          @input=${this._numberChanged(field.key)}
+        />
+      </label>
+    `;
+  }
+
+  private _sectionOrderEditor() {
+    const sections = orderedSectionsForEditor(this._config.sections);
+    return html`
+      <section class="sections-editor">
+        <h3>${localize(this.hass, "editor.sections")}</h3>
+        <p>${localize(this.hass, "editor.sections_help")}</p>
+        <div class="order-list section-order-list">
+          ${sections.map((section) => this._sectionToggle(section))}
+        </div>
+      </section>
+    `;
+  }
+
+  private _sectionToggle(section: SectionId) {
+    const checked = this._config.sections.includes(section);
+    const selectedIndex = this._config.sections.indexOf(section);
+    return html`
+      <div class="order-row section-order-row" data-section-key=${section}>
+        <label class="check">
+          <input
+            type="checkbox"
+            .checked=${checked}
+            @change=${(event: Event) => this._toggleSection(section, event)}
+          />
+          <span>${sectionLabel(section, this.hass)}</span>
+        </label>
+        <div class="order-actions">
+          <button
+            class="icon-button"
+            type="button"
+            title=${localize(this.hass, "editor.move_up")}
+            aria-label=${localize(this.hass, "editor.move_up")}
+            ?disabled=${!checked || selectedIndex <= 0}
+            @click=${() => this._moveSection(section, -1)}
+          >
+            <ha-icon icon="mdi:chevron-up"></ha-icon>
+          </button>
+          <button
+            class="icon-button"
+            type="button"
+            title=${localize(this.hass, "editor.move_down")}
+            aria-label=${localize(this.hass, "editor.move_down")}
+            ?disabled=${!checked || selectedIndex < 0 || selectedIndex >= this._config.sections.length - 1}
+            @click=${() => this._moveSection(section, 1)}
+          >
+            <ha-icon icon="mdi:chevron-down"></ha-icon>
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  private _overviewEntityEditor() {
+    const selected = new Set(this._config.overview_entities);
+    const selectedDefinitions = this._config.overview_entities
+      .map((key) => EDITOR_ENTITY_DEFINITION_BY_KEY.get(key))
+      .filter((definition): definition is EntityDefinition => Boolean(definition));
+    const availableDefinitions = EDITOR_ENTITY_DEFINITIONS.filter(
+      (definition) => !selected.has(definition.key),
+    );
+    return html`
+      <section class="overview-editor">
+        <h3>${localize(this.hass, "editor.overview_entities")}</h3>
+        <p>${localize(this.hass, "editor.overview_entities_help")}</p>
+        <div class="overview-entity-groups">
+          <div class="overview-entity-group">
+            <h4>${localize(this.hass, "editor.selected_overview_entities")}</h4>
+            <div class="order-list overview-order-list">
+              ${selectedDefinitions.map((definition) =>
+                this._overviewEntityToggle(definition, selected),
+              )}
+            </div>
+          </div>
+          <div class="overview-entity-group">
+            <h4>${localize(this.hass, "editor.available_overview_entities")}</h4>
+            <div class="overview-entity-grid">
+              ${availableDefinitions.map((definition) =>
+                this._overviewEntityToggle(definition, selected),
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+    `;
+  }
+
+  private _overviewEntityToggle(definition: EntityDefinition, selected: Set<EntityKey>) {
+    const checked = selected.has(definition.key);
+    const selectedIndex = this._config.overview_entities.indexOf(definition.key);
+    return html`
+      <div class="overview-entity-toggle" data-overview-key=${definition.key}>
+        <label class="check">
+          <input
+            type="checkbox"
+            .checked=${checked}
+            @change=${(event: Event) => this._overviewEntityChanged(definition.key, event)}
+          />
+          <span>${entityLabel(definition, this.hass)}</span>
+        </label>
+        ${checked
+          ? html`
+              <div class="order-actions">
+                <button
+                  class="icon-button"
+                  type="button"
+                  title=${localize(this.hass, "editor.move_up")}
+                  aria-label=${localize(this.hass, "editor.move_up")}
+                  ?disabled=${selectedIndex <= 0}
+                  @click=${() => this._moveOverviewEntity(definition.key, -1)}
+                >
+                  <ha-icon icon="mdi:chevron-up"></ha-icon>
+                </button>
+                <button
+                  class="icon-button"
+                  type="button"
+                  title=${localize(this.hass, "editor.move_down")}
+                  aria-label=${localize(this.hass, "editor.move_down")}
+                  ?disabled=${selectedIndex >= this._config.overview_entities.length - 1}
+                  @click=${() => this._moveOverviewEntity(definition.key, 1)}
+                >
+                  <ha-icon icon="mdi:chevron-down"></ha-icon>
+                </button>
+              </div>
+            `
+          : ""}
+      </div>
+    `;
+  }
+
+  private _checkbox(field: BooleanField) {
     return html`
       <label class="check">
         <input
@@ -132,23 +305,8 @@ export class UnifiDriveCardEditor extends LitElement {
     `;
   }
 
-  private _sectionToggle(section: SectionId) {
-    return html`
-      <label class="check">
-        <input
-          type="checkbox"
-          .checked=${this._config.sections.includes(section)}
-          @change=${(event: Event) => this._toggleSection(section, event)}
-        />
-        <span>${sectionLabel(section, this.hass)}</span>
-      </label>
-    `;
-  }
-
   private _entitySection(section: SectionId) {
-    const definitions = ENTITY_DEFINITIONS.filter(
-      (definition) => definition.section === section && !definition.dynamic,
-    );
+    const definitions = definitionsForSection(section);
     if (!definitions.length) {
       return "";
     }
@@ -193,7 +351,7 @@ export class UnifiDriveCardEditor extends LitElement {
     `;
   }
 
-  private _actionField(field: { key: ActionConfigKey; labelKey: string }) {
+  private _actionField(field: ActionField) {
     const action = this._config[field.key];
     const actionName = actionNameFromConfig(action, field.key);
     return html`
@@ -345,11 +503,13 @@ export class UnifiDriveCardEditor extends LitElement {
     };
   }
 
-  private _numberChanged = (event: Event): void => {
-    this._updateConfig({
-      max_sensor_rows: Number.parseInt((event.target as HTMLInputElement).value, 10),
-    });
-  };
+  private _numberChanged(key: NumberConfigKey) {
+    return (event: Event): void => {
+      this._updateConfig({
+        [key]: Number.parseInt((event.target as HTMLInputElement).value, 10),
+      });
+    };
+  }
 
   private _entityVisibilityChanged(key: EntityKey, event: Event): void {
     const hidden = new Set(this._config.hide_entities);
@@ -437,13 +597,43 @@ export class UnifiDriveCardEditor extends LitElement {
   }
 
   private _toggleSection(section: SectionId, event: Event): void {
-    const sections = new Set(this._config.sections);
+    const sections = [...this._config.sections];
     if ((event.target as HTMLInputElement).checked) {
-      sections.add(section);
+      if (!sections.includes(section)) {
+        sections.push(section);
+      }
     } else {
-      sections.delete(section);
+      const index = sections.indexOf(section);
+      if (index >= 0) {
+        sections.splice(index, 1);
+      }
     }
-    this._updateConfig({ sections: [...sections] });
+    this._updateConfig({ sections });
+  }
+
+  private _moveSection(section: SectionId, direction: -1 | 1): void {
+    this._updateConfig({ sections: moveItem(this._config.sections, section, direction) });
+  }
+
+  private _overviewEntityChanged(key: EntityKey, event: Event): void {
+    const overview_entities = [...this._config.overview_entities];
+    if ((event.target as HTMLInputElement).checked) {
+      if (!overview_entities.includes(key)) {
+        overview_entities.push(key);
+      }
+    } else {
+      const index = overview_entities.indexOf(key);
+      if (index >= 0) {
+        overview_entities.splice(index, 1);
+      }
+    }
+    this._updateConfig({ overview_entities });
+  }
+
+  private _moveOverviewEntity(key: EntityKey, direction: -1 | 1): void {
+    this._updateConfig({
+      overview_entities: moveItem(this._config.overview_entities, key, direction),
+    });
   }
 
   private _updateConfig(patch: Partial<UnifiDriveCardConfig>): void {
@@ -458,140 +648,32 @@ export class UnifiDriveCardEditor extends LitElement {
     );
   }
 
-  static override styles = css`
-    .editor {
-      display: grid;
-      gap: 16px;
-    }
+  static override styles = editorStyles;
+}
 
-    label {
-      display: grid;
-      gap: 6px;
-    }
+function orderedSectionsForEditor(selectedSections: SectionId[]): SectionId[] {
+  const selected = new Set(selectedSections);
+  return [
+    ...selectedSections,
+    ...DEFAULT_SECTIONS.filter((section) => !selected.has(section)),
+  ];
+}
 
-    input[type="text"],
-    input[type="number"],
-    select,
-    textarea {
-      box-sizing: border-box;
-      width: 100%;
-      min-height: 40px;
-      padding: 8px 10px;
-      border: 1px solid var(--divider-color);
-      border-radius: 8px;
-      background: var(--card-background-color);
-      color: var(--primary-text-color);
-    }
+function definitionsForSection(section: SectionId): EntityDefinition[] {
+  return EDITOR_ENTITY_DEFINITIONS.filter((definition) => definition.section === section);
+}
 
-    textarea {
-      min-height: 84px;
-      resize: vertical;
-      font-family: var(--code-font-family, monospace);
-    }
-
-    textarea.invalid {
-      border-color: var(--error-color);
-    }
-
-    input:focus-visible,
-    select:focus-visible,
-    textarea:focus-visible {
-      outline: 2px solid var(--primary-color);
-      outline-offset: 2px;
-    }
-
-    .action-grid,
-    .checks,
-    .sections {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 8px;
-    }
-
-    .action-grid {
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    }
-
-    .action-card,
-    .entity-section {
-      display: grid;
-      gap: 10px;
-      padding: 10px;
-      border: 1px solid var(--divider-color);
-      border-radius: 8px;
-      background: color-mix(
-        in srgb,
-        var(--card-background-color) 88%,
-        var(--secondary-background-color)
-      );
-    }
-
-    .check {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .entity-editor {
-      display: grid;
-      gap: 8px;
-    }
-
-    .entity-editor h3 {
-      margin: 0;
-      color: var(--secondary-text-color);
-      font-size: 13px;
-      font-weight: 600;
-      letter-spacing: 0;
-      text-transform: uppercase;
-    }
-
-    .entity-section summary {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      min-height: 36px;
-      cursor: pointer;
-      list-style: none;
-    }
-
-    .entity-section summary::-webkit-details-marker {
-      display: none;
-    }
-
-    .entity-section small {
-      color: var(--secondary-text-color);
-    }
-
-    .entity-mapping-list {
-      display: grid;
-      gap: 10px;
-    }
-
-    .entity-mapping-row {
-      display: grid;
-      grid-template-columns: minmax(160px, 1fr) minmax(220px, 1.2fr);
-      gap: 10px;
-      align-items: center;
-    }
-
-    .entity-visible {
-      display: grid;
-      grid-template-columns: auto 1fr;
-      gap: 2px 8px;
-      align-items: center;
-    }
-
-    .entity-visible small {
-      grid-column: 2;
-    }
-
-    @media (max-width: 640px) {
-      .entity-mapping-row {
-        grid-template-columns: 1fr;
-      }
-    }
-  `;
+function moveItem<T>(items: T[], item: T, direction: -1 | 1): T[] {
+  const next = [...items];
+  const index = next.indexOf(item);
+  const target = index + direction;
+  if (index < 0 || target < 0 || target >= next.length) {
+    return next;
+  }
+  const current = next[index] as T;
+  next[index] = next[target] as T;
+  next[target] = current;
+  return next;
 }
 
 function entityOverride(
@@ -615,6 +697,16 @@ function updateEntityOverride(
   entityId: string | undefined,
 ): Record<string, string | Record<string, string> | undefined> {
   const next = { ...entities };
+  const domain = next[definition.domain];
+  if (domain && typeof domain === "object" && !Array.isArray(domain)) {
+    const nested = { ...domain };
+    delete nested[definition.key];
+    if (Object.keys(nested).length) {
+      next[definition.domain] = nested;
+    } else {
+      delete next[definition.domain];
+    }
+  }
   if (entityId) {
     next[definition.key] = entityId;
   } else {

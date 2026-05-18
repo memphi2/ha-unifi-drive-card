@@ -1,16 +1,22 @@
-import { LitElement, css, html, nothing } from "lit";
+import { LitElement, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { ifDefined } from "lit/directives/if-defined.js";
 import {
   DIAGNOSTIC_KEYS,
   ENTITY_DEFINITION_BY_KEY,
   FALLBACK_ENTITY_DEFINITION,
-  OVERVIEW_KEYS,
   STORAGE_KEYS,
   SYSTEM_KEYS,
   UPDATE_KEYS,
 } from "./catalog";
-import { callEntityService, installUpdate, selectOption, serviceForToggle, setNumberValue, setTimeValue } from "./actions";
+import {
+  callEntityService,
+  installUpdate,
+  selectOption,
+  serviceForToggle,
+  setNumberValue,
+  setTimeValue,
+} from "./actions";
 import { actionEventConfig, isActionEnabled, type ActionTrigger } from "./card-actions";
 import { normalizeConfig } from "./config";
 import { discoverEntities } from "./discovery";
@@ -30,6 +36,7 @@ import { localize, sectionLabel } from "./i18n";
 import { isVisibleRenderable } from "./rendering";
 import { ServiceCallGuard, serviceActionKey } from "./service-call-guard";
 import { headerStatusText } from "./status-text";
+import { cardStyles } from "./styles";
 import type {
   DiscoveredEntities,
   EntityDefinition,
@@ -88,19 +95,38 @@ export class UnifiDriveCard extends LitElement {
         ${this._errorMessage
           ? html`<div class="error-banner" role="alert">${this._errorMessage}</div>`
           : nothing}
-        ${this._sectionEnabled("overview") ? this._renderOverview(discovered) : nothing}
-        ${this._sectionEnabled("storage") ? this._renderKeyRows("storage", discovered, STORAGE_KEYS) : nothing}
-        ${this._sectionEnabled("pools") ? this._renderGroupSection("pools", discovered.groups.pool) : nothing}
-        ${this._sectionEnabled("drives") ? this._renderGroupSection("drives", discovered.groups.drive) : nothing}
-        ${this._sectionEnabled("snapshots") ? this._renderGroupSection("snapshots", discovered.groups.snapshot) : nothing}
-        ${this._sectionEnabled("system") ? this._renderKeyRows("system", discovered, SYSTEM_KEYS) : nothing}
-        ${this._sectionEnabled("updates") ? this._renderKeyRows("updates", discovered, UPDATE_KEYS) : nothing}
-        ${this._sectionEnabled("diagnostics") && this._config.show_diagnostics
-          ? this._renderKeyRows("diagnostics", discovered, DIAGNOSTIC_KEYS)
-          : nothing}
-        ${this._sectionEnabled("actions") ? this._renderGroupSection("actions", discovered.groups.backup) : nothing}
+        <div class="content-grid">
+          ${this._config.sections.map((section) => this._renderSection(discovered, section))}
+        </div>
       </ha-card>
     `;
+  }
+
+  private _renderSection(discovered: DiscoveredEntities, section: SectionId): Renderable {
+    switch (section) {
+      case "overview":
+        return this._renderOverview(discovered);
+      case "storage":
+        return this._renderKeySection("storage", discovered, STORAGE_KEYS);
+      case "pools":
+        return this._renderGroupSection("pools", discovered.groups.pool);
+      case "drives":
+        return this._renderGroupSection("drives", discovered.groups.drive);
+      case "snapshots":
+        return this._renderGroupSection("snapshots", discovered.groups.snapshot);
+      case "system":
+        return this._renderKeySection("system", discovered, SYSTEM_KEYS);
+      case "updates":
+        return this._renderKeySection("updates", discovered, UPDATE_KEYS);
+      case "diagnostics":
+        return this._config.show_diagnostics
+          ? this._renderKeySection("diagnostics", discovered, DIAGNOSTIC_KEYS)
+          : nothing;
+      case "actions":
+        return this._renderGroupSection("actions", discovered.groups.backup);
+      default:
+        return nothing;
+    }
   }
 
   private _renderHeader(discovered: DiscoveredEntities) {
@@ -168,32 +194,29 @@ export class UnifiDriveCard extends LitElement {
   }
 
   private _renderOverview(discovered: DiscoveredEntities) {
-    const tiles = OVERVIEW_KEYS.map((key) => this._entity(discovered, key)).filter((item) =>
-      this._canRender(item.definition, item.state),
-    );
+    const tiles = this._config.overview_entities
+      .map((key) => this._entity(discovered, key))
+      .filter((item) => this._canRender(item.definition, item.state));
     if (!tiles.length) {
       return nothing;
     }
-    return html`
-      <section class="section-overview">
+    return this._renderCardSection(
+      "overview",
+      html`
         <div class="metric-grid">
-          ${tiles.map(({ definition, entityId, state }) => this._metricTile(definition, entityId, state))}
+          ${tiles.map(({ definition, entityId, state }) =>
+            this._metricTile(definition, entityId, state),
+          )}
         </div>
-      </section>
-    `;
+      `,
+    );
   }
 
-  private _renderKeyRows(section: SectionId, discovered: DiscoveredEntities, keys: string[]) {
-    const rows = keys.map((key) => this._entityRow(discovered, key)).filter(isVisibleRenderable);
-    if (!rows.length) {
-      return nothing;
-    }
-    return html`
-      <section class=${`section-${section}`}>
-        <h3>${sectionLabel(section, this.hass)}</h3>
-        <div class="rows entity-list">${rows.slice(0, this._config.max_sensor_rows)}</div>
-      </section>
-    `;
+  private _renderKeySection(section: SectionId, discovered: DiscoveredEntities, keys: string[]) {
+    const content = this._config.show_display_buttons
+      ? this._displayButtonGrid(discovered, keys, section)
+      : this._entityRowList(discovered, keys);
+    return this._renderCardSection(section, content, sectionLabel(section, this.hass));
   }
 
   private _renderGroupSection(section: SectionId, groups: EntityGroup[]) {
@@ -201,11 +224,90 @@ export class UnifiDriveCard extends LitElement {
     if (!renderedGroups.length) {
       return nothing;
     }
+    return this._renderCardSection(
+      section,
+      html`<div class="group-grid">${renderedGroups}</div>`,
+      sectionLabel(section, this.hass),
+    );
+  }
+
+  private _renderCardSection(
+    section: SectionId,
+    content: Renderable,
+    title?: string,
+  ): Renderable {
+    if (!isVisibleRenderable(content)) {
+      return nothing;
+    }
     return html`
-      <section class=${`section-${section}`}>
-        <h3>${sectionLabel(section, this.hass)}</h3>
-        <div class="group-grid">${renderedGroups}</div>
+      <section class="card-section" data-section=${section}>
+        ${title ? html`<h3>${title}</h3>` : nothing}
+        ${content}
       </section>
+    `;
+  }
+
+  private _entityRowList(discovered: DiscoveredEntities, keys: string[]): Renderable {
+    const rows = keys
+      .map((key) => this._entityRow(discovered, key))
+      .filter(isVisibleRenderable)
+      .slice(0, this._config.max_sensor_rows);
+    return rows.length ? html`<div class="rows entity-list">${rows}</div>` : nothing;
+  }
+
+  private _displayButtonGrid(
+    discovered: DiscoveredEntities,
+    keys: string[],
+    variant: string,
+  ): Renderable {
+    const buttons = keys
+      .map((key) => this._displayButton(discovered, key))
+      .filter(isVisibleRenderable)
+      .slice(0, this._config.max_sensor_rows);
+    if (!buttons.length) {
+      return nothing;
+    }
+    return html`<div class="display-button-grid ${variant}">${buttons}</div>`;
+  }
+
+  private _displayButton(discovered: DiscoveredEntities, key: string): Renderable {
+    const item = this._entity(discovered, key);
+    if (!this._canRender(item.definition, item.state)) {
+      return nothing;
+    }
+    const label = friendlyName(item.definition, item.state, this.hass);
+    const value = displayState(this.hass!, item.state);
+    const control = this._rowControl(item.definition, item.entityId, item.state);
+    const active = item.state ? booleanState(item.state) : false;
+    const busy = this._isEntityBusy(item.entityId);
+    return html`
+      <div
+        class="display-button-tile ${active ? "active" : ""} ${busy ? "busy" : ""}"
+        data-entity-key=${item.definition.key}
+        aria-busy=${String(busy)}
+      >
+        <button
+          class="display-button-main entity-action"
+          type="button"
+          ?disabled=${!item.entityId}
+          aria-label=${`${label}: ${value}`}
+          @click=${(event: MouseEvent) => this._handleTapAction(event, item.entityId)}
+          @dblclick=${(event: MouseEvent) => this._handleDoubleTapAction(event, item.entityId)}
+          @pointerdown=${(event: PointerEvent) => this._startHoldAction(event, item.entityId)}
+          @pointerup=${this._finishHoldAction}
+          @pointerleave=${this._cancelHoldAction}
+          @pointercancel=${this._cancelHoldAction}
+        >
+          <div class=${this._iconBubbleClass(item.definition, item.state)}>
+            <ha-icon icon=${item.definition.icon}></ha-icon>
+          </div>
+          <span>${label}</span>
+          <strong>${value}</strong>
+        </button>
+        ${isVisibleRenderable(control)
+          ? html`<div class="display-button-control">${control}</div>`
+          : nothing}
+      </div>
     `;
   }
 
@@ -427,11 +529,13 @@ export class UnifiDriveCard extends LitElement {
   }
 
   private _headerIconClass(problem?: HassEntity): string {
+    const tone = problem && !isUnavailable(problem) && booleanState(problem) ? "alert" : "storage";
     return [
       "icon-bubble",
       "primary",
-      problem && !isUnavailable(problem) && booleanState(problem) ? "alert" : "storage",
+      tone,
       "active",
+      this._config.show_icon_animations ? `motion-${tone}` : "",
       this._config.show_icon_animations ? "animated" : "",
     ]
       .filter(Boolean)
@@ -483,10 +587,6 @@ export class UnifiDriveCard extends LitElement {
         detail: { action: trigger, config },
       }),
     );
-  }
-
-  private _sectionEnabled(section: SectionId): boolean {
-    return this._config.sections.includes(section);
   }
 
   private _isActionBusy(key: string): boolean {
@@ -576,521 +676,7 @@ export class UnifiDriveCard extends LitElement {
     });
   }
 
-  static override styles = css`
-    :host {
-      display: block;
-      container-type: inline-size;
-      --unifi-row-background: color-mix(
-        in srgb,
-        var(--card-background-color, var(--ha-card-background, #fff)) 92%,
-        var(--secondary-background-color, #f5f5f5)
-      );
-      --unifi-row-border: color-mix(in srgb, var(--divider-color, #ddd) 80%, transparent);
-      --unifi-row-hover: color-mix(in srgb, var(--primary-color, #03a9f4) 7%, var(--unifi-row-background));
-      --unifi-icon-size: 36px;
-    }
-
-    .unifi-card {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr);
-      gap: 16px;
-      padding: 16px;
-      overflow: hidden;
-      color: var(--primary-text-color);
-      font-family: var(--ha-font-family-body, inherit);
-    }
-
-    .unifi-card.compact {
-      gap: 12px;
-      padding: 12px;
-    }
-
-    header {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 12px;
-      align-items: center;
-    }
-
-    .title-block,
-    .metric,
-    .entity-main {
-      appearance: none;
-      border: 0;
-      background: transparent;
-      color: inherit;
-      font: inherit;
-      text-align: left;
-      cursor: pointer;
-    }
-
-    .title-block {
-      display: grid;
-      grid-template-columns: var(--unifi-icon-size) 1fr;
-      gap: 12px;
-      align-items: center;
-      min-width: 0;
-      padding: 0;
-    }
-
-    .title-block:disabled,
-    .metric:disabled,
-    .entity-main:disabled {
-      cursor: default;
-    }
-
-    h2,
-    h3,
-    p {
-      margin: 0;
-    }
-
-    h2 {
-      font-size: 20px;
-      line-height: 1.2;
-      font-weight: 600;
-      letter-spacing: 0;
-    }
-
-    header p,
-    .main span,
-    .metric span,
-    .group-header span {
-      overflow-wrap: anywhere;
-      color: var(--secondary-text-color);
-      font-size: 13px;
-      line-height: 1.3;
-    }
-
-    section {
-      display: grid;
-      gap: 10px;
-    }
-
-    section h3 {
-      color: var(--secondary-text-color);
-      font-size: 13px;
-      font-weight: 600;
-      letter-spacing: 0;
-      text-transform: uppercase;
-    }
-
-    .error-banner {
-      padding: 10px 12px;
-      border: 1px solid color-mix(in srgb, var(--error-color, #db4437) 40%, transparent);
-      border-radius: 8px;
-      background: color-mix(in srgb, var(--error-color, #db4437) 12%, transparent);
-      color: var(--error-color, #db4437);
-      font-size: 13px;
-      overflow-wrap: anywhere;
-    }
-
-    .usage-gauge {
-      display: grid;
-      justify-items: center;
-      gap: 2px;
-      min-width: 58px;
-    }
-
-    .usage-gauge svg {
-      width: 44px;
-      height: 44px;
-      transform: rotate(-90deg);
-    }
-
-    .usage-gauge circle {
-      fill: none;
-      stroke-width: 4;
-    }
-
-    .usage-gauge .track {
-      stroke: color-mix(in srgb, var(--divider-color, #ddd) 70%, transparent);
-    }
-
-    .usage-gauge .value {
-      stroke: var(--primary-color, #03a9f4);
-      stroke-linecap: round;
-    }
-
-    .usage-gauge strong {
-      font-size: 12px;
-      font-weight: 600;
-    }
-
-    .metric-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
-      gap: 8px;
-    }
-
-    .metric {
-      display: grid;
-      grid-template-columns: var(--unifi-icon-size) 1fr;
-      gap: 10px;
-      align-items: center;
-      min-height: 64px;
-      min-width: 0;
-      padding: 10px;
-      border: 1px solid var(--unifi-row-border);
-      border-radius: 8px;
-      background: var(--unifi-row-background);
-    }
-
-    .metric .icon-bubble {
-      grid-row: 1 / span 2;
-    }
-
-    .metric strong {
-      display: block;
-      grid-column: 2;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      font-size: 18px;
-      line-height: 1.15;
-    }
-
-    .rows,
-    .group-grid {
-      display: grid;
-      gap: 8px;
-      min-width: 0;
-    }
-
-    .group-grid {
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    }
-
-    .group-card {
-      display: grid;
-      gap: 8px;
-      min-width: 0;
-      padding: 10px;
-      border: 1px solid var(--unifi-row-border);
-      border-radius: 8px;
-      background: color-mix(in srgb, var(--unifi-row-background) 82%, transparent);
-    }
-
-    .group-header {
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-      align-items: center;
-      min-width: 0;
-    }
-
-    .group-title {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      min-width: 0;
-    }
-
-    .group-title strong {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .entity-row {
-      container-type: inline-size;
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 8px;
-      align-items: center;
-      min-height: 52px;
-      padding: 6px;
-      border: 1px solid var(--unifi-row-border);
-      border-radius: 8px;
-      background: var(--unifi-row-background);
-    }
-
-    .entity-main {
-      display: grid;
-      grid-template-columns: var(--unifi-icon-size) minmax(0, 1fr);
-      gap: 10px;
-      align-items: center;
-      min-width: 0;
-      padding: 0;
-    }
-
-    .entity-main strong,
-    .main span {
-      overflow-wrap: break-word;
-      word-break: normal;
-    }
-
-    .row-control {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      min-width: 0;
-    }
-
-    .chip,
-    input,
-    select {
-      box-sizing: border-box;
-      min-height: 36px;
-      border: 1px solid var(--unifi-row-border);
-      border-radius: 8px;
-      background: var(--card-background-color, var(--ha-card-background, #fff));
-      color: var(--primary-text-color);
-      font: inherit;
-    }
-
-    .chip {
-      padding: 0 12px;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-
-    .chip.active {
-      border-color: color-mix(in srgb, var(--primary-color, #03a9f4) 50%, var(--unifi-row-border));
-      background: color-mix(in srgb, var(--primary-color, #03a9f4) 15%, transparent);
-      color: var(--primary-color, #03a9f4);
-    }
-
-    input,
-    select {
-      width: min(180px, 38vw);
-      padding: 6px 8px;
-    }
-
-    button:focus-visible,
-    input:focus-visible,
-    select:focus-visible {
-      outline: 2px solid var(--primary-color, #03a9f4);
-      outline-offset: 2px;
-    }
-
-    button:disabled,
-    input:disabled,
-    select:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
-    }
-
-    .busy {
-      opacity: 0.75;
-    }
-
-    .icon-bubble {
-      --unifi-icon-rgb: 3, 155, 229;
-      --unifi-icon-color: rgb(var(--unifi-icon-rgb));
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: var(--unifi-icon-size);
-      height: var(--unifi-icon-size);
-      border-radius: 50%;
-      background: rgba(var(--unifi-icon-rgb), 0.16);
-      color: var(--unifi-icon-color);
-      --state-icon-color: var(--unifi-icon-color);
-      --paper-item-icon-color: var(--unifi-icon-color);
-      --iron-icon-fill-color: var(--unifi-icon-color);
-      --mdc-icon-size: 20px;
-    }
-
-    .icon-bubble ha-icon {
-      color: var(--unifi-icon-color) !important;
-      fill: var(--unifi-icon-color) !important;
-    }
-
-    .icon-bubble.primary {
-      --unifi-icon-rgb: 255, 255, 255;
-      color: var(--text-primary-color, #fff);
-      background: var(--primary-color, #03a9f4);
-    }
-
-    .icon-bubble.alert {
-      --unifi-icon-rgb: 229, 57, 53;
-    }
-
-    .icon-bubble.drive {
-      --unifi-icon-rgb: 92, 107, 192;
-    }
-
-    .icon-bubble.network {
-      --unifi-icon-rgb: 0, 172, 193;
-    }
-
-    .icon-bubble.snapshot {
-      --unifi-icon-rgb: 126, 87, 194;
-    }
-
-    .icon-bubble.storage {
-      --unifi-icon-rgb: 3, 155, 229;
-    }
-
-    .icon-bubble.system {
-      --unifi-icon-rgb: 0, 150, 136;
-    }
-
-    .icon-bubble.temperature {
-      --unifi-icon-rgb: 244, 128, 36;
-    }
-
-    .icon-bubble.update {
-      --unifi-icon-rgb: 67, 160, 71;
-    }
-
-    .icon-bubble.animated.active {
-      animation: unifi-breathe 2.7s ease-in-out infinite;
-    }
-
-    @media (hover: hover) {
-      .metric:not(:disabled):hover,
-      .entity-row:hover {
-        background: var(--unifi-row-hover);
-      }
-    }
-
-    @container (min-width: 720px) {
-      .unifi-card {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        align-items: start;
-      }
-
-      header,
-      .error-banner,
-      .section-overview {
-        grid-column: 1 / -1;
-      }
-
-      .section-overview {
-        order: 10;
-      }
-
-      .section-storage {
-        order: 20;
-      }
-
-      .section-system {
-        order: 30;
-      }
-
-      .section-updates {
-        order: 40;
-      }
-
-      .section-diagnostics {
-        order: 50;
-      }
-
-      .section-pools {
-        order: 60;
-      }
-
-      .section-drives {
-        order: 70;
-      }
-
-      .section-snapshots {
-        order: 80;
-      }
-
-      .section-actions {
-        order: 90;
-      }
-
-      .metric-grid {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-      }
-
-      .entity-list {
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      }
-
-      .section-system .entity-list {
-        grid-template-columns: 1fr;
-      }
-
-      .group-grid {
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      }
-    }
-
-    @container (min-width: 1040px) {
-      .unifi-card {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-      }
-
-      .section-storage,
-      .section-system,
-      .section-updates,
-      .section-diagnostics,
-      .section-actions {
-        grid-column: span 1;
-      }
-
-      .section-pools,
-      .section-snapshots {
-        grid-column: span 2;
-      }
-
-      .metric-grid {
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      }
-    }
-
-    @media (max-width: 560px) {
-      .unifi-card {
-        padding: 12px;
-      }
-
-      header {
-        grid-template-columns: 1fr;
-      }
-
-      .usage-gauge {
-        justify-self: start;
-        grid-template-columns: auto auto;
-        align-items: center;
-      }
-
-      .entity-row {
-        grid-template-columns: 1fr;
-      }
-
-      .row-control {
-        justify-content: stretch;
-      }
-
-      .chip,
-      input,
-      select {
-        width: 100%;
-      }
-    }
-
-    @container (max-width: 340px) {
-      .entity-main,
-      .row-control {
-        grid-column: 1 / -1;
-      }
-
-      .row-control {
-        justify-content: stretch;
-      }
-
-      .chip,
-      input,
-      select {
-        width: 100%;
-      }
-    }
-
-    @keyframes unifi-breathe {
-      0%,
-      100% {
-        box-shadow: 0 0 0 0 rgba(var(--unifi-icon-rgb), 0);
-      }
-      50% {
-        box-shadow: 0 0 18px 2px rgba(var(--unifi-icon-rgb), 0.22);
-      }
-    }
-  `;
+  static override styles = cardStyles;
 }
 
 function inputAttributeValue(value: unknown): string | undefined {

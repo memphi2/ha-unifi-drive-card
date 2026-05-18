@@ -1,12 +1,19 @@
-import { DEFAULT_SECTIONS } from "./catalog";
+import { DEFAULT_SECTIONS, ENTITY_DEFINITIONS } from "./catalog";
 import { DEFAULT_TAP_ACTION, normalizeActionConfig } from "./card-actions";
+import { OVERVIEW_KEYS } from "./entity-groups";
 import type {
+  EntityKey,
   NormalizedUnifiDriveCardConfig,
   SectionId,
   UnifiDriveCardConfig,
 } from "./types";
 
 const SECTION_SET = new Set<string>(DEFAULT_SECTIONS);
+const OVERVIEW_ENTITY_KEY_SET = new Set<string>(
+  ENTITY_DEFINITIONS.filter((definition) => !definition.dynamic).map(
+    (definition) => definition.key,
+  ),
+);
 
 export function normalizeConfig(
   config: UnifiDriveCardConfig,
@@ -25,8 +32,10 @@ export function normalizeConfig(
     show_diagnostics: config.show_diagnostics ?? true,
     show_dangerous_actions: config.show_dangerous_actions ?? false,
     show_icon_animations: config.show_icon_animations ?? true,
+    show_display_buttons: config.show_display_buttons ?? false,
     max_sensor_rows: positiveInteger(config.max_sensor_rows, 10),
     sections: normalizeSections(config.sections),
+    overview_entities: normalizeOverviewEntities(config.overview_entities),
     hide_entities: Array.isArray(config.hide_entities) ? [...config.hide_entities] : [],
     entities: config.entities ? { ...config.entities } : {},
   };
@@ -36,10 +45,19 @@ export function normalizeSections(sections: SectionId[] | undefined): SectionId[
   if (!sections?.length) {
     return [...DEFAULT_SECTIONS];
   }
-  const normalized = sections.filter((section): section is SectionId =>
-    SECTION_SET.has(section),
-  );
+  const normalized = uniqueKnownItems(sections, SECTION_SET);
   return normalized.length ? normalized : [...DEFAULT_SECTIONS];
+}
+
+export function normalizeOverviewEntities(keys: EntityKey[] | undefined): EntityKey[] {
+  if (!Array.isArray(keys)) {
+    return [...OVERVIEW_KEYS];
+  }
+  return uniqueKnownItems(keys, OVERVIEW_ENTITY_KEY_SET);
+}
+
+function uniqueKnownItems<T extends string>(items: T[], knownItems: Set<string>): T[] {
+  return [...new Set(items.filter((item) => knownItems.has(item)))];
 }
 
 function positiveInteger(value: number | undefined, fallback: number): number {
