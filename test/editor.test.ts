@@ -153,6 +153,26 @@ describe("UnifiDriveCardEditor", () => {
     expect(config.sections).toEqual(["storage", "overview", "system"]);
   });
 
+  it("keeps adjacent downward section drops moving to the end", async () => {
+    const editor = document.createElement("unifi-drive-card-editor") as UnifiDriveCardEditor;
+    const listener = vi.fn();
+    editor.addEventListener("config-changed", listener);
+    editor.setConfig({ sections: ["overview", "storage", "system"] });
+    document.body.append(editor);
+    await editor.updateComplete;
+
+    const systemRow = editor.shadowRoot?.querySelector(
+      '[data-section-key="system"]',
+    ) as HTMLElement;
+    systemRow.dispatchEvent(
+      dropEvent("application/x-unifi-drive-section", "storage"),
+    );
+    await editor.updateComplete;
+
+    const config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
+    expect(config.sections).toEqual(["overview", "system", "storage"]);
+  });
+
   it("reorders overview tiles through the overview entity editor", async () => {
     const editor = document.createElement("unifi-drive-card-editor") as UnifiDriveCardEditor;
     const listener = vi.fn();
@@ -194,6 +214,32 @@ describe("UnifiDriveCardEditor", () => {
       "used_storage",
       "usage_percent",
       "overall_status",
+    ]);
+  });
+
+  it("keeps adjacent downward overview drops moving to the end", async () => {
+    const editor = document.createElement("unifi-drive-card-editor") as UnifiDriveCardEditor;
+    const listener = vi.fn();
+    editor.addEventListener("config-changed", listener);
+    editor.setConfig({
+      overview_entities: ["usage_percent", "used_storage", "overall_status"],
+    });
+    document.body.append(editor);
+    await editor.updateComplete;
+
+    const statusRow = editor.shadowRoot?.querySelector(
+      '[data-overview-key="overall_status"]',
+    ) as HTMLElement;
+    statusRow.dispatchEvent(
+      dropEvent("application/x-unifi-drive-overview-entity", "used_storage"),
+    );
+    await editor.updateComplete;
+
+    const config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
+    expect(config.overview_entities).toEqual([
+      "usage_percent",
+      "overall_status",
+      "used_storage",
     ]);
   });
 

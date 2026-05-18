@@ -543,7 +543,9 @@ function reorderItem<T>(items: T[], source: T, target: T): T[] {
     return next;
   }
   const [entry] = next.splice(sourceIndex, 1);
-  const insertIndex = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
+  const isAdjacentDownwardMove = sourceIndex + 1 === targetIndex;
+  const insertIndex =
+    sourceIndex < targetIndex && !isAdjacentDownwardMove ? targetIndex - 1 : targetIndex;
   next.splice(insertIndex, 0, entry as T);
   return next;
 }
