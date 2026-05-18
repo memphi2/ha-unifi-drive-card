@@ -14,6 +14,7 @@ export type IconTone =
 
 export interface IconVisualState {
   tone: IconTone;
+  motion: IconTone;
   active: boolean;
   animated: boolean;
 }
@@ -27,6 +28,7 @@ export function iconVisualClass(
   return [
     "icon-bubble",
     visual.tone,
+    visual.animated ? `motion-${visual.motion}` : "",
     visual.animated ? "animated" : "",
     visual.active ? "active" : "",
   ]
@@ -43,6 +45,7 @@ export function iconVisualState(
   const available = Boolean(state && !isUnavailable(state));
   return {
     tone,
+    motion: tone,
     active: Boolean(state && isActiveIcon(definition, state)),
     animated: available && animationsEnabled,
   };

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_SECTIONS } from "../src/catalog";
 import { normalizeConfig } from "../src/config";
+import { OVERVIEW_KEYS } from "../src/entity-groups";
 
 describe("normalizeConfig", () => {
   it("provides stable UniFi Drive defaults", () => {
@@ -13,6 +14,8 @@ describe("normalizeConfig", () => {
     expect(config.compact).toBe(true);
     expect(config.tap_action).toEqual({ action: "more-info" });
     expect(config.max_sensor_rows).toBe(10);
+    expect(config.overview_entities).toEqual(OVERVIEW_KEYS);
+    expect(config.show_display_buttons).toBe(false);
   });
 
   it("allows compact mode to be disabled explicitly", () => {
@@ -22,9 +25,23 @@ describe("normalizeConfig", () => {
 
   it("filters invalid sections", () => {
     const config = normalizeConfig({
-      sections: ["overview", "invalid" as "overview"],
+      sections: ["overview", "storage", "overview", "invalid" as "overview"],
     });
-    expect(config.sections).toEqual(["overview"]);
+    expect(config.sections).toEqual(["overview", "storage"]);
+  });
+
+  it("filters and deduplicates overview entities without restoring defaults", () => {
+    const config = normalizeConfig({
+      overview_entities: [
+        "usage_percent",
+        "pool_status",
+        "invalid",
+        "usage_percent",
+        "system_status",
+      ],
+    });
+
+    expect(config.overview_entities).toEqual(["usage_percent", "system_status"]);
   });
 
   it("preserves Mushroom-style action configs", () => {
