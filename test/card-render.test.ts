@@ -79,10 +79,12 @@ describe("UnifiDriveCard rendering", () => {
 
   it("uses a non-empty icon for at-risk disk count", async () => {
     const hass = hassFixture();
+    const entities = hass.entities ?? {};
     hass.states["sensor.disk_risk_count"] = entity("2", {
       friendly_name: "UniFi Drive At-risk Drives",
     });
-    hass.entities!["sensor.disk_risk_count"] = registry("at_risk_disk_count");
+    entities["sensor.disk_risk_count"] = registry("at_risk_disk_count");
+    hass.entities = entities;
     const card = await renderCard(hass, {
       sections: ["storage"],
       entities: { at_risk_disk_count: "sensor.disk_risk_count" },
