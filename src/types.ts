@@ -73,7 +73,6 @@ export interface HomeAssistant {
 
 export interface UnifiDriveCardConfig {
   type?: string;
-  entity?: string;
   device_id?: string;
   name?: unknown;
   tap_action?: ActionConfig;
@@ -112,9 +111,8 @@ export interface NormalizedUnifiDriveCardConfig
       | "show_display_buttons"
       | "overview_columns"
     >
-  > {
+> {
   type: string;
-  entity?: string;
   device_id?: string;
   name?: unknown;
   tap_action?: ActionConfig;

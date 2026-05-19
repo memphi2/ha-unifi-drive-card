@@ -101,7 +101,6 @@ Common options:
 
 | Option | Default | Purpose |
 | --- | --- | --- |
-| `entity` | auto-discovered | Optional anchor entity for discovery. |
 | `device_id` | required | Restricts discovery to one HA device. |
 | `sections` | all sections | Ordered visible sections. |
 | `show_dangerous_actions` | `false` | Shows restart/shutdown actions with confirmation. |

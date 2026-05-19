@@ -47,8 +47,7 @@ export function discoverEntities(
   hass: HomeAssistant,
   config: NormalizedUnifiDriveCardConfig,
 ): DiscoveredEntities {
-  const configuredBase = existingEntity(hass, config.entity);
-  const baseEntity = configuredBase ?? findBaseEntity(hass, config);
+  const baseEntity = findBaseEntity(hass, config);
   const baseRegistry = registryEntry(hass, baseEntity);
   const deviceId = config.device_id ?? baseRegistry?.device_id ?? inferredDeviceId(hass);
   const entityIds: Record<EntityKey, string> = {};
@@ -477,10 +476,6 @@ function registryEntry(
     return undefined;
   }
   return hass.entities?.[entityId];
-}
-
-function existingEntity(hass: HomeAssistant, entityId: string | undefined): string | undefined {
-  return entityId && hass.states[entityId] ? entityId : undefined;
 }
 
 function isIntegrationEntity(hass: HomeAssistant, entityId: string): boolean {

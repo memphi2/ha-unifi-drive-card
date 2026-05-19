@@ -23,6 +23,14 @@ describe("normalizeConfig", () => {
     expect(config.compact).toBe(false);
   });
 
+  it("does not keep the removed legacy entity anchor option", () => {
+    const config = normalizeConfig({
+      entity: "sensor.legacy_anchor",
+    } as Parameters<typeof normalizeConfig>[0] & { entity: string });
+
+    expect("entity" in config).toBe(false);
+  });
+
   it("bounds overview columns like the DHE card", () => {
     expect(normalizeConfig({ overview_columns: 0 }).overview_columns).toBe(1);
     expect(normalizeConfig({ overview_columns: 4 }).overview_columns).toBe(4);

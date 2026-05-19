@@ -75,7 +75,6 @@ export class UnifiDriveCardEditor extends LitElement {
           hass: this.hass,
           config: this._config,
           deviceChanged: this._deviceChanged,
-          entityChanged: this._entityChanged,
           nameChanged: this._nameChanged,
           numberChanged: (key, event) => this._numberChanged(key, event),
           checkboxChanged: (key, checked) => this._checkboxChanged(key, checked),
@@ -314,10 +313,6 @@ export class UnifiDriveCardEditor extends LitElement {
       </label>
     `;
   }
-
-  private _entityChanged = (event: Event): void => {
-    this._updateConfig({ entity: pickerValueFromEvent(event) });
-  };
 
   private _deviceChanged = (event: Event): void => {
     const deviceId = pickerValueFromEvent(event);

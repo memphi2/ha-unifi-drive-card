@@ -104,7 +104,7 @@ describe("UnifiDriveCard rendering", () => {
     const config = UnifiDriveCard.getStubConfig(hassFixture());
     expect(config).toEqual({
       type: "custom:unifi-drive-card",
-      entity: "sensor.system_status",
+      device_id: "dev-a",
     });
   });
 

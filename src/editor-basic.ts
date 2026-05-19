@@ -3,20 +3,9 @@ import { localize } from "./i18n";
 import { checkedFromEvent, textInputValue } from "./editor-shared";
 import {
   INTEGRATION_DOMAIN,
-  type EntityDomain,
   type HomeAssistant,
   type NormalizedUnifiDriveCardConfig,
 } from "./types";
-const ANCHOR_ENTITY_DOMAINS: EntityDomain[] = [
-  "binary_sensor",
-  "button",
-  "number",
-  "select",
-  "sensor",
-  "switch",
-  "time",
-  "update",
-];
 
 export type BasicNumberConfigKey = "overview_columns";
 export type BasicBooleanConfigKey =
@@ -45,7 +34,6 @@ interface EditorBasicContext {
   hass?: HomeAssistant;
   config: NormalizedUnifiDriveCardConfig;
   deviceChanged: (event: Event) => void;
-  entityChanged: (event: Event) => void;
   nameChanged: (event: Event) => void;
   numberChanged: (key: BasicNumberConfigKey, event: Event) => void;
   checkboxChanged: (key: BasicBooleanConfigKey, checked: boolean) => void;
@@ -87,14 +75,6 @@ export function renderBasicEditor(context: EditorBasicContext) {
           .required=${true}
           @value-changed=${context.deviceChanged}
         ></ha-selector>
-        <ha-entity-picker
-          class="ha-picker-control"
-          .hass=${context.hass}
-          .label=${localize(context.hass, "editor.anchor_entity")}
-          .value=${context.config.entity ?? ""}
-          .includeDomains=${ANCHOR_ENTITY_DOMAINS}
-          @value-changed=${context.entityChanged}
-        ></ha-entity-picker>
         <label class="ha-form-row">
           <span>${localize(context.hass, "editor.name")}</span>
           <input

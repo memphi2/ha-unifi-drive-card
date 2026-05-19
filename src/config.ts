@@ -20,7 +20,6 @@ export function normalizeConfig(
 ): NormalizedUnifiDriveCardConfig {
   return {
     type: "custom:unifi-drive-card",
-    entity: config.entity,
     device_id: config.device_id,
     name: config.name,
     tap_action: normalizeActionConfig(config.tap_action) ?? { ...DEFAULT_TAP_ACTION },
