@@ -31,10 +31,10 @@ describe("UnifiDriveCardEditor", () => {
     expect(text).not.toContain("storage_problem");
   });
 
-  it("uses Home Assistant selectors and entity picker for selection", async () => {
+  it("uses the Home Assistant device selector for selection", async () => {
     const listener = vi.fn();
     const editor = await createEditor({
-      config: { device_id: "device-a", entity: "sensor.system_status" },
+      config: { device_id: "device-a" },
       listener,
     });
 
@@ -52,18 +52,13 @@ describe("UnifiDriveCardEditor", () => {
       label?: string;
       value?: string;
     };
-    const entityPicker = editor.shadowRoot?.querySelector(
-      ".basic-editor ha-entity-picker",
-    ) as HTMLElement & { includeDomains?: string[]; label?: string; value?: string };
-
     expect(devicePicker.value).toBe("device-a");
     expect(devicePicker.label).toBe("Device");
     expect(devicePicker.helper).toContain("Home Assistant device");
     expect(devicePicker.required).toBe(true);
     expect(devicePicker.selector?.device?.filter?.at(0)?.integration).toBe("unifi_drive");
     expect(devicePicker.selector?.device?.entity?.at(0)?.domain).toBe("sensor");
-    expect(entityPicker.value).toBe("sensor.system_status");
-    expect(entityPicker.label).toBe("Anchor entity");
+    expect(editor.shadowRoot?.querySelector(".basic-editor ha-entity-picker")).toBeNull();
 
     devicePicker.dispatchEvent(
       new CustomEvent("value-changed", {

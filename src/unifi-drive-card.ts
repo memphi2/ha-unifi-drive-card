@@ -74,7 +74,9 @@ export class UnifiDriveCard extends LitElement {
 
   public static getStubConfig(hass: HomeAssistant): UnifiDriveCardConfig {
     const discovered = discoverEntities(hass, normalizeConfig({}));
-    return { type: "custom:unifi-drive-card", entity: discovered.baseEntity };
+    return discovered.deviceId
+      ? { type: "custom:unifi-drive-card", device_id: discovered.deviceId }
+      : { type: "custom:unifi-drive-card" };
   }
 
   public override disconnectedCallback(): void {

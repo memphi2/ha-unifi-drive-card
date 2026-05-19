@@ -8,11 +8,10 @@ The card works from YAML or the Home Assistant visual editor.
 type: custom:unifi-drive-card
 ```
 
-For multiple UniFi Drive devices, set `device_id` (and optionally an anchor entity):
+For multiple UniFi Drive devices, set `device_id`:
 
 ```yaml
 type: custom:unifi-drive-card
-entity: sensor.unifi_drive_system_status
 device_id: your_home_assistant_device_id
 ```
 
@@ -56,7 +55,6 @@ double_tap_action:
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
 | `type` | string | required | Must be `custom:unifi-drive-card`. |
-| `entity` | string | auto | Optional anchor entity for registry discovery. |
 | `device_id` | string | required | Restricts discovery to one Home Assistant device. |
 | `name` | string | `UniFi Drive` | Card title. |
 | `compact` | boolean | `true` | Reduces vertical spacing. Set to `false` for the roomier layout. |
@@ -105,7 +103,7 @@ Discovery prefers Home Assistant registry metadata:
 
 - platform `unifi_drive`
 - enabled and visible registry entries
-- same device as the anchor entity or `device_id`
+- same device as `device_id`
 - known translation keys and unique ID suffixes
 
 Manual overrides always win:
