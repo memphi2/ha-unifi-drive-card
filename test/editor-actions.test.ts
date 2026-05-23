@@ -31,7 +31,7 @@ describe("editor action helpers", () => {
   it("clears a previously configured service action from editor input", () => {
     const action = actionConfigFromEditor("tap_action", {
       action: "call-service",
-      perform_action: "script.unifi_drive_backup",
+      perform_action: "script.unifi_unas_backup",
       service: undefined,
       target: { entity_id: "button.backup_now" },
     });

@@ -11,6 +11,6 @@ window.customCards = window.customCards ?? [];
 window.customCards.push({
   type: "unifi-drive-card",
   name: "Drive Storage Card",
-  description: "Mushroom-style card for Home Assistant's unifi_drive integration",
+  description: "Mushroom-style card for Home Assistant's unifi_unas integration",
   preview: true,
 });

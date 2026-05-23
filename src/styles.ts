@@ -15,15 +15,23 @@ export const cardStyles = css`
     --unifi-ha-row-height: 48px;
     --unifi-ha-row-inner-height: 40px;
     --unifi-ha-tile-height: 56px;
+    --unifi-layout-row-height: 24px;
+    --unifi-layout-section-gap: 14px;
+    --unifi-layout-column-gap: 14px;
+    --unifi-focus-ring-color: color-mix(in srgb, var(--primary-color) 84%, white 16%);
     container-type: inline-size;
     display: block;
   }
 
   .unifi-card {
+    color-scheme: light dark;
     overflow: hidden;
     padding: 16px;
+    border: var(--ha-card-border-width, 0) solid
+      var(--ha-card-border-color, var(--divider-color));
     border-radius: var(--ha-card-border-radius, 8px);
     background: var(--ha-card-background, var(--card-background-color));
+    box-shadow: var(--ha-card-box-shadow, none);
     color: var(--primary-text-color);
     font-family: var(
       --primary-font-family,
@@ -75,17 +83,67 @@ export const cardStyles = css`
 
   section {
     min-width: 0;
-    padding: 14px 0;
+    padding: var(--unifi-layout-section-gap) 0;
     border-top: 1px solid var(--divider-color);
+    content-visibility: auto;
+    contain-intrinsic-size: auto 180px;
   }
 
   .content-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
+    grid-auto-flow: row dense;
+    grid-auto-rows: minmax(var(--unifi-layout-row-height), auto);
+    align-items: start;
+    row-gap: var(--unifi-layout-section-gap);
+    column-gap: var(--unifi-layout-column-gap);
   }
 
-  .compact section {
-    padding: 10px 0;
+  .layout-dense {
+    --unifi-layout-section-gap: 12px;
+  }
+
+  .unifi-card.compact {
+    --unifi-ha-icon-bubble-size: 34px;
+    --unifi-ha-icon-size: 18px;
+    --unifi-ha-row-height: 44px;
+    --unifi-ha-row-inner-height: 38px;
+    --unifi-ha-tile-height: 52px;
+    --unifi-layout-row-height: 20px;
+    --unifi-layout-section-gap: 10px;
+    --unifi-layout-column-gap: 10px;
+    padding: 12px;
+  }
+
+  .unifi-card.compact header {
+    margin-bottom: 8px;
+  }
+
+  .unifi-card.compact h2 {
+    font-size: 18px;
+  }
+
+  .unifi-card.compact .metric {
+    gap: 2px 8px;
+    padding: 7px;
+  }
+
+  .unifi-card.compact .group-card {
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .unifi-card.compact .display-button-tile {
+    min-height: 96px;
+  }
+
+  .unifi-card.compact .display-button-main {
+    gap: 5px;
+    padding: 7px;
+  }
+
+  .unifi-card.compact .display-button-control {
+    padding: 0 7px 7px;
   }
 
   .title-block,
@@ -274,6 +332,11 @@ export const cardStyles = css`
     min-width: 0;
   }
 
+  .row-control select {
+    width: min(154px, 100%);
+    max-width: 154px;
+  }
+
   .group-grid {
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   }
@@ -420,7 +483,7 @@ export const cardStyles = css`
   button:focus-visible,
   input:focus-visible,
   select:focus-visible {
-    outline: 2px solid var(--primary-color);
+    outline: 2px solid var(--unifi-focus-ring-color);
     outline-offset: 2px;
   }
 
@@ -663,8 +726,7 @@ export const cardStyles = css`
 
     .content-grid {
       grid-template-columns: repeat(12, minmax(0, 1fr));
-      align-items: start;
-      column-gap: 16px;
+      column-gap: var(--unifi-layout-column-gap, 16px);
     }
 
     .content-grid > .card-section {
@@ -689,6 +751,23 @@ export const cardStyles = css`
       grid-column: span 5;
     }
 
+    .unifi-card.layout-dense .content-grid > [data-section="storage"],
+    .unifi-card.layout-dense .content-grid > [data-section="pools"],
+    .unifi-card.layout-dense .content-grid > [data-section="drives"],
+    .unifi-card.layout-dense .content-grid > [data-section="snapshots"] {
+      grid-column: span 8;
+    }
+
+    .unifi-card.layout-dense .content-grid > [data-section="system"],
+    .unifi-card.layout-dense .content-grid > [data-section="updates"],
+    .unifi-card.layout-dense .content-grid > [data-section="diagnostics"] {
+      grid-column: span 4;
+    }
+
+    .unifi-card.layout-dense .content-grid > [data-section="actions"] {
+      grid-column: span 8;
+    }
+
     .rows.entity-list {
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     }
@@ -703,9 +782,16 @@ export const cardStyles = css`
   }
 
   @container (min-width: 1060px) {
+    .unifi-card {
+      --unifi-layout-column-gap: 18px;
+    }
+
     .content-grid {
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      column-gap: 18px;
+    }
+
+    .unifi-card.layout-dense .content-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 
     .content-grid > [data-section] {
@@ -722,17 +808,51 @@ export const cardStyles = css`
     .content-grid > [data-section="snapshots"] {
       grid-column: span 2;
     }
+
+    .unifi-card.layout-dense .content-grid > [data-section="system"],
+    .unifi-card.layout-dense .content-grid > [data-section="updates"],
+    .unifi-card.layout-dense .content-grid > [data-section="diagnostics"] {
+      grid-column: span 1;
+    }
+
+    .unifi-card.layout-dense .content-grid > [data-section="actions"] {
+      grid-column: span 2;
+    }
   }
 
   @container (max-width: 360px) {
     .metric-grid {
       grid-template-columns: minmax(0, 1fr);
     }
+
+    .entity-row {
+      gap: 8px;
+    }
+
+    .entity-main {
+      gap: 8px;
+      padding: 0 2px;
+    }
+
+    input[type="number"] {
+      width: 68px;
+    }
+
+    .entity-row input[type="text"],
+    .entity-row select {
+      width: min(112px, 100%);
+    }
+
+    .row-control select {
+      width: 112px;
+      max-width: 112px;
+    }
   }
 
   @media (max-width: 520px) {
     .unifi-card {
       padding: 12px;
+      --unifi-layout-section-gap: 10px;
     }
 
     header {
@@ -741,6 +861,10 @@ export const cardStyles = css`
 
     .entity-row {
       flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .entity-main {
       gap: 8px;
     }
 

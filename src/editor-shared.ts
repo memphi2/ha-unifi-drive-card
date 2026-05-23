@@ -5,7 +5,8 @@ type SelectorValueDetail = {
 };
 
 export function checkedFromEvent(event: Event): boolean {
-  return Boolean((event.target as { checked?: boolean }).checked);
+  const source = event.currentTarget || event.target;
+  return Boolean((source as { checked?: boolean }).checked);
 }
 
 export function inputStringFromEvent(event: Event): string {

@@ -1,6 +1,7 @@
 import { html } from "lit";
 import { DEFAULT_SECTIONS, ENTITY_DEFINITIONS } from "./catalog";
 import { entityLabel, localize, sectionLabel } from "./i18n";
+import { switchFormField } from "./editor-form";
 import { checkedFromEvent } from "./editor-shared";
 import type { EntityDefinition, EntityKey, HomeAssistant, SectionId } from "./types";
 
@@ -164,18 +165,13 @@ function sectionToggle(context: EditorOrderingContext, section: SectionId) {
       @drop=${(event: DragEvent) => dropSection(context, section, checked, event)}
     >
       <div class="check switch-row">
-        <ha-switch
-          .checked=${checked}
-          @change=${(event: Event) =>
-            context.toggleSection(section, checkedFromEvent(event))}
-        ></ha-switch>
-        <button
-          class="switch-label"
-          type="button"
-          @click=${() => context.toggleSection(section, !checked)}
-        >
-          ${sectionLabel(section, context.hass)}
-        </button>
+        ${switchFormField(
+          context.hass,
+          sectionLabel(section, context.hass),
+          checked,
+          (event: Event) => context.toggleSection(section, checkedFromEvent(event)),
+          { isLocalizedText: true },
+        )}
       </div>
       ${orderActionButtons({
         moveUpLabel,
@@ -212,18 +208,14 @@ function overviewEntityToggle(
         dropOverviewEntity(context, definition.key, checked, event)}
     >
       <div class="check switch-row">
-        <ha-switch
-          .checked=${checked}
-          @change=${(event: Event) =>
-            context.toggleOverviewEntity(definition.key, checkedFromEvent(event))}
-        ></ha-switch>
-        <button
-          class="switch-label"
-          type="button"
-          @click=${() => context.toggleOverviewEntity(definition.key, !checked)}
-        >
-          ${entityLabel(definition, context.hass)}
-        </button>
+        ${switchFormField(
+          context.hass,
+          entityLabel(definition, context.hass),
+          checked,
+          (event: Event) =>
+            context.toggleOverviewEntity(definition.key, checkedFromEvent(event)),
+          { isLocalizedText: true },
+        )}
       </div>
       ${checked
         ? html`

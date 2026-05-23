@@ -1,10 +1,16 @@
 [
   { "domain": "binary_sensor", "key": "maintenance_active" },
+  { "domain": "binary_sensor", "key": "device_online" },
   { "domain": "binary_sensor", "key": "storage_problem" },
   { "domain": "button", "key": "restart" },
   { "domain": "button", "key": "shutdown" },
+  { "domain": "button", "key": "snapshot_create" },
   { "domain": "button", "key": "wake_on_lan" },
   { "domain": "select", "key": "fan_mode" },
+  { "domain": "select", "key": "snapshot_schedule" },
+  { "domain": "select", "key": "snapshot_weekday" },
+  { "domain": "number", "key": "snapshot_limit" },
+  { "domain": "number", "key": "snapshot_month_day" },
   { "domain": "sensor", "key": "at_risk_disk_count" },
   { "domain": "sensor", "key": "available_storage" },
   { "domain": "sensor", "key": "average_disk_temperature" },
@@ -15,6 +21,7 @@
   { "domain": "sensor", "key": "overall_status" },
   { "domain": "sensor", "key": "pool_count" },
   { "domain": "sensor", "key": "read_throughput" },
+  { "domain": "sensor", "key": "snapshot_inventory" },
   { "domain": "sensor", "key": "system_ip" },
   { "domain": "sensor", "key": "system_status" },
   { "domain": "sensor", "key": "system_uptime" },
@@ -23,6 +30,8 @@
   { "domain": "sensor", "key": "usage_percent" },
   { "domain": "sensor", "key": "used_storage" },
   { "domain": "sensor", "key": "write_throughput" },
+  { "domain": "switch", "key": "snapshot_enabled" },
+  { "domain": "time", "key": "snapshot_schedule_time" },
   { "domain": "update", "key": "drive" },
   { "domain": "update", "key": "unifi_os" }
 ]

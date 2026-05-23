@@ -4,7 +4,7 @@
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/docs/faq/custom_repositories)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-Mushroom-style Lovelace card for the `unifi_drive` Home Assistant integration.
+Mushroom-style Lovelace card for the `unifi_unas` Home Assistant integration.
 It discovers compatible UniFi Drive / UNAS storage, pool, drive, snapshot, system and
 update entities from Home Assistant registry metadata and renders them as one
 compact dashboard card.
@@ -21,7 +21,7 @@ Built with Codex.
 
 ## Highlights
 
-- Automatic discovery for enabled `unifi_drive` entities.
+- Automatic discovery for enabled `unifi_unas` entities.
 - Dynamic grouping for pools, drives, snapshot targets and backup tasks.
 - Safe defaults: shutdown/restart stay hidden until `show_dangerous_actions` is enabled.
 - Width-aware layout: dashboard column changes automatically reorder blocks into vertical or wide views.
@@ -188,5 +188,5 @@ Home Assistant, HACS or Mushroom.
 Third-party names are used only for truthful, descriptive compatibility
 references. `Drive Storage Card` is the user-facing project name; repository,
 custom element and Home Assistant identifiers such as `ha-unifi-drive-card`,
-`unifi-drive-card` and `unifi_drive` are retained for technical compatibility
+`unifi-drive-card` and `unifi_unas` are retained for technical compatibility
 and should not be read as ownership of any third-party mark.

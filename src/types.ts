@@ -1,6 +1,6 @@
 import type { TemplateResult } from "lit";
 
-export const INTEGRATION_DOMAIN = "unifi_drive";
+export const INTEGRATION_DOMAIN = "unifi_unas";
 
 export type EntityDomain =
   | "binary_sensor"
@@ -51,9 +51,20 @@ export interface HassRegistryEntity {
   unique_id?: string | null;
 }
 
+interface HassDevice {
+  area_id?: string | null;
+  disabled_by?: string | null;
+  id?: string;
+  manufacturer?: string | null;
+  model?: string | null;
+  name?: string | null;
+  name_by_user?: string | null;
+}
+
 export interface HomeAssistant {
   states: Record<string, HassEntity>;
   entities?: Record<string, HassRegistryEntity>;
+  devices?: Record<string, HassDevice>;
   locale?: {
     language?: string;
   };

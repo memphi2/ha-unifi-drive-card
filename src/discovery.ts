@@ -1,5 +1,10 @@
-import { ENTITY_DEFINITIONS } from "./catalog";
+import {
+  DYNAMIC_ENTITY_DEFINITIONS,
+  ENTITY_DEFINITIONS,
+  STATIC_ENTITY_DEFINITIONS,
+} from "./catalog";
 import { normalizeDisplayText } from "./display-text";
+import { definitionAliases, definitionIdentityScore } from "./entity-matching";
 import { objectIdFromEntityId, slugify } from "./format";
 import type {
   DiscoveredEntities,
@@ -14,6 +19,11 @@ import type {
   NormalizedUnifiDriveCardConfig,
 } from "./types";
 import { INTEGRATION_DOMAIN } from "./types";
+
+type DiscoveryCandidates = Partial<Record<EntityDomain, string[]>>;
+const DISCOVERY_DOMAIN_SET = new Set<EntityDomain>(
+  ENTITY_DEFINITIONS.map((definition) => definition.domain),
+);
 
 const DYNAMIC_KEY_ALIASES: Record<EntityKey, string[]> = {
   backup_run: ["run_backup", "backup"],
@@ -42,57 +52,76 @@ const DYNAMIC_KEY_ALIASES: Record<EntityKey, string[]> = {
   snapshot_schedule_time: ["schedule_time", "snapshot_schedule_time"],
   snapshot_weekday: ["weekday", "snapshot_weekday"],
 };
+const DYNAMIC_KEY_ALIAS_SLUGS = Object.fromEntries(
+  Object.entries(DYNAMIC_KEY_ALIASES).map(([key, aliases]) => [
+    key,
+    aliases.map(slugify),
+  ]),
+) as Record<string, string[]>;
 
 export function discoverEntities(
   hass: HomeAssistant,
   config: NormalizedUnifiDriveCardConfig,
 ): DiscoveredEntities {
-  const baseEntity = findBaseEntity(hass, config);
+  const states = stateMap(hass);
+  const hiddenEntityKeys = new Set(config.hide_entities);
+  const configuredDeviceId = config.device_id ?? null;
+  const discoveryCandidates = collectDiscoveryCandidates(hass, states, configuredDeviceId);
+  const baseEntity = findBaseEntity(hass, config, discoveryCandidates.sensor ?? []);
   const baseRegistry = registryEntry(hass, baseEntity);
-  const deviceId = config.device_id ?? baseRegistry?.device_id ?? inferredDeviceId(hass);
+  const deviceId = configuredDeviceId ?? baseRegistry?.device_id ?? inferredDeviceId(hass);
+  const domainCandidates =
+    (deviceId ?? null) === configuredDeviceId
+      ? discoveryCandidates
+      : collectDiscoveryCandidates(hass, states, deviceId ?? null);
   const entityIds: Record<EntityKey, string> = {};
   const groups = emptyGroups();
 
-  for (const definition of ENTITY_DEFINITIONS) {
-    if (definition.dynamic || config.hide_entities.includes(definition.key)) {
+  for (const definition of STATIC_ENTITY_DEFINITIONS) {
+    if (hiddenEntityKeys.has(definition.key)) {
       continue;
     }
     const explicit = explicitEntity(config, definition.key, definition.domain);
-    if (explicit) {
-      entityIds[definition.key] = explicit;
+    const explicitEntityId = existingEntity(states, explicit, definition.domain);
+    if (explicitEntityId) {
+      entityIds[definition.key] = explicitEntityId;
       continue;
     }
-    const discovered = discoverEntityForDefinition(hass, definition, deviceId ?? null);
+    const discovered = discoverEntityForDefinition(
+      hass,
+      definition,
+      deviceId ?? null,
+      domainCandidates[definition.domain] ?? [],
+    );
     if (discovered) {
       entityIds[definition.key] = discovered;
     }
   }
 
-  for (const [entityId, state] of Object.entries(hass.states)) {
-    const registry = registryEntry(hass, entityId);
-    if (!isAutoDiscoverable(hass, entityId)) {
+  for (const definition of DYNAMIC_ENTITY_DEFINITIONS) {
+    if (hiddenEntityKeys.has(definition.key)) {
       continue;
     }
-    if (!isIntegrationEntity(hass, entityId)) {
-      continue;
-    }
-    if (deviceId && registry?.device_id && registry.device_id !== deviceId) {
-      continue;
-    }
-    const definition = dynamicDefinitionForEntity(entityId, state, registry);
-    if (!definition || config.hide_entities.includes(definition.key)) {
-      continue;
-    }
-    const group = groupForEntity(entityId, state, registry, definition);
-    if (!group) {
-      continue;
-    }
-    const existing = groups[group.kind].find((candidate) => candidate.id === group.id);
-    if (existing) {
-      existing.entityIds[definition.key] = entityId;
-    } else {
-      group.entityIds[definition.key] = entityId;
-      groups[group.kind].push(group);
+    for (const entityId of domainCandidates[definition.domain] ?? []) {
+      const state = states[entityId];
+      if (!state) {
+        continue;
+      }
+      const registry = registryEntry(hass, entityId);
+      if (!dynamicDefinitionMatches(entityId, state, registry, definition)) {
+        continue;
+      }
+      const group = groupForEntity(entityId, state, registry, definition);
+      if (!group) {
+        continue;
+      }
+      const existing = groups[group.kind].find((candidate) => candidate.id === group.id);
+      if (existing) {
+        existing.entityIds[definition.key] = entityId;
+      } else {
+        group.entityIds[definition.key] = entityId;
+        groups[group.kind].push(group);
+      }
     }
   }
 
@@ -138,9 +167,18 @@ function explicitEntity(
   return undefined;
 }
 
-function isAutoDiscoverable(hass: HomeAssistant, entityId: string): boolean {
-  const registry = registryEntry(hass, entityId);
-  return !registry?.disabled_by && !registry?.hidden_by && registry?.hidden !== true;
+function existingEntity(
+  states: Record<string, HassEntity>,
+  entityId: string | undefined,
+  domain?: EntityDomain,
+): string | undefined {
+  if (!entityId || !states[entityId]) {
+    return undefined;
+  }
+  if (domain && !entityId.startsWith(`${domain}.`)) {
+    return undefined;
+  }
+  return entityId;
 }
 
 function emptyGroups(): Record<EntityGroupKind, EntityGroup[]> {
@@ -152,14 +190,53 @@ function emptyGroups(): Record<EntityGroupKind, EntityGroup[]> {
   };
 }
 
+function stateMap(hass: HomeAssistant): Record<string, HassEntity> {
+  return hass.states && typeof hass.states === "object" && !Array.isArray(hass.states)
+    ? hass.states
+    : {};
+}
+
+function collectDiscoveryCandidates(
+  hass: HomeAssistant,
+  states: Record<string, HassEntity>,
+  deviceId: string | null,
+): DiscoveryCandidates {
+  const candidates: DiscoveryCandidates = {};
+  for (const entityId of Object.keys(states)) {
+    const domain = entityDomainFromEntityId(entityId);
+    if (!domain) {
+      continue;
+    }
+    const registry = registryEntry(hass, entityId);
+    if (
+      registry?.platform !== INTEGRATION_DOMAIN ||
+      registry.disabled_by ||
+      registry.hidden_by ||
+      registry.hidden === true
+    ) {
+      continue;
+    }
+    if (deviceId && registry.device_id !== deviceId) {
+      continue;
+    }
+    (candidates[domain] ??= []).push(entityId);
+  }
+  return candidates;
+}
+
+function entityDomainFromEntityId(entityId: string): EntityDomain | undefined {
+  const [domain] = entityId.split(".", 1);
+  return domain && DISCOVERY_DOMAIN_SET.has(domain as EntityDomain)
+    ? (domain as EntityDomain)
+    : undefined;
+}
+
 function findBaseEntity(
   hass: HomeAssistant,
   config: NormalizedUnifiDriveCardConfig,
+  candidates: readonly string[],
 ): string | undefined {
   const configuredDevice = config.device_id;
-  const candidates = Object.keys(hass.states)
-    .filter((entityId) => isAutoDiscoverable(hass, entityId))
-    .filter((entityId) => isIntegrationEntity(hass, entityId));
   const scored = candidates
     .map((entityId) => {
       const registry = registryEntry(hass, entityId);
@@ -168,17 +245,14 @@ function findBaseEntity(
       }
       const objectId = objectIdFromEntityId(entityId);
       const translationKey = registry?.translation_key ?? "";
-      let score = registry?.platform === INTEGRATION_DOMAIN ? 50 : 0;
+      let score = 50;
       if (registry?.device_id) {
         score += 20;
       }
       if (["system_status", "overall_status", "usage_percent"].includes(translationKey)) {
         score += 60;
       }
-      if (
-        hasBaseEntityEvidence(objectId) ||
-        hasBaseEntityEvidence(hass.states[entityId]?.attributes.friendly_name)
-      ) {
+      if (hasBaseEntityEvidence(objectId)) {
         score += 20;
       }
       return { entityId, score };
@@ -199,7 +273,7 @@ function hasBaseEntityEvidence(value: unknown): boolean {
   if (typeof value !== "string") {
     return false;
   }
-  return /(^|_)(system_status|overall_status|usage_percent|unifi_drive|unas)($|_)/.test(
+  return /(^|_)(system_status|overall_status|usage_percent|unifi_unas|unas)($|_)/.test(
     slugify(value),
   );
 }
@@ -208,15 +282,10 @@ function discoverEntityForDefinition(
   hass: HomeAssistant,
   definition: EntityDefinition,
   deviceId: string | null,
+  candidates: readonly string[],
 ): string | undefined {
   let best: { entityId: string; score: number } | undefined;
-  for (const entityId of Object.keys(hass.states)) {
-    if (!entityId.startsWith(`${definition.domain}.`)) {
-      continue;
-    }
-    if (!isAutoDiscoverable(hass, entityId)) {
-      continue;
-    }
+  for (const entityId of candidates) {
     const score = entityScore(hass, entityId, definition, deviceId);
     if (score <= 0) {
       continue;
@@ -235,47 +304,13 @@ function entityScore(
   deviceId: string | null,
 ): number {
   const registry = registryEntry(hass, entityId);
-  const objectId = objectIdFromEntityId(entityId);
-  const aliases = definitionAliases(definition);
+  const semanticScore = definitionIdentityScore(definition, entityId, registry);
   let score = 0;
-  let matched = false;
 
-  if (registry?.platform === INTEGRATION_DOMAIN) {
-    score += 40;
-  }
   if (deviceId && registry?.device_id === deviceId) {
     score += 60;
   }
-  if (registry?.translation_key && aliases.includes(slugify(registry.translation_key))) {
-    score += 90;
-    matched = true;
-  }
-  if (registry?.unique_id && aliases.some((alias) => registry.unique_id?.endsWith(`_${alias}`))) {
-    score += 75;
-    matched = true;
-  }
-  if (aliases.some((alias) => objectId === alias || objectId.endsWith(`_${alias}`))) {
-    score += 45;
-    matched = true;
-  }
-
-  const friendly = hass.states[entityId]?.attributes.friendly_name;
-  if (typeof friendly === "string" && aliases.some((alias) => slugify(friendly).includes(alias))) {
-    score += 15;
-    matched = true;
-  }
-  return matched ? score : 0;
-}
-
-function dynamicDefinitionForEntity(
-  entityId: string,
-  state: HassEntity,
-  registry?: HassRegistryEntity,
-): EntityDefinition | undefined {
-  const dynamicDefinitions = ENTITY_DEFINITIONS.filter((definition) => definition.dynamic);
-  return dynamicDefinitions.find((definition) =>
-    dynamicDefinitionMatches(entityId, state, registry, definition),
-  );
+  return semanticScore > 0 ? score + semanticScore : 0;
 }
 
 function dynamicDefinitionMatches(
@@ -287,24 +322,22 @@ function dynamicDefinitionMatches(
   if (!entityId.startsWith(`${definition.domain}.`)) {
     return false;
   }
-  if (definition.dynamic && !hasDynamicKindEvidence(entityId, state, registry, definition.dynamic)) {
+  const aliases = definitionAliases(definition);
+  if (definition.dynamic && !hasDynamicKindEvidence(entityId, state, registry, definition.dynamic, aliases)) {
     return false;
   }
-  const aliases = definitionAliases(definition);
-  const extraAliases = DYNAMIC_KEY_ALIASES[definition.key] ?? [];
+  const extraAliases = DYNAMIC_KEY_ALIAS_SLUGS[definition.key] ?? [];
+  const allAliases = [...aliases, ...extraAliases];
   const candidates = [
     objectIdFromEntityId(entityId),
     registry?.translation_key,
     registry?.unique_id,
-    state.attributes.friendly_name,
   ]
     .filter((value): value is string => typeof value === "string")
     .map(slugify);
 
   return candidates.some((candidate) =>
-    [...aliases, ...extraAliases.map(slugify)].some((alias) =>
-      slugContainsAlias(candidate, alias),
-    ),
+    allAliases.some((alias) => slugContainsAlias(candidate, alias)),
   );
 }
 
@@ -322,6 +355,7 @@ function hasDynamicKindEvidence(
   state: HassEntity,
   registry: HassRegistryEntity | undefined,
   kind: EntityGroupKind,
+  aliases: string[] = [],
 ): boolean {
   if (attributeText(state, groupIdAttribute(kind)) || attributeText(state, groupNameAttribute(kind))) {
     return true;
@@ -332,6 +366,9 @@ function hasDynamicKindEvidence(
   }
   const objectId = objectIdFromEntityId(entityId);
   if (objectId.startsWith(`${kind}_`) || objectId.includes(`_${kind}_`)) {
+    return true;
+  }
+  if (kind === "snapshot" && aliases.some((alias) => objectId === alias)) {
     return true;
   }
   if (kind === "drive") {
@@ -350,10 +387,12 @@ function groupForEntity(
   if (!kind) {
     return undefined;
   }
+  const attributeId = attributeText(state, groupIdAttribute(kind));
+  const uniqueId = groupIdFromUniqueId(registry?.unique_id, kind, definition.key);
+  const objectId = groupIdFromObjectId(entityId, definition.key);
   const id =
-    attributeText(state, groupIdAttribute(kind)) ??
-    groupIdFromUniqueId(registry?.unique_id, kind, definition.key) ??
-    groupIdFromObjectId(entityId, definition.key);
+    attributeId ??
+    (kind === "snapshot" ? objectId ?? uniqueId : uniqueId ?? objectId);
   if (!id) {
     return undefined;
   }
@@ -453,19 +492,14 @@ function groupIdFromObjectId(entityId: string, key: EntityKey): string | undefin
   const objectId = objectIdFromEntityId(entityId);
   const aliases = [key, ...(DYNAMIC_KEY_ALIASES[key] ?? [])].map(slugify);
   for (const alias of aliases) {
+    if (objectId === alias) {
+      return objectId;
+    }
     if (objectId.endsWith(`_${alias}`)) {
       return objectId.slice(0, -alias.length - 1);
     }
   }
   return undefined;
-}
-
-function definitionAliases(definition: EntityDefinition): string[] {
-  return [
-    definition.key,
-    slugify(definition.label),
-    ...(definition.aliases ?? []),
-  ].map(slugify);
 }
 
 function registryEntry(
@@ -476,22 +510,6 @@ function registryEntry(
     return undefined;
   }
   return hass.entities?.[entityId];
-}
-
-function isIntegrationEntity(hass: HomeAssistant, entityId: string): boolean {
-  const registry = registryEntry(hass, entityId);
-  if (registry?.platform === INTEGRATION_DOMAIN) {
-    return true;
-  }
-  const state = hass.states[entityId];
-  const objectId = objectIdFromEntityId(entityId);
-  const friendly = String(state?.attributes.friendly_name ?? "");
-  return hasIntegrationSlug(objectId) || hasIntegrationSlug(friendly);
-}
-
-function hasIntegrationSlug(value: string): boolean {
-  const slug = slugify(value);
-  return /(^|_)unifi_drive($|_)/.test(slug) || /(^|_)unas($|_)/.test(slug);
 }
 
 function attributeText(state: HassEntity, key: string): string | undefined {

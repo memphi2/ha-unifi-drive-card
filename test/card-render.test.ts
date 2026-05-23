@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { UnifiDriveCard } from "../src/unifi-drive-card";
-import type { HomeAssistant } from "../src/types";
+import { INTEGRATION_DOMAIN, type HomeAssistant } from "../src/types";
 
 describe("UnifiDriveCard rendering", () => {
   it("renders aggregate storage, dynamic groups and hides dangerous actions by default", async () => {
@@ -15,6 +15,7 @@ describe("UnifiDriveCard rendering", () => {
     expect(rendered).toContain("Disk 1");
     expect(rendered).toContain("Shared");
     expect(rendered).toContain("Fan mode");
+    expect(rendered).toContain("Device connection");
     expect(rendered).not.toContain("Shut down");
   });
 
@@ -279,6 +280,9 @@ function hassFixture(): HomeAssistant {
     "binary_sensor.problem": entity("off", {
       friendly_name: "UniFi Drive Storage Problem",
     }),
+    "binary_sensor.device_connection": entity("on", {
+      friendly_name: "Device connection",
+    }),
     "sensor.pool_status": entity("healthy", {
       pool_key: "pool-1",
       pool_name: "Pool 1",
@@ -320,6 +324,7 @@ function hassFixture(): HomeAssistant {
       "sensor.usage": registry("usage_percent"),
       "sensor.used": registry("used_storage"),
       "binary_sensor.problem": registry("storage_problem"),
+      "binary_sensor.device_connection": registry("device_online"),
       "sensor.pool_status": registry("pool_status"),
       "sensor.drive_temperature": registry("drive_temperature"),
       "switch.snapshots": registry("snapshot_enabled"),
@@ -338,7 +343,7 @@ function entity(state: string, attributes: Record<string, unknown>) {
 
 function registry(translationKey: string) {
   return {
-    platform: "unifi_drive",
+    platform: INTEGRATION_DOMAIN,
     device_id: "dev-a",
     config_entry_id: "entry-a",
     translation_key: translationKey,

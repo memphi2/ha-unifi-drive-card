@@ -69,6 +69,10 @@ const html = `<!doctype html>
           state: "off",
           attributes: { friendly_name: "UniFi Drive Storage Problem" }
         },
+        "binary_sensor.device_connection": {
+          state: "on",
+          attributes: { friendly_name: "Device connection" }
+        },
         "sensor.pool_status": {
           state: "healthy",
           attributes: {
@@ -124,17 +128,18 @@ const html = `<!doctype html>
         }
       };
       const registry = {
-        "sensor.system_status": { platform: "unifi_drive", device_id: "dev-a", config_entry_id: "entry-a", translation_key: "system_status", unique_id: "dev-a_system_status" },
-        "sensor.usage": { platform: "unifi_drive", device_id: "dev-a", config_entry_id: "entry-a", translation_key: "usage_percent", unique_id: "dev-a_usage_percent" },
-        "sensor.used": { platform: "unifi_drive", device_id: "dev-a", config_entry_id: "entry-a", translation_key: "used_storage", unique_id: "dev-a_used_storage" },
-        "binary_sensor.problem": { platform: "unifi_drive", device_id: "dev-a", config_entry_id: "entry-a", translation_key: "storage_problem", unique_id: "dev-a_storage_problem" },
-        "sensor.pool_status": { platform: "unifi_drive", device_id: "dev-a", config_entry_id: "entry-a", translation_key: "pool_status", unique_id: "dev-a_pool-1_pool_status" },
-        "sensor.drive_temperature": { platform: "unifi_drive", device_id: "dev-a", config_entry_id: "entry-a", translation_key: "drive_temperature", unique_id: "dev-a_pool-1_sda_drive_temperature" },
-        "switch.snapshots": { platform: "unifi_drive", device_id: "dev-a", config_entry_id: "entry-a", translation_key: "snapshot_enabled", unique_id: "dev-a_snapshot_shared_main_enabled" },
-        "select.fan": { platform: "unifi_drive", device_id: "dev-a", config_entry_id: "entry-a", translation_key: "fan_mode", unique_id: "dev-a_fan_mode" },
-        "button.shutdown": { platform: "unifi_drive", device_id: "dev-a", config_entry_id: "entry-a", translation_key: "shutdown", unique_id: "dev-a_shutdown" },
-        "update.unifi_os": { platform: "unifi_drive", device_id: "dev-a", config_entry_id: "entry-a", translation_key: "unifi_os", unique_id: "dev-a_unifi_os_update" },
-        "update.drive": { platform: "unifi_drive", device_id: "dev-a", config_entry_id: "entry-a", translation_key: "drive", unique_id: "dev-a_drive_update" }
+        "sensor.system_status": { platform: "unifi_unas", device_id: "dev-a", config_entry_id: "entry-a", translation_key: "system_status", unique_id: "dev-a_system_status" },
+        "sensor.usage": { platform: "unifi_unas", device_id: "dev-a", config_entry_id: "entry-a", translation_key: "usage_percent", unique_id: "dev-a_usage_percent" },
+        "sensor.used": { platform: "unifi_unas", device_id: "dev-a", config_entry_id: "entry-a", translation_key: "used_storage", unique_id: "dev-a_used_storage" },
+        "binary_sensor.problem": { platform: "unifi_unas", device_id: "dev-a", config_entry_id: "entry-a", translation_key: "storage_problem", unique_id: "dev-a_storage_problem" },
+        "binary_sensor.device_connection": { platform: "unifi_unas", device_id: "dev-a", config_entry_id: "entry-a", translation_key: "device_online", unique_id: "dev-a_device_online" },
+        "sensor.pool_status": { platform: "unifi_unas", device_id: "dev-a", config_entry_id: "entry-a", translation_key: "pool_status", unique_id: "dev-a_pool-1_pool_status" },
+        "sensor.drive_temperature": { platform: "unifi_unas", device_id: "dev-a", config_entry_id: "entry-a", translation_key: "drive_temperature", unique_id: "dev-a_pool-1_sda_drive_temperature" },
+        "switch.snapshots": { platform: "unifi_unas", device_id: "dev-a", config_entry_id: "entry-a", translation_key: "snapshot_enabled", unique_id: "dev-a_snapshot_shared_main_enabled" },
+        "select.fan": { platform: "unifi_unas", device_id: "dev-a", config_entry_id: "entry-a", translation_key: "fan_mode", unique_id: "dev-a_fan_mode" },
+        "button.shutdown": { platform: "unifi_unas", device_id: "dev-a", config_entry_id: "entry-a", translation_key: "shutdown", unique_id: "dev-a_shutdown" },
+        "update.unifi_os": { platform: "unifi_unas", device_id: "dev-a", config_entry_id: "entry-a", translation_key: "unifi_os", unique_id: "dev-a_unifi_os_update" },
+        "update.drive": { platform: "unifi_unas", device_id: "dev-a", config_entry_id: "entry-a", translation_key: "drive", unique_id: "dev-a_drive_update" }
       };
       const card = document.createElement("unifi-drive-card");
       card.hass = {

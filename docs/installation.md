@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Home Assistant with dashboards enabled.
-- The `unifi_drive` integration is installed and exposes entities.
+- The `unifi_unas` integration is installed and exposes entities.
 - Browser cache can be refreshed after updates.
 
 ## HACS

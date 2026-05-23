@@ -101,7 +101,7 @@ and device fields plus JSON service data.
 
 Discovery prefers Home Assistant registry metadata:
 
-- platform `unifi_drive`
+- platform `unifi_unas`
 - enabled and visible registry entries
 - same device as `device_id`
 - known translation keys and unique ID suffixes

@@ -56,6 +56,12 @@ export function iconVisualState(
 
 function iconTone(definition: EntityDefinition, state?: HassEntity): IconTone {
   const key = definition.key;
+  if (key === "device_online") {
+    if (state && !isUnavailable(state)) {
+      return booleanState(state) ? "ok" : "alert";
+    }
+    return "neutral";
+  }
   if (isAttentionDefinition(definition)) {
     if (state && isAttentionState(definition, state)) {
       return "alert";
@@ -92,7 +98,7 @@ function iconTone(definition: EntityDefinition, state?: HassEntity): IconTone {
   if (key.includes("ip") || key.includes("throughput") || definition.icon.includes("ethernet")) {
     return "network";
   }
-  if (["fan_mode", "reboot", "shutdown", "wake_on_lan", "system_status"].includes(key)) {
+  if (["fan_mode", "reboot", "shutdown", "wake_on_lan", "system_status", "device_online"].includes(key)) {
     return "system";
   }
   if (definition.domain === "button") {
@@ -107,6 +113,9 @@ function isActiveIcon(definition: EntityDefinition, state: HassEntity): boolean 
   }
   if (definition.domain === "update") {
     return state.state === "on" || isHealthyState(state);
+  }
+  if (definition.key === "device_online") {
+    return !isUnavailable(state);
   }
   if (definition.domain === "switch" || definition.domain === "binary_sensor") {
     return booleanState(state);
@@ -126,6 +135,9 @@ function shouldAnimateIcon(definition: EntityDefinition, state?: HassEntity): bo
   }
   if (definition.domain === "update") {
     return state.state === "on";
+  }
+  if (definition.key === "device_online") {
+    return !booleanState(state);
   }
   if (definition.domain === "switch" || definition.domain === "binary_sensor") {
     return booleanState(state);
