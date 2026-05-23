@@ -1,18 +1,58 @@
 # Configuration
 
-The card works from YAML or the Home Assistant visual editor.
+The card works from YAML and from the Home Assistant visual editor.
+For most setups, start minimal and add options only when needed.
 
-## Minimal
+## Start Minimal
 
 ```yaml
 type: custom:unifi-drive-card
 ```
 
-For multiple UniFi Drive devices, set `device_id`:
+For multiple UniFi Drive/UNAS devices, set `device_id`:
 
 ```yaml
 type: custom:unifi-drive-card
 device_id: your_home_assistant_device_id
+```
+
+## Common Recipes
+
+Show only the sections you care about:
+
+```yaml
+type: custom:unifi-drive-card
+sections:
+  - overview
+  - storage
+  - drives
+  - updates
+```
+
+Keep compact mode (default) and hide noisy entities:
+
+```yaml
+type: custom:unifi-drive-card
+compact: true
+hide_entities:
+  - backup_task_legacy
+  - fan_mode
+```
+
+Override incorrect discovery matches:
+
+```yaml
+type: custom:unifi-drive-card
+entities:
+  usage_percent: sensor.custom_unas_usage
+  fan_mode: select.custom_unas_fan_mode
+```
+
+Enable restart/shutdown actions intentionally:
+
+```yaml
+type: custom:unifi-drive-card
+show_dangerous_actions: true
 ```
 
 ## Full Example
@@ -55,7 +95,7 @@ double_tap_action:
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
 | `type` | string | required | Must be `custom:unifi-drive-card`. |
-| `device_id` | string | required | Restricts discovery to one Home Assistant device. |
+| `device_id` | string | optional | Restricts discovery to one Home Assistant device (recommended for multi-device setups). |
 | `name` | string | `UniFi Drive` | Card title. |
 | `compact` | boolean | `true` | Reduces vertical spacing. Set to `false` for the roomier layout. |
 | `show_unavailable` | boolean | `false` | Shows unavailable entities. |
@@ -78,6 +118,9 @@ browser viewport. Narrow dashboard columns render vertically. Wider dashboard
 cards reorder section blocks so storage, system and update blocks move earlier
 into a horizontal layout, with multi-column entity rows and wider dynamic group
 sections where space allows.
+
+This means you can resize the dashboard column and the card will adapt both
+width and block arrangement automatically.
 
 Service actions from the visual editor are written in Home Assistant's current
 `perform-action` format. The editor also supports service target entity, area
@@ -116,3 +159,10 @@ entities:
 
 Dynamic pools, drives, snapshots and backup tasks are grouped from entity
 attributes such as `pool_key`, `drive_key`, `target_key` and `task_id`.
+
+## Recommended Order
+
+1. Start with minimal config.
+2. Add `device_id` if you have more than one UniFi device.
+3. Use `sections` and `hide_entities` to simplify the card.
+4. Add `entities` overrides only for keys that discovery cannot map correctly.
