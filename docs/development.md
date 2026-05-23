@@ -24,6 +24,7 @@ npm run build
 npm run compat
 npm run license-check
 npm run anonymization-check
+npm run anonymization-check:github
 npm run release-check
 npm run security-audit
 npm run check
@@ -39,6 +40,11 @@ renders, groups dynamic UniFi Drive entities, hides dangerous actions by
 default, validates overview tile columns, flows from a narrow dashboard column
 into a reordered wide horizontal layout, and dispatches tap, double-tap and hold
 actions.
+
+`npm run anonymization-check:github` scans GitHub release bodies, issue/PR
+titles and bodies, comments, and recent commit messages for private LAN IPs and
+literal secret patterns. It requires `GH_REPO` and `GITHUB_TOKEN` (or
+`GH_TOKEN`) when run in required mode.
 
 ## Live Home Assistant Smoke
 
@@ -78,7 +84,8 @@ npm run smoke:install-uninstall
 | `scripts/render_smoke.mjs` | Browser smoke. |
 | `scripts/ha_card_smoke.mjs` | Live HA smoke and install/uninstall helper. |
 | `scripts/anonymization_check.mjs` | Guards committed text files against private LAN addresses and literal secrets. |
-| `scripts/release_check.mjs` | Validates 0.1.0 release metadata, notes and compliance gates. |
+| `scripts/anonymization_check_github.mjs` | Scans GitHub release/issues/PR/comment surfaces for private LAN addresses and secret-like literals. |
+| `scripts/release_check.mjs` | Validates release metadata, notes and compliance gates. |
 
 ## Review Checklist
 

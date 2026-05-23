@@ -147,6 +147,22 @@ npm run anonymization-check
 npm run security-audit
 ```
 
+Optional GitHub-surface anonymization check:
+
+```bash
+GH_REPO=<owner/repo> \
+GITHUB_TOKEN='<github-token>' \
+npm run anonymization-check:github
+```
+
+Optional additional runtime blocklist (for user/org-specific anonymization
+terms) without storing those terms in the repository:
+
+```bash
+ANONYMIZATION_BLOCKLIST_TERMS='<term1>,<term2>' npm run anonymization-check
+ANONYMIZATION_BLOCKLIST_TERMS='<term1>,<term2>' GH_REPO=<owner/repo> GITHUB_TOKEN='<github-token>' npm run anonymization-check:github
+```
+
 Live Home Assistant smoke uses environment variables only:
 
 ```bash

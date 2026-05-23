@@ -14,6 +14,7 @@
   },
   "homepage": "https://github.com/memphi2/ha-unifi-drive-card#readme",
   "scripts": {
+    "anonymization-check:github": "node scripts/anonymization_check_github.mjs",
     "build": "vite build",
     "anonymization-check": "node scripts/anonymization_check.mjs",
     "check": "npm run typecheck && npm run lint && npm run test && npm run build && npm run compat && npm run license-check && npm run anonymization-check && npm run release-check && npm run security-audit",
