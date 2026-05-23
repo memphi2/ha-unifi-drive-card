@@ -65,6 +65,29 @@ describe("UnifiDriveCard rendering", () => {
     });
   });
 
+  it("updates busy row controls when busy action keys change", async () => {
+    const card = await renderCard(hassFixture(), {
+      sections: ["snapshots"],
+    });
+
+    const switchChip = card.shadowRoot?.querySelector(
+      '[data-entity-key="snapshot_enabled"] button.chip',
+    ) as HTMLButtonElement;
+    expect(switchChip.disabled).toBe(false);
+    expect(switchChip.getAttribute("aria-busy")).toBe("false");
+
+    (card as unknown as { _busyActionKeys: Set<string> })._busyActionKeys = new Set([
+      "switch.snapshots:turn_off",
+    ]);
+    await card.updateComplete;
+
+    const busySwitchChip = card.shadowRoot?.querySelector(
+      '[data-entity-key="snapshot_enabled"] button.chip',
+    ) as HTMLButtonElement;
+    expect(busySwitchChip.disabled).toBe(true);
+    expect(busySwitchChip.getAttribute("aria-busy")).toBe("true");
+  });
+
   it("renders precise time controls and numeric bounds", async () => {
     const card = await renderCard(hassFixture(), {
       sections: ["snapshots"],

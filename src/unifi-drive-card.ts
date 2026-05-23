@@ -189,7 +189,12 @@ export class UnifiDriveCard extends LitElement {
     entityFor: EntityResolver,
     discovered: DiscoveredEntities,
   ): RenderableSectionEntry[] {
-    const signature = renderSectionsSignature(this._config, discovered, this.hass);
+    const signature = renderSectionsSignature(
+      this._config,
+      discovered,
+      this.hass,
+      this._busyActionKeys,
+    );
     if (this._sectionRenderCache?.signature === signature) {
       return this._sectionRenderCache.sections;
     }
@@ -803,6 +808,7 @@ function renderSectionsSignature(
   config: NormalizedUnifiDriveCardConfig,
   discovered: DiscoveredEntities,
   hass: HomeAssistant | undefined,
+  busyActionKeys: ReadonlySet<string>,
 ): string {
   return JSON.stringify({
     sections: config.sections,
@@ -814,6 +820,7 @@ function renderSectionsSignature(
     displayButtons: config.show_display_buttons,
     discovered: objectIdentityToken(discovered),
     states: objectIdentityToken(hass?.states),
+    busy: [...busyActionKeys].sort(),
   });
 }
 
