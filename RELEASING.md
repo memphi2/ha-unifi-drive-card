@@ -9,11 +9,12 @@ npm run check
 npm run render-smoke
 ```
 
-`npm run check` includes the 0.1.0 release metadata gate:
+`npm run check` includes the release metadata gate for the current
+`package.json` version:
 
-- `package.json` and `package-lock.json` version `0.1.0`
+- `package.json` and `package-lock.json` are on the same version
 - HACS filename and trademark-neutral display name
-- tag-specific release notes at `release-notes/v0.1.0.md`
+- tag-specific release notes at `release-notes/vX.Y.Z.md`
 - MIT license metadata and bundled Lit runtime notices
 - legal/trademark disclaimer coverage
 - release workflow upload list for JS, sourcemap and ZIP assets
@@ -35,8 +36,8 @@ After `main` is green, release notes are current and the release owner has
 approved publication:
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag vX.Y.Z
+git push origin vX.Y.Z
 ```
 
 The release workflow runs validation, packages `ha-unifi-drive-card.js`,
