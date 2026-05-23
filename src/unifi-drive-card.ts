@@ -821,7 +821,21 @@ function renderSectionsSignature(
     discovered: objectIdentityToken(discovered),
     states: objectIdentityToken(hass?.states),
     busy: [...busyActionKeys].sort(),
+    locale: localeSignature(hass),
+    formatState: objectIdentityToken(hass?.formatEntityState),
+    formatName: objectIdentityToken(hass?.formatEntityName),
   });
+}
+
+function localeSignature(hass: HomeAssistant | undefined): string {
+  if (!hass?.locale || typeof hass.locale !== "object") {
+    return "";
+  }
+  try {
+    return JSON.stringify(hass.locale);
+  } catch {
+    return "";
+  }
 }
 
 const OBJECT_TOKENS = new WeakMap<object, number>();

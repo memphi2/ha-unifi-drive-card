@@ -88,6 +88,29 @@ describe("UnifiDriveCard rendering", () => {
     expect(busySwitchChip.getAttribute("aria-busy")).toBe("true");
   });
 
+  it("re-renders section labels when locale changes with stable states", async () => {
+    const hassEn = {
+      ...hassFixture(),
+      locale: { language: "en" },
+    };
+    const card = await renderCard(hassEn, {
+      sections: ["storage"],
+    });
+    expect(visibleText(card)).toContain("Storage");
+
+    card.hass = {
+      ...hassEn,
+      locale: { language: "de" },
+      states: hassEn.states,
+      entities: hassEn.entities,
+    };
+    await card.updateComplete;
+
+    const text = visibleText(card);
+    expect(text).toContain("Speicher");
+    expect(text).not.toContain("Storage");
+  });
+
   it("renders precise time controls and numeric bounds", async () => {
     const card = await renderCard(hassFixture(), {
       sections: ["snapshots"],
