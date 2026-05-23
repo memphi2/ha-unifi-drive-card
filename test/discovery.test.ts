@@ -208,6 +208,27 @@ describe("discoverEntities", () => {
 
     expect(discovered.entityIds.usage_percent).toBe("sensor.custom_usage");
   });
+
+  it("keeps entities without registry device_id when device_id is configured", () => {
+    const hass: HomeAssistant = {
+      states: {
+        "sensor.unas_system_status": state("online"),
+        "sensor.unas_usage_no_device": state("48"),
+        "sensor.unas_usage_other_device": state("22"),
+      },
+      entities: {
+        "sensor.unas_system_status": registry("dev-a", "system_status"),
+        "sensor.unas_usage_no_device": registry(undefined, "usage_percent"),
+        "sensor.unas_usage_other_device": registry("dev-b", "usage_percent"),
+      },
+      callService: async () => undefined,
+    };
+
+    const discovered = discoverEntities(hass, normalizeConfig({ device_id: "dev-a" }));
+
+    expect(discovered.entityIds.usage_percent).toBe("sensor.unas_usage_no_device");
+    expect(discovered.entityIds.system_status).toBe("sensor.unas_system_status");
+  });
 });
 
 function state(value: string) {
@@ -218,7 +239,7 @@ function entity(value: string, attributes: Record<string, unknown>) {
   return { state: value, attributes };
 }
 
-function registry(deviceId: string, translationKey?: string, uniqueId?: string) {
+function registry(deviceId?: string, translationKey?: string, uniqueId?: string) {
   return {
     config_entry_id: "entry-a",
     device_id: deviceId,

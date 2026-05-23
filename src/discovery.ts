@@ -216,7 +216,7 @@ function collectDiscoveryCandidates(
     ) {
       continue;
     }
-    if (deviceId && registry.device_id !== deviceId) {
+    if (deviceId && registry.device_id && registry.device_id !== deviceId) {
       continue;
     }
     (candidates[domain] ??= []).push(entityId);
@@ -240,7 +240,7 @@ function findBaseEntity(
   const scored = candidates
     .map((entityId) => {
       const registry = registryEntry(hass, entityId);
-      if (configuredDevice && registry?.device_id !== configuredDevice) {
+      if (configuredDevice && registry?.device_id && registry.device_id !== configuredDevice) {
         return { entityId, score: -1 };
       }
       const objectId = objectIdFromEntityId(entityId);
