@@ -6,6 +6,21 @@
 
 - None pending.
 
+## 0.2.3 - 2026-05-23
+
+### Changed
+
+- Fixed section render-cache invalidation for busy action states so row/button
+  busy and disabled indicators stay in sync during service calls.
+- Kept entities without registry `device_id` discoverable when a card `device_id`
+  is configured, filtering only explicit device mismatches.
+- Extended section cache signatures with locale and formatter dependencies so
+  language/format updates re-render immediately.
+- Improved user-facing documentation with clearer setup, configuration recipes
+  and troubleshooting checklists.
+- Completed CI, compatibility, anonymization, security audit, browser smoke and
+  HA install/uninstall smoke validation before release publication.
+
 ## 0.2.2 - 2026-05-19
 
 ### Changed

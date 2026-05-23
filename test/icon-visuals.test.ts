@@ -106,6 +106,19 @@ describe("icon visuals", () => {
     });
   });
 
+  it("renders device connection online as green and offline as red", () => {
+    expect(iconVisualState(definition("device_online"), entity("on"))).toMatchObject({
+      tone: "ok",
+      active: true,
+      animated: false,
+    });
+    expect(iconVisualState(definition("device_online"), entity("off"))).toMatchObject({
+      tone: "alert",
+      active: true,
+      animated: true,
+    });
+  });
+
   it("keeps routine metrics calm and only animates active throughput", () => {
     expect(iconVisualState(definition("usage_percent"), entity("42"))).toMatchObject({
       tone: "storage",

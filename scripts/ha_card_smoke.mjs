@@ -10,6 +10,7 @@ const args = new Set(process.argv.slice(2));
 const shouldDeploy = args.has("--deploy");
 const shouldUninstall = args.has("--uninstall");
 const baseUrl = (process.env.HA_TEST_URL || DEFAULT_URL).replace(/\/$/, "");
+const accessToken = process.env.HA_TEST_TOKEN || "";
 const username = process.env.HA_TEST_USERNAME || "";
 const password = process.env.HA_TEST_PASSWORD || "";
 const deployDir = process.env.HA_CARD_DEPLOY_DIR || "";
@@ -42,8 +43,14 @@ async function requestJson(url, options = {}) {
 }
 
 async function login() {
+  if (accessToken) {
+    return {
+      accessToken,
+      refreshToken: "",
+    };
+  }
   if (!username || !password) {
-    throw new Error("HA_TEST_USERNAME and HA_TEST_PASSWORD are required");
+    throw new Error("HA_TEST_TOKEN or HA_TEST_USERNAME and HA_TEST_PASSWORD are required");
   }
   const clientId = "http://localhost/";
   const flow = await requestJson(`${baseUrl}/auth/login_flow`, {
@@ -218,7 +225,7 @@ async function registryEntities() {
     const registryPath = path.join(configDir, ".storage", "core.entity_registry");
     const registry = JSON.parse(await readFile(registryPath, "utf8"));
     return (registry?.data?.entities ?? []).filter(
-      (entity) => entity.platform === "unifi_drive",
+      (entity) => entity.platform === "unifi_unas",
     );
   } catch {
     return [];
@@ -229,7 +236,7 @@ function isUnifiDriveState(state) {
   const entityId = String(state.entity_id || "").toLowerCase();
   const friendlyName = String(state.attributes?.friendly_name || "").toLowerCase();
   return (
-    entityId.includes("unifi_drive") ||
+    entityId.includes("unifi_unas") ||
     friendlyName.includes("unifi drive") ||
     friendlyName.includes("unas")
   );

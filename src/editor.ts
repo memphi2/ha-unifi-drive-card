@@ -1,8 +1,8 @@
 import { LitElement, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { DEFAULT_SECTIONS, ENTITY_DEFINITIONS } from "./catalog";
+import { DEFAULT_SECTIONS, ENTITY_DEFINITIONS_BY_SECTION } from "./catalog";
 import { normalizeConfig } from "./config";
-import { discoverEntities } from "./discovery";
+import { DiscoveryCache } from "./discovery-cache";
 import {
   ACTION_OPTIONS,
   actionConfigFromEditor,
@@ -31,19 +31,22 @@ import {
   type EditorOrderingContext,
 } from "./editor-ordering";
 import { editorStyles } from "./editor-styles";
-import { entityLabel, localize, sectionLabel } from "./i18n";
+import { entityLabel, localize } from "./i18n";
 import {
   checkedFromEvent,
   inputStringFromEvent,
   pickerValueFromEvent,
 } from "./editor-shared";
 import type {
+  DiscoveredEntities,
+  EntityDomain,
   EntityDefinition,
   EntityKey,
   HomeAssistant,
   SectionId,
   UnifiDriveCardConfig,
 } from "./types";
+import { editorFoldout, formRow, switchFormField, textareaRow } from "./editor-form";
 
 type ActionTextProperty = "navigation_path" | "url_path" | "service";
 interface ActionField {
@@ -62,18 +65,29 @@ const ACTION_FIELDS: ActionField[] = [
 export class UnifiDriveCardEditor extends LitElement {
   @property({ attribute: false }) public hass?: HomeAssistant;
   @state() private _config = normalizeConfig({});
+  private readonly _activeEntityKeysCache = new WeakMap<DiscoveredEntities, Set<EntityKey>>();
+  private readonly _discoveryCache = new DiscoveryCache();
 
   public setConfig(config: UnifiDriveCardConfig): void {
     this._config = normalizeConfig(config);
   }
 
+  public override disconnectedCallback(): void {
+    this._discoveryCache.clear();
+    super.disconnectedCallback();
+  }
+
   protected override render() {
-    const orderingContext = this._orderingContext();
+    const activeEntityKeys = this._activeOverviewEntityKeys();
+    const hiddenEntityKeys = new Set(this._config.hide_entities);
+    const orderingContext = this._orderingContext(activeEntityKeys);
     return html`
       <div class="editor">
         ${renderBasicEditor({
           hass: this.hass,
           config: this._config,
+          devicePreviewLabel: this._devicePreviewLabel(),
+          devicePreviewReady: activeEntityKeys !== undefined,
           deviceChanged: this._deviceChanged,
           nameChanged: this._nameChanged,
           numberChanged: (key, event) => this._numberChanged(key, event),
@@ -82,21 +96,45 @@ export class UnifiDriveCardEditor extends LitElement {
         ${renderSectionOrderEditor(orderingContext)}
         ${renderOverviewEntityEditor(orderingContext)}
         <section class="actions-editor">
-          <h3>${localize(this.hass, "editor.actions")}</h3>
-          <div class="action-list">
-            ${ACTION_FIELDS.map((field) => this._actionField(field))}
-          </div>
+          ${editorFoldout(this.hass, {
+            className: "actions-foldout",
+            titleKey: "section.actions",
+            helpKey: "editor.actions_help",
+            content: html`
+              <div class="action-list">
+                ${ACTION_FIELDS.map((field) => this._actionField(field))}
+              </div>
+            `,
+          })}
         </section>
         <section class="entity-editor">
-          <h3>${localize(this.hass, "editor.entities")}</h3>
-          ${DEFAULT_SECTIONS.map((section) => this._entitySection(section))}
+          ${editorFoldout(this.hass, {
+            className: "entities-foldout",
+            titleKey: "editor.entities",
+            helpKey: "editor.entities_help",
+            content: html`
+              <div class="entity-section-list">
+                ${DEFAULT_SECTIONS.map((section) =>
+                  this._entitySection(section, hiddenEntityKeys),
+                )}
+              </div>
+            `,
+          })}
         </section>
       </div>
     `;
   }
 
-  private _orderingContext(): EditorOrderingContext {
-    const activeEntityKeys = this._activeOverviewEntityKeys();
+  private _devicePreviewLabel(): string | undefined {
+    const deviceId = this._config.device_id;
+    if (!deviceId) {
+      return undefined;
+    }
+    const device = this.hass?.devices?.[deviceId];
+    return device?.name_by_user || device?.name || undefined;
+  }
+
+  private _orderingContext(activeEntityKeys: Set<EntityKey> | undefined): EditorOrderingContext {
     return {
       hass: this.hass,
       sections: this._config.sections,
@@ -117,56 +155,86 @@ export class UnifiDriveCardEditor extends LitElement {
     if (!this.hass) {
       return undefined;
     }
-    return new Set(Object.keys(discoverEntities(this.hass, this._config).entityIds));
+    const discovered = this._discoveryCache.get(this.hass, this._config);
+    const cached = this._activeEntityKeysCache.get(discovered);
+    if (cached) {
+      return cached;
+    }
+    const keys = new Set(Object.keys(discovered.entityIds));
+    this._activeEntityKeysCache.set(discovered, keys);
+    return keys;
   }
 
-  private _entitySection(section: SectionId) {
+  private _entitySection(section: SectionId, hiddenEntityKeys: Set<EntityKey>) {
     const definitions = definitionsForSection(section);
     if (!definitions.length) {
       return "";
     }
-    const visibleCount = definitions.filter(
-      (definition) => !this._config.hide_entities.includes(definition.key),
-    ).length;
-    return html`
-      <details class="entity-section">
-        <summary>
-          <span>${sectionLabel(section, this.hass)}</span>
-          <small>${visibleCount}/${definitions.length}</small>
-        </summary>
+    const visibleCount = definitions.filter((definition) => !hiddenEntityKeys.has(definition.key))
+      .length;
+    return editorFoldout(this.hass, {
+      className: "entity-section",
+      titleKey: `section.${section}`,
+      count: `${visibleCount}/${definitions.length}`,
+      content: html`
         <div class="entity-mapping-list">
-          ${definitions.map((definition) => this._entityMappingRow(definition))}
+          ${definitions.map((definition) => this._entityMappingRow(definition, hiddenEntityKeys))}
         </div>
-      </details>
-    `;
+      `,
+    });
   }
 
-  private _entityMappingRow(definition: EntityDefinition) {
-    const hidden = this._config.hide_entities.includes(definition.key);
+  private _entityMappingRow(definition: EntityDefinition, hiddenEntityKeys: Set<EntityKey>) {
+    const hidden = hiddenEntityKeys.has(definition.key);
     const override = entityOverride(this._config.entities, definition);
+    const overridePreview = typeof override === "string" ? override : "";
+    const hasOverride = overridePreview.length > 0;
     return html`
       <div class="entity-mapping-row" data-entity-key=${definition.key}>
         <div class="entity-visible switch-row">
-          <ha-switch
-            .checked=${!hidden}
-            @change=${(event: Event) =>
-              this._entityVisibilityChanged(definition.key, checkedFromEvent(event))}
-          ></ha-switch>
-          <button
-            class="switch-label"
-            type="button"
-            @click=${() => this._entityVisibilityChanged(definition.key, hidden)}
-          >
-            ${entityLabel(definition, this.hass)}
-          </button>
+          ${switchFormField(
+            this.hass,
+            entityLabel(definition, this.hass),
+            !hidden,
+            (event: Event) =>
+              this._entityVisibilityChanged(definition.key, checkedFromEvent(event)),
+            {
+              helpKey: "editor.entity_visibility_help",
+              isLocalizedText: true,
+            },
+          )}
         </div>
-        <ha-entity-picker
-          .hass=${this.hass}
-          .value=${override}
-          .includeDomains=${[definition.domain]}
-          @value-changed=${(event: Event) =>
-            this._entityOverrideChanged(definition, event)}
-        ></ha-entity-picker>
+        ${formRow(
+          this.hass,
+          "editor.entity_override",
+          "editor.entity_override_help",
+          html`
+            <div class="entity-override-control">
+              ${domainEntityPicker(
+                this.hass,
+                definition,
+                override,
+                (event: Event) => this._entityOverrideChanged(definition, event),
+              )}
+              <ha-textfield
+                .value=${overridePreview}
+                .label=${localize(this.hass, "editor.entity_override_custom")}
+                .helper=${localize(this.hass, "editor.entity_override_custom_help")}
+                helperPersistent
+                @change=${(event: Event) =>
+                  this._entityOverrideTextChanged(definition, event)}
+              ></ha-textfield>
+              ${hasOverride
+                ? html`
+                    <small class="entity-override-preview" title=${overridePreview}>
+                      ${overridePreview}
+                    </small>
+                  `
+                : ""}
+            </div>
+          `,
+          "entity-override-row",
+        )}
       </div>
     `;
   }
@@ -176,40 +244,54 @@ export class UnifiDriveCardEditor extends LitElement {
     const actionName = actionNameFromConfig(action, field.key);
     const open = actionCardOpen(field.key, action, actionName);
     return html`
-      <details class="action-card" data-action-card-key=${field.key} ?open=${open}>
+      <details class="editor-foldout action-card" data-action-card-key=${field.key} ?open=${open}>
         <summary>
-          <span>${localize(this.hass, field.labelKey)}</span>
+          <span class="summary-label">
+            <span>${localize(this.hass, field.labelKey)}</span>
+          </span>
           <small>${localize(this.hass, `editor.action.${actionName}`)}</small>
         </summary>
         <div class="action-fields">
-          <label class="ha-form-row action-form-row">
-            <span>${localize(this.hass, "editor.action_type")}</span>
-            <select
-              data-action-key=${field.key}
-              .value=${actionName}
-              @change=${(event: Event) => this._actionTypeChanged(field.key, event)}
-            >
-              ${ACTION_OPTIONS.map(
-                (option) =>
-                  html`<option value=${option} ?selected=${option === actionName}>
-                    ${localize(this.hass, `editor.action.${option}`)}
-                  </option>`,
-              )}
-            </select>
-          </label>
+          ${formRow(
+            this.hass,
+            "editor.action_type",
+            undefined,
+            html`
+              <select
+                data-action-key=${field.key}
+                .value=${actionName}
+                aria-label=${localize(this.hass, "editor.action_type")}
+                @change=${(event: Event) => this._actionTypeChanged(field.key, event)}
+              >
+                ${ACTION_OPTIONS.map(
+                  (option) =>
+                    html`<option value=${option} ?selected=${option === actionName}>
+                      ${localize(this.hass, `editor.action.${option}`)}
+                    </option>`,
+                )}
+              </select>
+            `,
+            "action-form-row",
+          )}
           ${actionName !== "none"
             ? html`
-                <label class="ha-form-row action-form-row">
-                  <span>${localize(this.hass, "editor.action_entity")}</span>
-                  <ha-entity-picker
-                    data-action-key=${field.key}
-                    data-action-property="entity"
-                    .hass=${this.hass}
-                    .value=${typeof action?.entity === "string" ? action.entity : ""}
-                    @value-changed=${(event: Event) =>
-                      this._actionEntityChanged(field.key, event)}
-                  ></ha-entity-picker>
-                </label>
+                ${formRow(
+                  this.hass,
+                  "editor.action_entity",
+                  undefined,
+                  html`
+                    <ha-entity-picker
+                      data-action-key=${field.key}
+                      data-action-property="entity"
+                      .hass=${this.hass}
+                      .value=${typeof action?.entity === "string" ? action.entity : ""}
+                      aria-label=${localize(this.hass, "editor.action_entity")}
+                      @value-changed=${(event: Event) =>
+                        this._actionEntityChanged(field.key, event)}
+                    ></ha-entity-picker>
+                  `,
+                  "action-form-row",
+                )}
               `
             : ""}
           ${actionName === "navigate"
@@ -248,35 +330,42 @@ export class UnifiDriveCardEditor extends LitElement {
     const action = this._config[key];
     const value =
       property === "service" ? (action?.service ?? action?.perform_action) : action?.[property];
-    return html`
-      <label class="ha-form-row action-form-row">
-        <span>${localize(this.hass, labelKey)}</span>
-        <input
-          type="text"
+    return formRow(
+      this.hass,
+      labelKey,
+      undefined,
+      html`
+        <ha-textfield
           data-action-key=${key}
           data-action-property=${property}
           .value=${typeof value === "string" ? value : ""}
+          aria-label=${localize(this.hass, labelKey)}
           @input=${(event: Event) => this._actionPropertyChanged(key, property, event)}
-        />
-      </label>
-    `;
+        ></ha-textfield>
+      `,
+      "action-form-row",
+    );
   }
 
   private _actionTargetEntityField(key: ActionConfigKey) {
     const action = this._config[key];
-    return html`
-      <label class="ha-form-row action-form-row">
-        <span>${localize(this.hass, "editor.service_target_entity")}</span>
+    return formRow(
+      this.hass,
+      "editor.service_target_entity",
+      undefined,
+      html`
         <ha-entity-picker
           data-action-key=${key}
           data-action-property="target_entity"
           .hass=${this.hass}
           .value=${targetFieldToString(action?.target, "entity_id")}
+          aria-label=${localize(this.hass, "editor.service_target_entity")}
           @value-changed=${(event: Event) =>
             this._actionTargetEntityChanged(key, event)}
         ></ha-entity-picker>
-      </label>
-    `;
+      `,
+      "action-form-row",
+    );
   }
 
   private _actionTargetTextField(
@@ -285,33 +374,40 @@ export class UnifiDriveCardEditor extends LitElement {
     labelKey: string,
   ) {
     const action = this._config[key];
-    return html`
-      <label class="ha-form-row action-form-row">
-        <span>${localize(this.hass, labelKey)}</span>
-        <input
-          type="text"
+    return formRow(
+      this.hass,
+      labelKey,
+      undefined,
+      html`
+        <ha-textfield
           data-action-key=${key}
           data-action-property=${`target_${field}`}
           .value=${targetFieldToString(action?.target, field)}
+          aria-label=${localize(this.hass, labelKey)}
           @input=${(event: Event) => this._actionTargetTextChanged(key, field, event)}
-        />
-      </label>
-    `;
+        ></ha-textfield>
+      `,
+      "action-form-row",
+    );
   }
 
   private _actionDataField(key: ActionConfigKey) {
     const action = this._config[key];
-    return html`
-      <label class="action-textarea-row">
-        <span>${localize(this.hass, "editor.service_data")}</span>
-        <textarea
+    return textareaRow(
+      this.hass,
+      "editor.service_data",
+      undefined,
+      html`
+        <ha-textarea
           data-action-key=${key}
           data-action-property="data"
           .value=${formatActionData(action?.data)}
+          aria-label=${localize(this.hass, "editor.service_data")}
+          helperPersistent
           @input=${(event: Event) => this._actionDataChanged(key, event)}
-        ></textarea>
-      </label>
-    `;
+        ></ha-textarea>
+      `,
+    );
   }
 
   private _deviceChanged = (event: Event): void => {
@@ -353,6 +449,16 @@ export class UnifiDriveCardEditor extends LitElement {
     });
   }
 
+  private _entityOverrideTextChanged(definition: EntityDefinition, event: Event): void {
+    this._updateConfig({
+      entities: updateEntityOverride(
+        this._config.entities,
+        definition,
+        inputStringFromEvent(event) || undefined,
+      ),
+    });
+  }
+
   private _actionTypeChanged(key: ActionConfigKey, event: Event): void {
     const target = event.target as HTMLSelectElement;
     this._updateActionConfig(key, { action: target.value });
@@ -367,15 +473,15 @@ export class UnifiDriveCardEditor extends LitElement {
     property: ActionTextProperty,
     event: Event,
   ): void {
-    const target = event.target as HTMLInputElement;
+    const value = inputStringFromEvent(event);
     if (property === "service") {
       this._updateActionConfig(key, {
-        perform_action: target.value || undefined,
-        service: target.value || undefined,
+        perform_action: value || undefined,
+        service: value || undefined,
       });
       return;
     }
-    this._updateActionConfig(key, { [property]: target.value || undefined });
+    this._updateActionConfig(key, { [property]: value || undefined });
   }
 
   private _actionTargetEntityChanged(key: ActionConfigKey, event: Event): void {
@@ -387,8 +493,7 @@ export class UnifiDriveCardEditor extends LitElement {
     field: Exclude<ActionTargetField, "entity_id">,
     event: Event,
   ): void {
-    const target = event.target as HTMLInputElement;
-    this._updateActionTarget(key, field, target.value);
+    this._updateActionTarget(key, field, inputStringFromEvent(event));
   }
 
   private _updateActionTarget(
@@ -402,8 +507,8 @@ export class UnifiDriveCardEditor extends LitElement {
   }
 
   private _actionDataChanged(key: ActionConfigKey, event: Event): void {
-    const target = event.target as HTMLTextAreaElement;
-    const parsed = parseActionData(target.value);
+    const target = event.target as HTMLElement & { value?: unknown };
+    const parsed = parseActionData(typeof target.value === "string" ? target.value : "");
     target.classList.toggle("invalid", !parsed.valid);
     target.toggleAttribute("aria-invalid", !parsed.valid);
     if (!parsed.valid) {
@@ -475,9 +580,7 @@ export class UnifiDriveCardEditor extends LitElement {
 }
 
 function definitionsForSection(section: SectionId): EntityDefinition[] {
-  return ENTITY_DEFINITIONS.filter(
-    (definition) => !definition.dynamic && definition.section === section,
-  );
+  return (ENTITY_DEFINITIONS_BY_SECTION[section] ?? []).filter((definition) => !definition.dynamic);
 }
 
 function actionCardOpen(
@@ -533,4 +636,44 @@ function updateEntityOverride(
     delete next[definition.key];
   }
   return next;
+}
+
+function domainEntitySelector(domain: EntityDomain) {
+  return {
+    entity: {
+      filter: [{ domain }],
+    },
+  };
+}
+
+function domainEntityPicker(
+  hass: HomeAssistant | undefined,
+  definition: EntityDefinition,
+  value: string,
+  onValueChanged: (event: Event) => void,
+) {
+  if (supportsHaSelector()) {
+    return html`
+      <ha-selector
+        class="ha-picker-control"
+        .hass=${hass}
+        .value=${value}
+        .selector=${domainEntitySelector(definition.domain)}
+        @value-changed=${onValueChanged}
+      ></ha-selector>
+    `;
+  }
+  return html`
+    <ha-entity-picker
+      class="ha-picker-control"
+      .hass=${hass}
+      .value=${value}
+      .includeDomains=${[definition.domain]}
+      @value-changed=${onValueChanged}
+    ></ha-entity-picker>
+  `;
+}
+
+function supportsHaSelector(): boolean {
+  return typeof customElements !== "undefined" && Boolean(customElements.get("ha-selector"));
 }

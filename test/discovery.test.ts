@@ -11,11 +11,13 @@ describe("discoverEntities", () => {
         "sensor.unas_system_status": state("online"),
         "sensor.unas_usage": state("42"),
         "binary_sensor.unas_storage_problem": state("off"),
+        "binary_sensor.unas_device_connection": state("on"),
       },
       entities: {
         "sensor.unas_system_status": registry("dev-a", "system_status"),
         "sensor.unas_usage": registry("dev-a", "usage_percent"),
         "binary_sensor.unas_storage_problem": registry("dev-a", "storage_problem"),
+        "binary_sensor.unas_device_connection": registry("dev-a", "device_online"),
       },
       callService: async () => undefined,
     };
@@ -26,6 +28,7 @@ describe("discoverEntities", () => {
     expect(discovered.entityIds.system_status).toBe("sensor.unas_system_status");
     expect(discovered.entityIds.usage_percent).toBe("sensor.unas_usage");
     expect(discovered.entityIds.storage_problem).toBe("binary_sensor.unas_storage_problem");
+    expect(discovered.entityIds.device_online).toBe("binary_sensor.unas_device_connection");
     expect(discovered.deviceId).toBe("dev-a");
     expect(discovered.configEntryId).toBe("entry-a");
   });
@@ -86,6 +89,28 @@ describe("discoverEntities", () => {
     });
   });
 
+  it("discovers snapshot entities without target attributes", () => {
+    const hass: HomeAssistant = {
+      states: {
+        "switch.snapshots": entity("on", {
+          friendly_name: "UniFi Drive Snapshots",
+        }),
+      },
+      entities: {
+        "switch.snapshots": registry("dev-a", "snapshot_enabled"),
+      },
+      callService: async () => undefined,
+    };
+
+    const discovered = discoverEntities(hass, normalizeConfig({ device_id: "dev-a" }));
+
+    expect(discovered.groups.snapshot).toHaveLength(1);
+    expect(discovered.groups.snapshot[0]).toMatchObject({
+      id: "snapshots",
+      entityIds: { snapshot_enabled: "switch.snapshots" },
+    });
+  });
+
   it("does not classify generic drive status aliases as pool status", () => {
     const hass: HomeAssistant = {
       states: {
@@ -100,12 +125,12 @@ describe("discoverEntities", () => {
         "sensor.disk_1_status": registry(
           "dev-a",
           "drive_status",
-          "unifi_drive_entry_drive_disk-1_status",
+          "unifi_unas_entry_drive_disk-1_status",
         ),
         "sensor.pool_1_status": registry(
           "dev-a",
           "pool_status",
-          "unifi_drive_entry_pool_pool-1_status",
+          "unifi_unas_entry_pool_pool-1_status",
         ),
       },
       callService: async () => undefined,
@@ -125,7 +150,7 @@ describe("discoverEntities", () => {
     });
   });
 
-  it("discovers UNAS fallback entities without registry metadata", () => {
+  it("does not discover entities without integration registry metadata", () => {
     const hass: HomeAssistant = {
       states: {
         "sensor.unas_system_status": entity("online", {
@@ -140,25 +165,8 @@ describe("discoverEntities", () => {
 
     const discovered = discoverEntities(hass, normalizeConfig({}));
 
-    expect(discovered.baseEntity).toBe("sensor.unas_system_status");
-    expect(discovered.entityIds.system_status).toBe("sensor.unas_system_status");
-    expect(discovered.entityIds.usage_percent).toBe("sensor.unas_usage");
-  });
-
-  it("uses a UNAS fallback entity as base when status is unavailable", () => {
-    const hass: HomeAssistant = {
-      states: {
-        "sensor.storage_usage": entity("42", {
-          friendly_name: "UNAS Storage Usage",
-        }),
-      },
-      callService: async () => undefined,
-    };
-
-    const discovered = discoverEntities(hass, normalizeConfig({}));
-
-    expect(discovered.baseEntity).toBe("sensor.storage_usage");
-    expect(discovered.entityIds.usage_percent).toBe("sensor.storage_usage");
+    expect(discovered.baseEntity).toBeUndefined();
+    expect(discovered.entityIds).toEqual({});
   });
 
   it("does not match dynamic aliases inside larger slug tokens", () => {
@@ -174,7 +182,7 @@ describe("discoverEntities", () => {
         "sensor.pool_unused_space": registry(
           "dev-a",
           undefined,
-          "unifi_drive_entry_pool_pool-1_unused_space",
+          "unifi_unas_entry_pool_pool-1_unused_space",
         ),
       },
       callService: async () => undefined,
@@ -200,6 +208,27 @@ describe("discoverEntities", () => {
 
     expect(discovered.entityIds.usage_percent).toBe("sensor.custom_usage");
   });
+
+  it("keeps entities without registry device_id when device_id is configured", () => {
+    const hass: HomeAssistant = {
+      states: {
+        "sensor.unas_system_status": state("online"),
+        "sensor.unas_usage_no_device": state("48"),
+        "sensor.unas_usage_other_device": state("22"),
+      },
+      entities: {
+        "sensor.unas_system_status": registry("dev-a", "system_status"),
+        "sensor.unas_usage_no_device": registry(undefined, "usage_percent"),
+        "sensor.unas_usage_other_device": registry("dev-b", "usage_percent"),
+      },
+      callService: async () => undefined,
+    };
+
+    const discovered = discoverEntities(hass, normalizeConfig({ device_id: "dev-a" }));
+
+    expect(discovered.entityIds.usage_percent).toBe("sensor.unas_usage_no_device");
+    expect(discovered.entityIds.system_status).toBe("sensor.unas_system_status");
+  });
 });
 
 function state(value: string) {
@@ -210,7 +239,7 @@ function entity(value: string, attributes: Record<string, unknown>) {
   return { state: value, attributes };
 }
 
-function registry(deviceId: string, translationKey?: string, uniqueId?: string) {
+function registry(deviceId?: string, translationKey?: string, uniqueId?: string) {
   return {
     config_entry_id: "entry-a",
     device_id: deviceId,

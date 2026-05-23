@@ -35,6 +35,17 @@ export const editorStyles = css`
     border-color: var(--error-color);
   }
 
+  ha-textfield,
+  ha-textarea {
+    display: block;
+    min-width: 0;
+    width: 100%;
+  }
+
+  ha-textarea.invalid {
+    --mdc-theme-error: var(--error-color);
+  }
+
   input:focus-visible,
   select:focus-visible,
   textarea:focus-visible {
@@ -117,30 +128,25 @@ export const editorStyles = css`
   }
 
   .check ha-switch,
-  .entity-visible ha-switch {
+  .entity-visible ha-switch,
+  .switch-formfield ha-switch {
     flex: 0 0 auto;
   }
 
-  .switch-label {
+  .switch-formfield {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     min-width: 0;
-    padding: 0;
-    border: 0;
-    background: transparent;
+    width: 100%;
     color: var(--primary-text-color);
-    font: inherit;
-    text-align: left;
-    cursor: pointer;
   }
 
-  .switch-label:hover,
-  .switch-label:focus-visible {
-    color: var(--primary-color);
-  }
-
-  .switch-label:focus-visible {
-    outline: 2px solid var(--primary-color);
-    outline-offset: 2px;
-    border-radius: 4px;
+  .switch-formfield-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .editor-section,
@@ -171,6 +177,38 @@ export const editorStyles = css`
     display: block;
     min-width: 0;
     width: 100%;
+  }
+
+  .device-preview {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 4px;
+  }
+
+  .device-preview ha-icon {
+    color: var(--primary-color);
+  }
+
+  .device-preview div {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .device-preview strong,
+  .device-preview span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .device-preview span {
+    color: var(--secondary-text-color);
+    font-size: 12px;
   }
 
   .ha-form-row {
@@ -212,6 +250,156 @@ export const editorStyles = css`
     color: var(--secondary-text-color);
     font-size: 13px;
     line-height: 1.4;
+  }
+
+  .field-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--primary-text-color);
+  }
+
+  .field-label > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .help-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    cursor: help;
+    flex: 0 0 auto;
+    color: var(--secondary-text-color);
+  }
+
+  .help-icon ha-icon {
+    --mdc-icon-size: 16px;
+  }
+
+  .help-icon:hover {
+    color: var(--primary-color);
+    background: color-mix(in srgb, var(--primary-color) 12%, transparent);
+  }
+
+  .help-icon:focus-visible {
+    color: var(--primary-color);
+    background: color-mix(in srgb, var(--primary-color) 12%, transparent);
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+  }
+
+  .editor-foldout {
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--divider-color) 72%, transparent);
+    border-radius: 8px;
+    background: color-mix(
+      in srgb,
+      var(--card-background-color) 88%,
+      var(--secondary-background-color)
+    );
+  }
+
+  .editor-foldout > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 42px;
+    padding: 0 12px;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .editor-foldout > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .editor-foldout > summary:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+  }
+
+  .editor-foldout > summary .summary-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--primary-text-color);
+    font-weight: 500;
+  }
+
+  .editor-foldout > summary .summary-label > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .editor-foldout > summary .summary-meta {
+    display: grid;
+    gap: 2px;
+    justify-items: end;
+    flex: 0 1 auto;
+    min-width: 0;
+    color: var(--secondary-text-color);
+    font-size: 12px;
+    line-height: 1.25;
+    text-align: right;
+  }
+
+  .editor-foldout > summary .summary-count,
+  .editor-foldout > summary .summary-help {
+    min-width: 0;
+    max-width: 32ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .editor-foldout > summary .summary-meta.with-count-and-help .summary-count {
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .editor-foldout[open] > summary {
+    border-bottom: 1px solid var(--divider-color);
+  }
+
+  .editor-foldout-content {
+    display: grid;
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .advanced-group {
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+    padding: 8px;
+    border: 1px solid color-mix(in srgb, var(--divider-color) 72%, transparent);
+    border-radius: 8px;
+    background: color-mix(
+      in srgb,
+      var(--card-background-color) 90%,
+      var(--secondary-background-color)
+    );
+  }
+
+  .entity-section-list {
+    display: grid;
+    gap: 10px;
   }
 
   .overview-editor {
@@ -348,13 +536,6 @@ export const editorStyles = css`
     --mdc-icon-size: 20px;
   }
 
-  .overview-entity-toggle .switch-label,
-  .section-order-row .switch-label {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
   .editor-section h3,
   .overview-editor h3,
   .sections-editor h3,
@@ -460,8 +641,18 @@ export const editorStyles = css`
     min-width: 0;
   }
 
-  .entity-visible .switch-label {
+  .entity-override-control {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .entity-override-preview {
+    display: block;
+    min-width: 0;
     overflow: hidden;
+    color: var(--secondary-text-color);
+    font-size: 12px;
     text-overflow: ellipsis;
     white-space: nowrap;
   }

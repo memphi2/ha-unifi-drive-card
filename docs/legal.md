@@ -47,7 +47,7 @@ those parties.
 
 The user-facing project name is `Drive Storage Card` to avoid presenting a
 third-party mark as this project's own brand. Technical identifiers such as
-`ha-unifi-drive-card`, `unifi-drive-card` and `unifi_drive` are retained for
+`ha-unifi-drive-card`, `unifi-drive-card` and `unifi_unas` are retained for
 repository, HACS and Home Assistant compatibility.
 
 The repository does not include Ubiquiti, UniFi, Home Assistant or HACS logos,

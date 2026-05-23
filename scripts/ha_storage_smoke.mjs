@@ -2,7 +2,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-const DOMAIN = "unifi_drive";
+const DOMAIN = "unifi_unas";
 const configDir = process.env.HA_CARD_CONFIG_DIR || process.argv[2] || "";
 
 function pass(message) {
@@ -30,7 +30,7 @@ async function checkEntityRegistry() {
     (entry) => !entry.disabled_by && !entry.hidden_by && entry.hidden !== true,
   );
   if (!unifiEntities.length) {
-    throw new Error("no unifi_drive entities found");
+    throw new Error("no unifi_unas entities found");
   }
   if (
     !enabled.some((entry) =>

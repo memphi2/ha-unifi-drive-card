@@ -15,6 +15,7 @@ describe("UnifiDriveCardEditor", () => {
     );
 
     expect(text).toContain("Device and layout");
+    expect(text).toContain("Advanced options");
     expect(text).toContain("Device");
     expect(text).toContain("Overview columns");
     expect(text).toContain("Icon animations");
@@ -56,7 +57,7 @@ describe("UnifiDriveCardEditor", () => {
     expect(devicePicker.label).toBe("Device");
     expect(devicePicker.helper).toContain("Home Assistant device");
     expect(devicePicker.required).toBe(true);
-    expect(devicePicker.selector?.device?.filter?.at(0)?.integration).toBe("unifi_drive");
+    expect(devicePicker.selector?.device?.filter?.at(0)?.integration).toBe("unifi_unas");
     expect(devicePicker.selector?.device?.entity?.at(0)?.domain).toBe("sensor");
     expect(editor.shadowRoot?.querySelector(".basic-editor ha-entity-picker")).toBeNull();
 
@@ -240,9 +241,9 @@ describe("UnifiDriveCardEditor", () => {
     await editor.updateComplete;
 
     const serviceInput = editor.shadowRoot?.querySelector(
-      'input[data-action-key="tap_action"][data-action-property="service"]',
-    ) as HTMLInputElement;
-    serviceInput.value = "script.unifi_drive_backup";
+      'ha-textfield[data-action-key="tap_action"][data-action-property="service"]',
+    ) as HTMLElement & { value: string };
+    serviceInput.value = "script.unifi_unas_backup";
     serviceInput.dispatchEvent(new Event("input"));
     await editor.updateComplete;
 
@@ -257,15 +258,15 @@ describe("UnifiDriveCardEditor", () => {
     await editor.updateComplete;
 
     const areaInput = editor.shadowRoot?.querySelector(
-      'input[data-action-key="tap_action"][data-action-property="target_area_id"]',
-    ) as HTMLInputElement;
+      'ha-textfield[data-action-key="tap_action"][data-action-property="target_area_id"]',
+    ) as HTMLElement & { value: string };
     areaInput.value = "rack, storage";
     areaInput.dispatchEvent(new Event("input"));
     await editor.updateComplete;
 
     const dataInput = editor.shadowRoot?.querySelector(
-      'textarea[data-action-key="tap_action"][data-action-property="data"]',
-    ) as HTMLTextAreaElement;
+      'ha-textarea[data-action-key="tap_action"][data-action-property="data"]',
+    ) as HTMLElement & { value: string };
     dataInput.value = '{"force":true}';
     dataInput.dispatchEvent(new Event("input"));
     await editor.updateComplete;
@@ -273,7 +274,7 @@ describe("UnifiDriveCardEditor", () => {
     const config = getLatestConfig(listener);
     expect(config.tap_action).toEqual({
       action: "perform-action",
-      perform_action: "script.unifi_drive_backup",
+      perform_action: "script.unifi_unas_backup",
       target: {
         entity_id: "button.backup_now",
         area_id: ["rack", "storage"],
@@ -288,7 +289,7 @@ describe("UnifiDriveCardEditor", () => {
       config: {
       tap_action: {
         action: "perform-action",
-        perform_action: "script.unifi_drive_backup",
+        perform_action: "script.unifi_unas_backup",
         data: { force: true },
       },
       },
@@ -296,8 +297,8 @@ describe("UnifiDriveCardEditor", () => {
     });
 
     const dataInput = editor.shadowRoot?.querySelector(
-      'textarea[data-action-key="tap_action"][data-action-property="data"]',
-    ) as HTMLTextAreaElement;
+      'ha-textarea[data-action-key="tap_action"][data-action-property="data"]',
+    ) as HTMLElement & { value: string };
     dataInput.value = "{";
     dataInput.dispatchEvent(new Event("input"));
     await editor.updateComplete;
@@ -312,7 +313,7 @@ describe("UnifiDriveCardEditor", () => {
       config: {
       tap_action: {
         action: "perform-action",
-        perform_action: "script.unifi_drive_backup",
+        perform_action: "script.unifi_unas_backup",
         target: { entity_id: "button.backup_now" },
       },
       },
@@ -320,7 +321,7 @@ describe("UnifiDriveCardEditor", () => {
     });
     await setTextInput(
       editor,
-      'input[data-action-key="tap_action"][data-action-property="service"]',
+      'ha-textfield[data-action-key="tap_action"][data-action-property="service"]',
       "",
       "input",
     );
@@ -365,7 +366,7 @@ async function setTextInput(
   value: string,
   eventType: string,
 ) {
-  const input = editor.shadowRoot?.querySelector(selector) as HTMLInputElement | HTMLTextAreaElement;
+  const input = editor.shadowRoot?.querySelector(selector) as HTMLElement & { value: string };
   input.value = value;
   input.dispatchEvent(new Event(eventType));
   await editor.updateComplete;

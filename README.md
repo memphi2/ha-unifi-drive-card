@@ -4,7 +4,7 @@
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/docs/faq/custom_repositories)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-Mushroom-style Lovelace card for the `unifi_drive` Home Assistant integration.
+Mushroom-style Lovelace card for the `unifi_unas` Home Assistant integration.
 It discovers compatible UniFi Drive / UNAS storage, pool, drive, snapshot, system and
 update entities from Home Assistant registry metadata and renders them as one
 compact dashboard card.
@@ -21,7 +21,7 @@ Built with Codex.
 
 ## Highlights
 
-- Automatic discovery for enabled `unifi_drive` entities.
+- Automatic discovery for enabled `unifi_unas` entities.
 - Dynamic grouping for pools, drives, snapshot targets and backup tasks.
 - Safe defaults: shutdown/restart stay hidden until `show_dangerous_actions` is enabled.
 - Width-aware layout: dashboard column changes automatically reorder blocks into vertical or wide views.
@@ -31,14 +31,21 @@ Built with Codex.
 - CI-ready TypeScript, lint, Vitest, HACS compatibility and browser smoke tests.
 - Live Home Assistant smoke supports install and uninstall checks without committing credentials.
 
-## Quick Start
+## 5-Minute Setup
+
+1. Install the `unifi_unas` integration in Home Assistant and verify entities are present.
+2. Install this card (HACS is easiest; details below).
+3. Add a new dashboard card and choose `custom:unifi-drive-card`.
+4. If you run multiple UniFi Drive/UNAS devices, set `device_id`.
+5. Keep `compact: true` for the default dense layout.
+
+Minimal YAML:
 
 ```yaml
 type: custom:unifi-drive-card
 ```
 
-The card can auto-discover entities, but for multi-device setups set the Home
-Assistant device explicitly:
+Multi-device YAML:
 
 ```yaml
 type: custom:unifi-drive-card
@@ -47,21 +54,31 @@ device_id: your_home_assistant_device_id
 
 ## Installation
 
-HACS resource:
+Recommended path (HACS):
+
+1. Add this repository as a HACS custom repository (Dashboard category).
+2. Install `Drive Storage Card`.
+3. Reload Home Assistant.
+4. Add the card to your dashboard.
+
+HACS resource entry:
 
 ```yaml
 url: /hacsfiles/ha-unifi-drive-card/ha-unifi-drive-card.js
 type: module
 ```
 
-Manual build:
+Manual path:
 
 ```bash
 npm ci
 npm run build
 ```
 
-Manual resource:
+Copy `dist/ha-unifi-drive-card.js` (and optional `.map`) into:
+`config/www/community/ha-unifi-drive-card/`
+
+Manual resource entry:
 
 ```yaml
 url: /local/community/ha-unifi-drive-card/ha-unifi-drive-card.js
@@ -114,6 +131,13 @@ vertical card; wider dashboard cards reorder the section blocks so storage,
 system and update blocks appear earlier in a horizontal dashboard layout, with
 multi-column entity rows where space allows.
 
+Typical quick tweaks:
+
+- Missing or wrong entity: set `entities` overrides for specific keys.
+- Too much information: trim `sections` and add `hide_entities`.
+- Want power actions: enable `show_dangerous_actions` (with confirmation).
+- Want a roomier card: set `compact: false`.
+
 ## Validation
 
 ```bash
@@ -144,6 +168,7 @@ Do not commit hostnames, IPs, tokens, passwords or screenshots with private data
 - [Development and smoke tests](docs/development.md)
 - [Legal notes](docs/legal.md)
 - [Release process](RELEASING.md)
+- [0.2.3 release notes](release-notes/v0.2.3.md)
 - [0.2.2 release notes](release-notes/v0.2.2.md)
 - [0.2.1 release notes](release-notes/v0.2.1.md)
 - [Changelog](CHANGELOG.md)
@@ -188,5 +213,5 @@ Home Assistant, HACS or Mushroom.
 Third-party names are used only for truthful, descriptive compatibility
 references. `Drive Storage Card` is the user-facing project name; repository,
 custom element and Home Assistant identifiers such as `ha-unifi-drive-card`,
-`unifi-drive-card` and `unifi_drive` are retained for technical compatibility
+`unifi-drive-card` and `unifi_unas` are retained for technical compatibility
 and should not be read as ownership of any third-party mark.

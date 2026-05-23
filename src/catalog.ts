@@ -38,6 +38,7 @@ export const SYSTEM_KEYS = [
   "fan_mode",
   "wake_on_lan",
   "system_status",
+  "device_online",
   "system_ip",
   "system_uptime",
   "cpu_temperature",
@@ -109,6 +110,7 @@ const aggregateDefinitions: EntityDefinition[] = [
   sensor("drive_version", "diagnostics", "Drive version", "mdi:application-cog", 43, true),
   sensor("cpu_temperature", "system", "CPU temperature", "mdi:thermometer", 44, true),
   sensor("system_status", "overview", "System status", "mdi:check-network", 45),
+  binary("device_online", "system", "Device connection", "mdi:lan-connect", 46, true),
   binary("storage_problem", "overview", "Storage problem", "mdi:alert-circle", 50),
   binary("maintenance_active", "diagnostics", "Maintenance active", "mdi:wrench", 51, true),
   select("fan_mode", "system", "Fan mode", "mdi:fan-auto", 60),
@@ -167,6 +169,22 @@ export const ENTITY_DEFINITIONS: EntityDefinition[] = [
 export const ENTITY_DEFINITION_BY_KEY = Object.fromEntries(
   ENTITY_DEFINITIONS.map((definition) => [definition.key, definition]),
 ) as Record<EntityKey, EntityDefinition>;
+
+export const STATIC_ENTITY_DEFINITIONS = ENTITY_DEFINITIONS.filter(
+  (definition) => !definition.dynamic,
+);
+
+export const DYNAMIC_ENTITY_DEFINITIONS = ENTITY_DEFINITIONS.filter(
+  (definition) => definition.dynamic,
+);
+
+export const ENTITY_DEFINITIONS_BY_SECTION = Object.fromEntries(
+  DEFAULT_SECTIONS.map((section) => [section, [] as EntityDefinition[]]),
+) as Record<SectionId, EntityDefinition[]>;
+
+for (const definition of ENTITY_DEFINITIONS) {
+  ENTITY_DEFINITIONS_BY_SECTION[definition.section].push(definition);
+}
 
 function sensor(
   key: EntityKey,
