@@ -10,12 +10,21 @@ export function checkedFromEvent(event: Event): boolean {
 }
 
 export function inputStringFromEvent(event: Event): string {
-  return (event.target as HTMLInputElement).value;
+  const value = (event.target as { value?: unknown } | null)?.value;
+  return typeof value === "string" ? value : "";
+}
+
+export function textValueFromEvent(event: Event): string {
+  const detailValue = (event as CustomEvent<SelectorValueDetail>).detail?.value;
+  if (typeof detailValue === "string") {
+    return detailValue;
+  }
+  return inputStringFromEvent(event);
 }
 
 export function pickerValueFromEvent(event: Event): string | undefined {
   const detail = (event as CustomEvent<SelectorValueDetail>).detail;
-  const detailValue = detail?.value ?? detail?.["device_id"];
+  const detailValue = detail?.value ?? detail?.["device_id"] ?? detail?.deviceId;
   if (typeof detailValue === "string") {
     return detailValue || undefined;
   }

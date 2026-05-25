@@ -48,6 +48,17 @@ entities:
   fan_mode: select.custom_unas_fan_mode
 ```
 
+Force a specific row order inside static sections:
+
+```yaml
+type: custom:unifi-drive-card
+section_entity_order:
+  storage:
+    - used_storage
+    - usage_percent
+    - available_storage
+```
+
 Enable restart/shutdown actions intentionally:
 
 ```yaml
@@ -105,6 +116,7 @@ double_tap_action:
 | `show_icon_animations` | boolean | `true` | Enables animated icon states. |
 | `overview_columns` | number | `3` | Sets the default overview tile columns, bounded from 1 to 6. Very narrow cards still collapse to one column. |
 | `sections` | list | all | Ordered visible sections. |
+| `section_entity_order` | map | `{}` | Optional per-section entity key order override for static key sections (`storage`, `system`, `updates`, `diagnostics`). |
 | `hide_entities` | list | `[]` | Known entity keys to hide. |
 | `entities` | map | `{}` | Entity ID overrides by key. |
 | `tap_action` | action | `more-info` | Action fired on click. |

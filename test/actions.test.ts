@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import { installUpdate, selectOption, setNumberValue, setTimeValue } from "../src/actions";
+import {
+  callEntityService,
+  installUpdate,
+  selectOption,
+  setNumberValue,
+  setTimeValue,
+} from "../src/actions";
 import type { HomeAssistant } from "../src/types";
 
 describe("actions", () => {
@@ -65,6 +71,20 @@ describe("actions", () => {
     });
   });
 
+  it("ignores malformed entity ids in generic service calls", async () => {
+    const hass = mockHass();
+    await callEntityService(hass, "invalid_entity_id", "turn_on");
+    expect(hass.callService).not.toHaveBeenCalled();
+  });
+
+  it("trims entity ids before calling Home Assistant services", async () => {
+    const hass = mockHass();
+    await callEntityService(hass, "  switch.snapshot_enabled  ", "toggle");
+    expect(hass.callService).toHaveBeenCalledWith("switch", "toggle", {
+      entity_id: "switch.snapshot_enabled",
+    });
+  });
+
   it("preserves seconds for time service payloads", async () => {
     const hass = mockHass();
     await setTimeValue(hass, "time.snapshot_schedule", "02:30:45");
@@ -79,6 +99,21 @@ describe("actions", () => {
     await setTimeValue(hass, "time.snapshot_schedule", "24:00");
     await setTimeValue(hass, "time.snapshot_schedule", "12:61:00");
     expect(hass.callService).not.toHaveBeenCalled();
+  });
+
+  it("ignores only truly empty select options", async () => {
+    const hass = mockHass();
+    await selectOption(hass, "select.fan_mode", "");
+    expect(hass.callService).not.toHaveBeenCalled();
+  });
+
+  it("preserves select options exactly before calling Home Assistant", async () => {
+    const hass = mockHass();
+    await selectOption(hass, "select.fan_mode", " eco ");
+    expect(hass.callService).toHaveBeenCalledWith("select", "select_option", {
+      entity_id: "select.fan_mode",
+      option: " eco ",
+    });
   });
 
   it("routes update installs through the update domain", async () => {

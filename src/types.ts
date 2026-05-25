@@ -99,6 +99,7 @@ export interface UnifiDriveCardConfig {
   overview_columns?: number;
   sections?: SectionId[];
   overview_entities?: EntityKey[];
+  section_entity_order?: Partial<Record<SectionId, EntityKey[]>>;
   hide_entities?: EntityKey[];
   entities?: Record<string, string | Record<string, string> | undefined>;
 }
@@ -131,6 +132,7 @@ export interface NormalizedUnifiDriveCardConfig
   double_tap_action?: ActionConfig;
   sections: SectionId[];
   overview_entities: EntityKey[];
+  section_entity_order: Partial<Record<SectionId, EntityKey[]>>;
   hide_entities: EntityKey[];
   entities: Record<string, string | Record<string, string> | undefined>;
 }

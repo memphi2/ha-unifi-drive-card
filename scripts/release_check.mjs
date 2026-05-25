@@ -68,6 +68,13 @@ requireIncludes(".github/workflows/release.yml", releaseWorkflow, `body_path: re
 requireIncludes(".github/workflows/release.yml", releaseWorkflow, EXPECTED_FILENAME, "release workflow uploads JS asset");
 requireIncludes(".github/workflows/release.yml", releaseWorkflow, `${EXPECTED_FILENAME}.map`, "release workflow uploads sourcemap asset");
 requireIncludes(".github/workflows/release.yml", releaseWorkflow, "ha-unifi-drive-card.zip", "release workflow uploads ZIP asset");
+requireIncludes(".github/workflows/release.yml", releaseWorkflow, "issues: read", "release workflow can read issues for anonymization scan");
+requireIncludes(".github/workflows/release.yml", releaseWorkflow, "pull-requests: read", "release workflow can read PRs for anonymization scan");
+requireIncludes(".github/workflows/release.yml", releaseWorkflow, "npm run anonymization-check:github", "release workflow runs GitHub anonymization scan");
+requireIncludes(".github/workflows/release.yml", releaseWorkflow, "ANONYMIZATION_GITHUB_REQUIRED", "release workflow enforces GitHub anonymization scan");
+requireIncludes(".github/workflows/release.yml", releaseWorkflow, "ANONYMIZATION_BLOCKLIST_TERMS: ${{ secrets.ANONYMIZATION_BLOCKLIST_TERMS }}", "release workflow forwards optional anonymization blocklist secret");
+requireIncludes(".github/workflows/release.yml", releaseWorkflow, "GH_REPO: ${{ github.repository }}", "release workflow sets repository for anonymization scan");
+requireIncludes(".github/workflows/release.yml", releaseWorkflow, "GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}", "release workflow injects GitHub token for anonymization scan");
 requireIncludes("docs/legal.md", legal, "affiliated with, sponsored by or endorsed", "legal disclaimer is present");
 requireIncludes("docs/legal.md", legal, "does not include Ubiquiti, UniFi, Home Assistant or HACS logos", "logo/trade-dress statement is present");
 requireIncludes("README.md", readme, "## Trademark Notice", "README trademark notice is present");

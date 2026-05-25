@@ -8,6 +8,8 @@ on:
 
 permissions:
   contents: write
+  issues: read
+  pull-requests: read
 
 jobs:
   release:
@@ -24,6 +26,14 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Scan GitHub surfaces for anonymization leaks
+        env:
+          ANONYMIZATION_GITHUB_REQUIRED: "1"
+          ANONYMIZATION_BLOCKLIST_TERMS: ${{ secrets.ANONYMIZATION_BLOCKLIST_TERMS }}
+          GH_REPO: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run anonymization-check:github
 
       - name: Set up Chrome
         id: setup-chrome

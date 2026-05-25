@@ -120,6 +120,7 @@ Common options:
 | --- | --- | --- |
 | `device_id` | required | Restricts discovery to one HA device. |
 | `sections` | all sections | Ordered visible sections. |
+| `section_entity_order` | `{}` | Optional per-section entity key order override for static key sections (for example `storage`, `system`, `updates`, `diagnostics`). |
 | `show_dangerous_actions` | `false` | Shows restart/shutdown actions with confirmation. |
 | `hide_entities` | `[]` | Known entity keys to hide. |
 | `entities` | `{}` | Per-key entity overrides. |
@@ -145,6 +146,22 @@ npm run check
 npm run render-smoke
 npm run anonymization-check
 npm run security-audit
+```
+
+Optional GitHub-surface anonymization check:
+
+```bash
+GH_REPO=<owner/repo> \
+GITHUB_TOKEN='<github-token>' \
+npm run anonymization-check:github
+```
+
+Optional additional runtime blocklist (for user/org-specific anonymization
+terms) without storing those terms in the repository:
+
+```bash
+ANONYMIZATION_BLOCKLIST_TERMS='<term1>,<term2>' npm run anonymization-check
+ANONYMIZATION_BLOCKLIST_TERMS='<term1>,<term2>' GH_REPO=<owner/repo> GITHUB_TOKEN='<github-token>' npm run anonymization-check:github
 ```
 
 Live Home Assistant smoke uses environment variables only:

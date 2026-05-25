@@ -57,6 +57,21 @@ describe("normalizeConfig", () => {
     });
   });
 
+  it("normalizes section entity ordering per section with known keys only", () => {
+    const config = normalizeConfig({
+      section_entity_order: {
+        storage: ["used_storage", "usage_percent", "used_storage", "invalid"],
+        diagnostics: ["pool_count", "system_status"],
+        unknown: ["used_storage"],
+      } as unknown as Record<string, string[]>,
+    });
+
+    expect(config.section_entity_order).toEqual({
+      storage: ["used_storage", "usage_percent"],
+      diagnostics: ["pool_count"],
+    });
+  });
+
   it("filters and deduplicates overview entities without restoring defaults", () => {
     const config = normalizeConfig({
       overview_entities: [

@@ -1,6 +1,15 @@
-import { LitElement, html } from "lit";
+import { LitElement, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { DEFAULT_SECTIONS, ENTITY_DEFINITIONS_BY_SECTION } from "./catalog";
+import { repeat } from "lit/directives/repeat.js";
+import {
+  DEFAULT_SECTIONS,
+  DIAGNOSTIC_KEYS,
+  ENTITY_DEFINITION_BY_KEY,
+  ENTITY_DEFINITIONS_BY_SECTION,
+  STORAGE_KEYS,
+  SYSTEM_KEYS,
+  UPDATE_KEYS,
+} from "./catalog";
 import { normalizeConfig } from "./config";
 import { DiscoveryCache } from "./discovery-cache";
 import {
@@ -17,12 +26,9 @@ import {
 import {
   renderBasicEditor,
   type BasicBooleanConfigKey,
-  type BasicNumberConfigKey,
 } from "./editor-basic";
 import {
   activeOverviewEntities,
-  moveItem,
-  moveActiveOverviewEntity,
   reorderActiveOverviewEntity,
   reorderItem,
   renderOverviewEntityEditor,
@@ -36,6 +42,7 @@ import {
   checkedFromEvent,
   inputStringFromEvent,
   pickerValueFromEvent,
+  textValueFromEvent,
 } from "./editor-shared";
 import type {
   DiscoveredEntities,
@@ -43,6 +50,7 @@ import type {
   EntityDefinition,
   EntityKey,
   HomeAssistant,
+  Renderable,
   SectionId,
   UnifiDriveCardConfig,
 } from "./types";
@@ -53,12 +61,63 @@ interface ActionField {
   key: ActionConfigKey;
   labelKey: string;
 }
+interface SectionEntityGroups {
+  availableDefinitions: EntityDefinition[];
+  selected: Set<EntityKey>;
+  selectedDefinitions: EntityDefinition[];
+  selectedOrder: EntityKey[];
+}
 
 const ACTION_FIELDS: ActionField[] = [
   { key: "tap_action", labelKey: "editor.tap_action" },
   { key: "hold_action", labelKey: "editor.hold_action" },
   { key: "double_tap_action", labelKey: "editor.double_tap_action" },
 ];
+const ENTITY_EDITOR_SECTIONS = DEFAULT_SECTIONS.filter(
+  (section) => section !== "overview",
+) satisfies SectionId[];
+const ENTITY_EDITOR_SECTION_SET = new Set<SectionId>(ENTITY_EDITOR_SECTIONS);
+const SECTION_CATALOG_KEYS: Partial<Record<SectionId, EntityKey[]>> = Object.fromEntries(
+  Object.entries(ENTITY_DEFINITIONS_BY_SECTION).map(([section, definitions]) => [
+    section,
+    definitions
+      .filter((definition) => !definition.dynamic)
+      .map((definition) => definition.key),
+  ]),
+) as Partial<Record<SectionId, EntityKey[]>>;
+
+const SECTION_ENTITY_DRAG_TYPE = "application/x-unifi-drive-section-entity";
+const PRIMITIVE_CONFIG_KEYS = [
+  "type",
+  "device_id",
+  "name",
+  "compact",
+  "show_unavailable",
+  "show_optional",
+  "show_diagnostics",
+  "show_dangerous_actions",
+  "show_icon_animations",
+  "show_display_buttons",
+  "overview_columns",
+] as const satisfies readonly (keyof UnifiDriveCardConfig)[];
+const ARRAY_CONFIG_KEYS = [
+  "sections",
+  "overview_entities",
+  "hide_entities",
+] as const satisfies readonly (keyof UnifiDriveCardConfig)[];
+const JSON_CONFIG_KEYS = [
+  "entities",
+  "section_entity_order",
+  "tap_action",
+  "hold_action",
+  "double_tap_action",
+] as const satisfies readonly (keyof UnifiDriveCardConfig)[];
+const SECTION_DEFAULT_KEY_ORDER: Partial<Record<SectionId, EntityKey[]>> = {
+  diagnostics: DIAGNOSTIC_KEYS,
+  storage: STORAGE_KEYS,
+  system: SYSTEM_KEYS,
+  updates: UPDATE_KEYS,
+};
 
 
 @customElement("unifi-drive-card-editor")
@@ -67,19 +126,26 @@ export class UnifiDriveCardEditor extends LitElement {
   @state() private _config = normalizeConfig({});
   private readonly _activeEntityKeysCache = new WeakMap<DiscoveredEntities, Set<EntityKey>>();
   private readonly _discoveryCache = new DiscoveryCache();
+  private _entityOverrideKeyCache?: {
+    source: NonNullable<UnifiDriveCardConfig["entities"]>;
+    keys: Set<EntityKey>;
+  };
 
   public setConfig(config: UnifiDriveCardConfig): void {
     this._config = normalizeConfig(config);
+    this._entityOverrideKeyCache = undefined;
   }
 
   public override disconnectedCallback(): void {
     this._discoveryCache.clear();
+    this._entityOverrideKeyCache = undefined;
     super.disconnectedCallback();
   }
 
   protected override render() {
-    const activeEntityKeys = this._activeOverviewEntityKeys();
+    const activeEntityKeys = this._activeEntityKeys();
     const hiddenEntityKeys = new Set(this._config.hide_entities);
+    const pinnedEntityKeys = this._pinnedEntityKeys(hiddenEntityKeys);
     const orderingContext = this._orderingContext(activeEntityKeys);
     return html`
       <div class="editor">
@@ -90,11 +156,8 @@ export class UnifiDriveCardEditor extends LitElement {
           devicePreviewReady: activeEntityKeys !== undefined,
           deviceChanged: this._deviceChanged,
           nameChanged: this._nameChanged,
-          numberChanged: (key, event) => this._numberChanged(key, event),
           checkboxChanged: (key, checked) => this._checkboxChanged(key, checked),
         })}
-        ${renderSectionOrderEditor(orderingContext)}
-        ${renderOverviewEntityEditor(orderingContext)}
         <section class="actions-editor">
           ${editorFoldout(this.hass, {
             className: "actions-foldout",
@@ -107,19 +170,17 @@ export class UnifiDriveCardEditor extends LitElement {
             `,
           })}
         </section>
-        <section class="entity-editor">
-          ${editorFoldout(this.hass, {
-            className: "entities-foldout",
-            titleKey: "editor.entities",
-            helpKey: "editor.entities_help",
-            content: html`
-              <div class="entity-section-list">
-                ${DEFAULT_SECTIONS.map((section) =>
-                  this._entitySection(section, hiddenEntityKeys),
-                )}
-              </div>
-            `,
-          })}
+        ${renderSectionOrderEditor(orderingContext)}
+        ${renderOverviewEntityEditor(orderingContext)}
+        <section class="entity-editor section-entities-editor">
+          ${this._orderedEntityEditorSections().map((section) =>
+            this._sectionEntitySelector(
+              section,
+              hiddenEntityKeys,
+              pinnedEntityKeys,
+              activeEntityKeys,
+            ),
+          )}
         </section>
       </div>
     `;
@@ -143,15 +204,14 @@ export class UnifiDriveCardEditor extends LitElement {
         : this._config.overview_entities,
       activeEntityKeys,
       toggleSection: (section, checked) => this._toggleSection(section, checked),
-      moveSection: (section, direction) => this._moveSection(section, direction),
       reorderSection: (source, target) => this._reorderSection(source, target),
       toggleOverviewEntity: (key, checked) => this._overviewEntityChanged(key, checked),
-      moveOverviewEntity: (key, direction) => this._moveOverviewEntity(key, direction),
-      reorderOverviewEntity: (source, target) => this._reorderOverviewEntity(source, target),
+      reorderOverviewEntity: (source, target) =>
+        this._reorderOverviewEntity(source, target, activeEntityKeys),
     };
   }
 
-  private _activeOverviewEntityKeys(): Set<EntityKey> | undefined {
+  private _activeEntityKeys(): Set<EntityKey> | undefined {
     if (!this.hass) {
       return undefined;
     }
@@ -165,76 +225,264 @@ export class UnifiDriveCardEditor extends LitElement {
     return keys;
   }
 
-  private _entitySection(section: SectionId, hiddenEntityKeys: Set<EntityKey>) {
-    const definitions = definitionsForSection(section);
+  private _orderedEntityEditorSections(): SectionId[] {
+    return this._config.sections.filter(
+      (section): section is SectionId =>
+        section !== "overview" && ENTITY_EDITOR_SECTION_SET.has(section),
+    );
+  }
+
+  private _sectionEntitySelector(
+    section: SectionId,
+    hiddenEntityKeys: Set<EntityKey>,
+    pinnedEntityKeys: ReadonlySet<EntityKey>,
+    activeEntityKeys?: Set<EntityKey>,
+  ) {
+    const definitions = this._orderedSectionEntityDefinitions(
+      section,
+      pinnedEntityKeys,
+      activeEntityKeys,
+    );
     if (!definitions.length) {
-      return "";
+      return nothing;
     }
-    const visibleCount = definitions.filter((definition) => !hiddenEntityKeys.has(definition.key))
-      .length;
+    const {
+      selectedDefinitions,
+      availableDefinitions,
+      selectedOrder,
+      selected,
+    } = this._sectionEntityGroups(definitions, hiddenEntityKeys);
     return editorFoldout(this.hass, {
-      className: "entity-section",
+      className: `overview-foldout entity-section entity-section-${section}`,
       titleKey: `section.${section}`,
-      count: `${visibleCount}/${definitions.length}`,
+      count: selectedDefinitions.length,
       content: html`
-        <div class="entity-mapping-list">
-          ${definitions.map((definition) => this._entityMappingRow(definition, hiddenEntityKeys))}
+        <div class="overview-entity-groups section-entity-groups">
+          ${this._sectionEntityDefinitionGroup(
+            section,
+            "editor.selected_section_entities",
+            selectedDefinitions,
+            selected,
+            selectedOrder,
+            "order-list overview-order-list",
+          )}
+          ${this._sectionEntityDefinitionGroup(
+            section,
+            "editor.available_section_entities",
+            availableDefinitions,
+            selected,
+            selectedOrder,
+            "overview-entity-grid",
+          )}
         </div>
       `,
     });
   }
 
-  private _entityMappingRow(definition: EntityDefinition, hiddenEntityKeys: Set<EntityKey>) {
-    const hidden = hiddenEntityKeys.has(definition.key);
+  private _sectionEntityGroups(
+    definitions: EntityDefinition[],
+    hiddenEntityKeys: Set<EntityKey>,
+  ): SectionEntityGroups {
+    const selectedDefinitions: EntityDefinition[] = [];
+    const availableDefinitions: EntityDefinition[] = [];
+    for (const definition of definitions) {
+      if (hiddenEntityKeys.has(definition.key)) {
+        availableDefinitions.push(definition);
+      } else {
+        selectedDefinitions.push(definition);
+      }
+    }
+    const selectedOrder = selectedDefinitions.map((definition) => definition.key);
+    return {
+      selectedDefinitions,
+      availableDefinitions,
+      selectedOrder,
+      selected: new Set(selectedOrder),
+    };
+  }
+
+  private _sectionEntityDefinitionGroup(
+    section: SectionId,
+    titleKey: string,
+    definitions: EntityDefinition[],
+    selected: Set<EntityKey>,
+    selectedOrder: EntityKey[],
+    listClassName: string,
+  ): Renderable {
+    if (!definitions.length) {
+      return nothing;
+    }
+    return editorFoldout(this.hass, {
+      className: "overview-entity-section",
+      titleKey,
+      count: definitions.length,
+      content: html`
+        <div class=${listClassName}>
+          ${repeat(
+            definitions,
+            (definition) => definition.key,
+            (definition) =>
+              this._sectionEntityToggle(section, definition, selected, selectedOrder),
+          )}
+        </div>
+      `,
+    });
+  }
+
+  private _orderedSectionEntityDefinitions(
+    section: SectionId,
+    pinnedEntityKeys?: ReadonlySet<EntityKey>,
+    activeEntityKeys?: ReadonlySet<EntityKey>,
+  ): EntityDefinition[] {
+    const configuredOrder = this._config.section_entity_order[section];
+    const configuredKeys = configuredOrder?.length ? new Set(configuredOrder) : undefined;
+    const definitions = definitionsForSection(section).filter(
+      (definition) =>
+        !activeEntityKeys ||
+        activeEntityKeys.has(definition.key) ||
+        pinnedEntityKeys?.has(definition.key) ||
+        configuredKeys?.has(definition.key),
+    );
+    if (!definitions.length) {
+      return [];
+    }
+    const byKey = new Map(definitions.map((definition) => [definition.key, definition] as const));
+    const sectionCatalogKeys = SECTION_CATALOG_KEYS[section] ?? [];
+    const preferredDefaults = sectionDefaultKeys(section, sectionCatalogKeys).filter((key) =>
+      byKey.has(key),
+    );
+    const preferredSet = new Set(preferredDefaults);
+    const baseDefinitions = [
+      ...preferredDefaults
+        .map((key) => byKey.get(key))
+        .filter((definition): definition is EntityDefinition => Boolean(definition)),
+      ...definitions.filter((definition) => !preferredSet.has(definition.key)),
+    ];
+    if (!configuredOrder?.length) {
+      return baseDefinitions;
+    }
+    const ordered = configuredOrder
+      .map((key) => byKey.get(key))
+      .filter((definition): definition is EntityDefinition => Boolean(definition));
+    const orderedKeys = new Set(ordered.map((definition) => definition.key));
+    return [...ordered, ...baseDefinitions.filter((definition) => !orderedKeys.has(definition.key))];
+  }
+
+  private _entityOverrideKeys(): Set<EntityKey> {
+    const source = this._config.entities;
+    if (this._entityOverrideKeyCache?.source === source) {
+      return this._entityOverrideKeyCache.keys;
+    }
+    const keys = new Set<EntityKey>();
+    for (const [entryKey, value] of Object.entries(source)) {
+      if (typeof value === "string" && ENTITY_DEFINITION_BY_KEY[entryKey]) {
+        keys.add(entryKey as EntityKey);
+      }
+      if (!value || typeof value !== "object" || Array.isArray(value)) {
+        continue;
+      }
+      for (const nestedKey of Object.keys(value)) {
+        if (ENTITY_DEFINITION_BY_KEY[nestedKey]) {
+          keys.add(nestedKey as EntityKey);
+        }
+      }
+    }
+    this._entityOverrideKeyCache = { source, keys };
+    return keys;
+  }
+
+  private _sectionEntityToggle(
+    section: SectionId,
+    definition: EntityDefinition,
+    selected: Set<EntityKey>,
+    selectedOrder: EntityKey[],
+  ) {
+    const checked = selected.has(definition.key);
     const override = entityOverride(this._config.entities, definition);
-    const overridePreview = typeof override === "string" ? override : "";
-    const hasOverride = overridePreview.length > 0;
+    const dragLabel = localize(this.hass, "editor.drag_to_reorder");
     return html`
-      <div class="entity-mapping-row" data-entity-key=${definition.key}>
-        <div class="entity-visible switch-row">
+      <div
+        class="overview-entity-toggle section-entity-toggle"
+        data-entity-key=${definition.key}
+        data-entity-section=${section}
+        @dragover=${(event: DragEvent) => (checked ? this._allowEntityDrop(event) : undefined)}
+        @drop=${(event: DragEvent) =>
+          checked ? this._dropSectionEntity(section, definition.key, event) : undefined}
+      >
+        <div class="check switch-row">
           ${switchFormField(
             this.hass,
             entityLabel(definition, this.hass),
-            !hidden,
+            checked,
             (event: Event) =>
               this._entityVisibilityChanged(definition.key, checkedFromEvent(event)),
             {
-              helpKey: "editor.entity_visibility_help",
+              helpKey: "editor.overview_entity_visibility_help",
               isLocalizedText: true,
             },
           )}
         </div>
-        ${formRow(
-          this.hass,
-          "editor.entity_override",
-          "editor.entity_override_help",
-          html`
-            <div class="entity-override-control">
-              ${domainEntityPicker(
-                this.hass,
-                definition,
-                override,
-                (event: Event) => this._entityOverrideChanged(definition, event),
-              )}
-              <ha-textfield
-                .value=${overridePreview}
-                .label=${localize(this.hass, "editor.entity_override_custom")}
-                .helper=${localize(this.hass, "editor.entity_override_custom_help")}
-                helperPersistent
-                @change=${(event: Event) =>
-                  this._entityOverrideTextChanged(definition, event)}
-              ></ha-textfield>
-              ${hasOverride
-                ? html`
-                    <small class="entity-override-preview" title=${overridePreview}>
-                      ${overridePreview}
-                    </small>
-                  `
-                : ""}
-            </div>
-          `,
-          "entity-override-row",
+        ${this._renderSectionEntityDragHandle(
+          checked,
+          section,
+          definition.key,
+          selectedOrder,
+          dragLabel,
         )}
+        ${this._renderSectionEntityOverride(definition, override)}
+      </div>
+    `;
+  }
+
+  private _renderSectionEntityDragHandle(
+    checked: boolean,
+    section: SectionId,
+    key: EntityKey,
+    selectedOrder: EntityKey[],
+    dragLabel: string,
+  ): Renderable {
+    if (!checked) {
+      return nothing;
+    }
+    return html`
+      <div class="order-actions">
+        <button
+          class="drag-handle"
+          type="button"
+          title=${dragLabel}
+          aria-label=${dragLabel}
+          aria-keyshortcuts="ArrowUp ArrowDown"
+          draggable="true"
+          @dragstart=${(event: DragEvent) => this._setSectionEntityDragData(event, key)}
+          @keydown=${(event: KeyboardEvent) =>
+            this._reorderSectionEntityByKeyboard(event, section, key, selectedOrder)}
+        >
+          <ha-icon icon="mdi:drag"></ha-icon>
+        </button>
+      </div>
+    `;
+  }
+
+  private _renderSectionEntityOverride(
+    definition: EntityDefinition,
+    override: string,
+  ): Renderable {
+    const overridePreview = typeof override === "string" ? override : "";
+    return html`
+      <div class="entity-override-control entity-override-inline">
+        ${domainEntityPicker(
+          this.hass,
+          definition,
+          override,
+          (event: Event) => this._entityOverrideChanged(definition, event),
+        )}
+        <ha-textfield
+          .value=${overridePreview}
+          .label=${localize(this.hass, "editor.entity_override_custom")}
+          .helper=${localize(this.hass, "editor.entity_override_custom_help")}
+          helperPersistent
+          @change=${(event: Event) => this._entityOverrideTextChanged(definition, event)}
+        ></ha-textfield>
       </div>
     `;
   }
@@ -412,21 +660,18 @@ export class UnifiDriveCardEditor extends LitElement {
 
   private _deviceChanged = (event: Event): void => {
     const deviceId = pickerValueFromEvent(event);
+    if (!deviceId) {
+      return;
+    }
     this._updateConfig({ device_id: deviceId });
   };
 
   private _nameChanged = (event: Event): void => {
-    this._updateConfig({ name: inputStringFromEvent(event) || undefined });
+    this._updateConfig({ name: textValueFromEvent(event) || undefined });
   };
 
   private _checkboxChanged(key: BasicBooleanConfigKey, checked: boolean): void {
     this._updateConfig({ [key]: checked });
-  }
-
-  private _numberChanged(key: BasicNumberConfigKey, event: Event): void {
-    const target = event.target as HTMLInputElement;
-    const value = Number.parseInt(target.value, 10);
-    this._updateConfig({ [key]: value });
   }
 
   private _entityVisibilityChanged(key: EntityKey, checked: boolean): void {
@@ -437,6 +682,85 @@ export class UnifiDriveCardEditor extends LitElement {
       hidden.add(key);
     }
     this._updateConfig({ hide_entities: [...hidden] });
+  }
+
+  private _setSectionEntityDragData(event: DragEvent, key: EntityKey): void {
+    event.dataTransfer?.setData(SECTION_ENTITY_DRAG_TYPE, key);
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = "move";
+    }
+  }
+
+  private _allowEntityDrop(event: DragEvent): void {
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = "move";
+    }
+  }
+
+  private _dropSectionEntity(section: SectionId, target: EntityKey, event: DragEvent): void {
+    event.preventDefault();
+    const source = event.dataTransfer?.getData(SECTION_ENTITY_DRAG_TYPE) as
+      | EntityKey
+      | undefined;
+    if (!source) {
+      return;
+    }
+    this._reorderSectionEntity(section, source, target);
+  }
+
+  private _reorderSectionEntityByKeyboard(
+    event: KeyboardEvent,
+    section: SectionId,
+    current: EntityKey,
+    orderedKeys: EntityKey[],
+  ): void {
+    if (event.key !== "ArrowUp" && event.key !== "ArrowDown") {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    const index = orderedKeys.indexOf(current);
+    if (index < 0) {
+      return;
+    }
+    const delta = event.key === "ArrowUp" ? -1 : 1;
+    const target = orderedKeys[index + delta];
+    if (!target) {
+      return;
+    }
+    this._reorderSectionEntity(section, current, target);
+  }
+
+  private _reorderSectionEntity(section: SectionId, source: EntityKey, target: EntityKey): void {
+    const current = this._orderedSectionEntityDefinitions(
+      section,
+      this._pinnedEntityKeys(),
+      this._activeEntityKeys(),
+    ).map((definition) => definition.key);
+    const next = reorderItem(current, source, target);
+    this._setSectionEntityOrder(section, current, next);
+  }
+
+  private _setSectionEntityOrder(
+    section: SectionId,
+    current: EntityKey[],
+    next: EntityKey[],
+  ): void {
+    if (sameStringList(current, next)) {
+      return;
+    }
+    const defaults = sectionDefaultKeys(
+      section,
+      SECTION_CATALOG_KEYS[section] ?? [],
+    );
+    const section_entity_order = { ...this._config.section_entity_order };
+    if (sameStringList(next, defaults)) {
+      delete section_entity_order[section];
+    } else {
+      section_entity_order[section] = next;
+    }
+    this._updateConfig({ section_entity_order });
   }
 
   private _entityOverrideChanged(definition: EntityDefinition, event: Event): void {
@@ -528,10 +852,6 @@ export class UnifiDriveCardEditor extends LitElement {
     });
   }
 
-  private _moveSection(section: SectionId, direction: -1 | 1): void {
-    this._updateConfig({ sections: moveItem(this._config.sections, section, direction) });
-  }
-
   private _reorderSection(source: SectionId, target: SectionId): void {
     this._updateConfig({ sections: reorderItem(this._config.sections, source, target) });
   }
@@ -542,19 +862,11 @@ export class UnifiDriveCardEditor extends LitElement {
     });
   }
 
-  private _moveOverviewEntity(key: EntityKey, direction: -1 | 1): void {
-    const activeEntityKeys = this._activeOverviewEntityKeys();
-    const overview_entities = moveActiveOverviewEntity(
-      this._config.overview_entities,
-      key,
-      direction,
-      activeEntityKeys,
-    );
-    this._updateConfig({ overview_entities });
-  }
-
-  private _reorderOverviewEntity(source: EntityKey, target: EntityKey): void {
-    const activeEntityKeys = this._activeOverviewEntityKeys();
+  private _reorderOverviewEntity(
+    source: EntityKey,
+    target: EntityKey,
+    activeEntityKeys?: Set<EntityKey>,
+  ): void {
     const overview_entities = reorderActiveOverviewEntity(
       this._config.overview_entities,
       source,
@@ -566,14 +878,27 @@ export class UnifiDriveCardEditor extends LitElement {
 
   private _updateConfig(patch: Partial<UnifiDriveCardConfig>): void {
     const next = normalizeConfig({ ...this._config, ...patch });
+    if (configsEqual(this._config, next)) {
+      return;
+    }
     this._config = next;
+    this._emitConfigChanged(next);
+  }
+
+  private _emitConfigChanged(config: UnifiDriveCardConfig): void {
     this.dispatchEvent(
       new CustomEvent("config-changed", {
-        detail: { config: next },
+        detail: { config },
         bubbles: true,
         composed: true,
       }),
     );
+  }
+
+  private _pinnedEntityKeys(
+    hiddenEntityKeys = new Set(this._config.hide_entities),
+  ): Set<EntityKey> {
+    return new Set<EntityKey>([...hiddenEntityKeys, ...this._entityOverrideKeys()]);
   }
 
   static override styles = editorStyles;
@@ -639,11 +964,17 @@ function updateEntityOverride(
 }
 
 function domainEntitySelector(domain: EntityDomain) {
-  return {
+  const cached = DOMAIN_ENTITY_SELECTOR_CACHE.get(domain);
+  if (cached) {
+    return cached;
+  }
+  const selector: DomainEntitySelector = {
     entity: {
       filter: [{ domain }],
     },
   };
+  DOMAIN_ENTITY_SELECTOR_CACHE.set(domain, selector);
+  return selector;
 }
 
 function domainEntityPicker(
@@ -677,3 +1008,53 @@ function domainEntityPicker(
 function supportsHaSelector(): boolean {
   return typeof customElements !== "undefined" && Boolean(customElements.get("ha-selector"));
 }
+
+function sectionDefaultKeys(section: SectionId, sectionCatalogKeys: EntityKey[]): EntityKey[] {
+  const preferred = SECTION_DEFAULT_KEY_ORDER[section] ?? [];
+  const preferredSet = new Set(preferred);
+  const knownCatalogKeys = new Set(sectionCatalogKeys);
+  const inSectionPreferred = preferred.filter((key) => knownCatalogKeys.has(key));
+  const remaining = sectionCatalogKeys.filter((key) => !preferredSet.has(key));
+  return [...inSectionPreferred, ...remaining];
+}
+
+function sameStringList(left: string[], right: string[]): boolean {
+  return (
+    left.length === right.length &&
+    left.every((value, index) => value === right[index])
+  );
+}
+
+function configsEqual(left: UnifiDriveCardConfig, right: UnifiDriveCardConfig): boolean {
+  if (left === right) {
+    return true;
+  }
+  for (const key of PRIMITIVE_CONFIG_KEYS) {
+    if (left[key] !== right[key]) {
+      return false;
+    }
+  }
+  for (const key of ARRAY_CONFIG_KEYS) {
+    if (
+      !sameStringList(
+        (left[key] as string[] | undefined) ?? [],
+        (right[key] as string[] | undefined) ?? [],
+      )
+    ) {
+      return false;
+    }
+  }
+  for (const key of JSON_CONFIG_KEYS) {
+    if (left[key] !== right[key] && !jsonEquals(left[key], right[key])) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function jsonEquals(left: unknown, right: unknown): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+type DomainEntitySelector = { entity: { filter: Array<{ domain: EntityDomain }> } };
+const DOMAIN_ENTITY_SELECTOR_CACHE = new Map<EntityDomain, DomainEntitySelector>();

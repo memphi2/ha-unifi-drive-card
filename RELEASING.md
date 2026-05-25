@@ -19,6 +19,19 @@ npm run render-smoke
 - legal/trademark disclaimer coverage
 - release workflow upload list for JS, sourcemap and ZIP assets
 
+Optional GitHub-surface anonymization scan (same scope the release workflow
+enforces):
+
+```bash
+GH_REPO=<owner/repo> \
+GITHUB_TOKEN='<github-token>' \
+npm run anonymization-check:github
+```
+
+If you need extra private-term blocking without writing those terms to git, set
+repository secret `ANONYMIZATION_BLOCKLIST_TERMS` (comma-separated). The release
+workflow passes it to the GitHub anonymization scanner at runtime.
+
 Optional live validation:
 
 ```bash
@@ -54,3 +67,5 @@ release-prep-only work.
   proprietary UI, type styles or trade dress are bundled.
 - Public reports and screenshots must not include private hostnames, LAN IPs,
   tokens, passwords or account identifiers.
+- The release workflow must pass the mandatory GitHub-surface anonymization
+  scan (`npm run anonymization-check:github` with required-mode enabled).

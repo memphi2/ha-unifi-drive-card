@@ -1,8 +1,9 @@
 import { html } from "lit";
+import { repeat } from "lit/directives/repeat.js";
 import { DEFAULT_SECTIONS, ENTITY_DEFINITIONS } from "./catalog";
-import { entityLabel, localize, sectionLabel } from "./i18n";
-import { switchFormField } from "./editor-form";
 import { checkedFromEvent } from "./editor-shared";
+import { editorFoldout, switchFormField } from "./editor-form";
+import { entityLabel, localize, sectionLabel } from "./i18n";
 import type { EntityDefinition, EntityKey, HomeAssistant, SectionId } from "./types";
 
 export interface EditorOrderingContext {
@@ -11,10 +12,8 @@ export interface EditorOrderingContext {
   overviewEntities: EntityKey[];
   activeEntityKeys?: Set<EntityKey>;
   toggleSection: (section: SectionId, checked: boolean) => void;
-  moveSection: (section: SectionId, direction: -1 | 1) => void;
   reorderSection: (source: SectionId, target: SectionId) => void;
   toggleOverviewEntity: (key: EntityKey, checked: boolean) => void;
-  moveOverviewEntity: (key: EntityKey, direction: -1 | 1) => void;
   reorderOverviewEntity: (source: EntityKey, target: EntityKey) => void;
 }
 
@@ -25,11 +24,21 @@ export function renderSectionOrderEditor(context: EditorOrderingContext) {
   const sections = orderedSectionsForEditor(context.sections);
   return html`
     <section class="sections-editor">
-      <h3>${localize(context.hass, "editor.sections")}</h3>
-      <p>${localize(context.hass, "editor.sections_help")}</p>
-      <div class="order-list section-order-list">
-        ${sections.map((section) => sectionToggle(context, section))}
-      </div>
+      ${editorFoldout(context.hass, {
+        className: "sections-foldout",
+        titleKey: "editor.sections",
+        helpKey: "editor.sections_help",
+        count: context.sections.length,
+        content: html`
+          <div class="order-list section-order-list">
+            ${repeat(
+              sections,
+              (section) => section,
+              (section) => sectionToggle(context, section),
+            )}
+          </div>
+        `,
+      })}
     </section>
   `;
 }
@@ -40,98 +49,85 @@ export function renderOverviewEntityEditor(context: EditorOrderingContext) {
     context.overviewEntities,
     activeDefinitions,
   );
+  const selectedOrder = selectedDefinitions.map((definition) => definition.key);
   const selected = new Set(selectedDefinitions.map((definition) => definition.key));
   const availableDefinitions = activeDefinitions.filter(
     (definition) => !selected.has(definition.key),
   );
   return html`
     <section class="overview-editor">
-      <h3>${localize(context.hass, "editor.overview_entities")}</h3>
-      <p>${localize(context.hass, "editor.overview_entities_help")}</p>
-      <div class="overview-entity-groups">
-        ${selectedDefinitions.length
-          ? html`
-              <details class="overview-entity-section">
-                <summary>
-                  <span>${localize(context.hass, "editor.selected_overview_entities")}</span>
-                  <small>${selectedDefinitions.length}</small>
-                </summary>
-                <div class="order-list overview-order-list">
-                  ${selectedDefinitions.map((definition) =>
-                    overviewEntityToggle(context, definition, selected),
-                  )}
-                </div>
-              </details>
-            `
-          : ""}
-        ${availableDefinitions.length
-          ? html`
-              <details class="overview-entity-section">
-                <summary>
-                  <span>${localize(context.hass, "editor.available_overview_entities")}</span>
-                  <small>${availableDefinitions.length}</small>
-                </summary>
-                <div class="overview-entity-grid">
-                  ${availableDefinitions.map((definition) =>
-                    overviewEntityToggle(context, definition, selected),
-                  )}
-                </div>
-              </details>
-            `
-          : ""}
-      </div>
+      ${editorFoldout(context.hass, {
+        className: "overview-foldout",
+        titleKey: "editor.overview_entities",
+        helpKey: "editor.overview_entities_help",
+        count: selectedDefinitions.length,
+        content: html`
+          <div class="overview-entity-groups">
+            ${selectedDefinitions.length
+              ? editorFoldout(context.hass, {
+                  className: "overview-entity-section",
+                  titleKey: "editor.selected_overview_entities",
+                  count: selectedDefinitions.length,
+                  content: html`
+                    <div class="order-list overview-order-list">
+                      ${repeat(
+                        selectedDefinitions,
+                        (definition) => definition.key,
+                        (definition) =>
+                          overviewEntityToggle(context, definition, selected, selectedOrder),
+                      )}
+                    </div>
+                  `,
+                })
+              : ""}
+            ${availableDefinitions.length
+              ? editorFoldout(context.hass, {
+                  className: "overview-entity-section",
+                  titleKey: "editor.available_overview_entities",
+                  count: availableDefinitions.length,
+                  content: html`
+                    <div class="overview-entity-grid">
+                      ${repeat(
+                        availableDefinitions,
+                        (definition) => definition.key,
+                        (definition) =>
+                          overviewEntityToggle(context, definition, selected, selectedOrder),
+                      )}
+                    </div>
+                  `,
+                })
+              : ""}
+          </div>
+        `,
+      })}
     </section>
   `;
 }
 
 export function toggleListItem<T>(items: T[], item: T, enabled: boolean): T[] {
   if (enabled) {
-    return items.includes(item) ? [...items] : [...items, item];
+    return items.includes(item) ? items : [...items, item];
   }
-  return items.filter((entry) => entry !== item);
-}
-
-export function moveItem<T>(items: T[], item: T, direction: -1 | 1): T[] {
-  const next = [...items];
-  const index = next.indexOf(item);
-  const target = index + direction;
-  if (index < 0 || target < 0 || target >= next.length) {
-    return next;
-  }
-  const current = next[index] as T;
-  next[index] = next[target] as T;
-  next[target] = current;
-  return next;
+  return items.includes(item) ? items.filter((entry) => entry !== item) : items;
 }
 
 export function activeOverviewEntities(keys: EntityKey[], activeKeys: Set<EntityKey>): EntityKey[] {
-  return keys.filter((key) => activeKeys.has(key));
-}
-
-export function moveActiveOverviewEntity(
-  keys: EntityKey[],
-  key: EntityKey,
-  direction: -1 | 1,
-  activeKeys: Set<EntityKey> | undefined,
-): EntityKey[] {
-  if (!activeKeys) {
-    return moveItem(keys, key, direction);
+  if (keys.every((key) => activeKeys.has(key))) {
+    return keys;
   }
-  const activeSelection = activeOverviewEntities(keys, activeKeys);
-  const movedActiveSelection = moveItem(activeSelection, key, direction);
-  return replaceActiveOverviewEntities(keys, activeKeys, movedActiveSelection);
+  return keys.filter((key) => activeKeys.has(key));
 }
 
 export function reorderItem<T>(items: T[], source: T, target: T): T[] {
   if (source === target) {
-    return [...items];
+    return items;
+  }
+  const sourceIndex = items.indexOf(source);
+  const targetIndex = items.indexOf(target);
+  if (sourceIndex < 0 || targetIndex < 0) {
+    return items;
   }
   const next = [...items];
-  const sourceIndex = next.indexOf(source);
-  const targetIndex = next.indexOf(target);
-  if (sourceIndex < 0 || targetIndex < 0) {
-    return next;
-  }
   const [entry] = next.splice(sourceIndex, 1);
   next.splice(targetIndex, 0, entry as T);
   return next;
@@ -153,10 +149,6 @@ export function reorderActiveOverviewEntity(
 
 function sectionToggle(context: EditorOrderingContext, section: SectionId) {
   const checked = context.sections.includes(section);
-  const selectedIndex = context.sections.indexOf(section);
-  const moveUpLabel = localize(context.hass, "editor.move_up");
-  const moveDownLabel = localize(context.hass, "editor.move_down");
-  const dragLabel = localize(context.hass, "editor.drag_to_reorder");
   return html`
     <div
       class="order-row section-order-row"
@@ -170,21 +162,34 @@ function sectionToggle(context: EditorOrderingContext, section: SectionId) {
           sectionLabel(section, context.hass),
           checked,
           (event: Event) => context.toggleSection(section, checkedFromEvent(event)),
-          { isLocalizedText: true },
+          {
+            helpKey: "editor.section_visibility_help",
+            isLocalizedText: true,
+          },
         )}
       </div>
-      ${orderActionButtons({
-        moveUpLabel,
-        moveDownLabel,
-        dragLabel,
-        moveUpDisabled: !checked || selectedIndex <= 0,
-        moveDownDisabled: !checked || selectedIndex < 0 || selectedIndex >= context.sections.length - 1,
-        dragDisabled: !checked,
-        draggable: checked,
-        onMoveUp: () => context.moveSection(section, -1),
-        onMoveDown: () => context.moveSection(section, 1),
-        onDragStart: (event: DragEvent) => setDragData(event, SECTION_DRAG_TYPE, section),
-      })}
+      <div class="order-actions">
+        <button
+          class="drag-handle"
+          type="button"
+          title=${localize(context.hass, "editor.drag_to_reorder")}
+          aria-label=${localize(context.hass, "editor.drag_to_reorder")}
+          aria-keyshortcuts="ArrowUp ArrowDown"
+          draggable=${checked ? "true" : "false"}
+          ?disabled=${!checked}
+          @dragstart=${(event: DragEvent) => setDragData(event, SECTION_DRAG_TYPE, section)}
+          @keydown=${(event: KeyboardEvent) =>
+            reorderByKeyboard(
+              event,
+              section,
+              context.sections,
+              (target) => context.reorderSection(section, target),
+              checked,
+            )}
+        >
+          <ha-icon icon="mdi:drag"></ha-icon>
+        </button>
+      </div>
     </div>
   `;
 }
@@ -193,12 +198,9 @@ function overviewEntityToggle(
   context: EditorOrderingContext,
   definition: EntityDefinition,
   selected: Set<EntityKey>,
+  selectedOrder: EntityKey[],
 ) {
   const checked = selected.has(definition.key);
-  const selectedIndex = context.overviewEntities.indexOf(definition.key);
-  const moveUpLabel = localize(context.hass, "editor.move_up");
-  const moveDownLabel = localize(context.hass, "editor.move_down");
-  const dragLabel = localize(context.hass, "editor.drag_to_reorder");
   return html`
     <div
       class="overview-entity-toggle"
@@ -214,108 +216,45 @@ function overviewEntityToggle(
           checked,
           (event: Event) =>
             context.toggleOverviewEntity(definition.key, checkedFromEvent(event)),
-          { isLocalizedText: true },
+          {
+            helpKey: "editor.overview_entity_visibility_help",
+            isLocalizedText: true,
+          },
         )}
       </div>
       ${checked
         ? html`
-            ${orderActionButtons({
-              moveUpLabel,
-              moveDownLabel,
-              dragLabel,
-              moveUpDisabled: selectedIndex <= 0,
-              moveDownDisabled:
-                selectedIndex >= context.overviewEntities.length - 1,
-              dragDisabled: false,
-              draggable: true,
-              onMoveUp: () => context.moveOverviewEntity(definition.key, -1),
-              onMoveDown: () => context.moveOverviewEntity(definition.key, 1),
-              onDragStart: (event: DragEvent) =>
-                setDragData(event, OVERVIEW_DRAG_TYPE, definition.key),
-            })}
+            <div class="order-actions">
+              <button
+                class="drag-handle"
+                type="button"
+                title=${localize(context.hass, "editor.drag_to_reorder")}
+                aria-label=${localize(context.hass, "editor.drag_to_reorder")}
+                aria-keyshortcuts="ArrowUp ArrowDown"
+                draggable="true"
+                @dragstart=${(event: DragEvent) =>
+                  setDragData(event, OVERVIEW_DRAG_TYPE, definition.key)}
+                @keydown=${(event: KeyboardEvent) =>
+                  reorderByKeyboard(
+                    event,
+                    definition.key,
+                    selectedOrder,
+                    (target) => context.reorderOverviewEntity(definition.key, target),
+                    true,
+                  )}
+              >
+                <ha-icon icon="mdi:drag"></ha-icon>
+              </button>
+            </div>
           `
         : ""}
     </div>
   `;
 }
 
-function orderActionButtons({
-  moveUpLabel,
-  moveDownLabel,
-  dragLabel,
-  moveUpDisabled,
-  moveDownDisabled,
-  dragDisabled,
-  draggable,
-  onMoveUp,
-  onMoveDown,
-  onDragStart,
-}: {
-  moveUpLabel: string;
-  moveDownLabel: string;
-  dragLabel: string;
-  moveUpDisabled: boolean;
-  moveDownDisabled: boolean;
-  dragDisabled: boolean;
-  draggable: boolean;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
-  onDragStart: (event: DragEvent) => void;
-}) {
-  return html`
-    <div class="order-actions">
-      <button
-        class="icon-button"
-        type="button"
-        title=${moveUpLabel}
-        aria-label=${moveUpLabel}
-        ?disabled=${moveUpDisabled}
-        @click=${onMoveUp}
-      >
-        <ha-icon icon="mdi:chevron-up"></ha-icon>
-      </button>
-      <button
-        class="icon-button"
-        type="button"
-        title=${moveDownLabel}
-        aria-label=${moveDownLabel}
-        ?disabled=${moveDownDisabled}
-        @click=${onMoveDown}
-      >
-        <ha-icon icon="mdi:chevron-down"></ha-icon>
-      </button>
-      <button
-        class="drag-handle"
-        type="button"
-        title=${dragLabel}
-        aria-label=${dragLabel}
-        draggable=${draggable ? "true" : "false"}
-        ?disabled=${dragDisabled}
-        @dragstart=${onDragStart}
-      >
-        <ha-icon icon="mdi:drag"></ha-icon>
-      </button>
-    </div>
-  `;
-}
-
 function orderedSectionsForEditor(selectedSections: SectionId[]): SectionId[] {
   const selected = new Set(selectedSections);
-  return [
-    ...selectedSections,
-    ...DEFAULT_SECTIONS.filter((section) => !selected.has(section)),
-  ];
-}
-
-function replaceActiveOverviewEntities(
-  keys: EntityKey[],
-  activeKeys: Set<EntityKey>,
-  nextActiveSelection: EntityKey[],
-): EntityKey[] {
-  const nextActive = [...nextActiveSelection];
-  return keys.map((entry) =>
-    activeKeys.has(entry) ? (nextActive.shift() ?? entry) : entry,
-  );
+  return [...selectedSections, ...DEFAULT_SECTIONS.filter((section) => !selected.has(section))];
 }
 
 function setDragData(event: DragEvent, type: string, value: string): void {
@@ -335,51 +274,100 @@ function allowDrop(event: DragEvent, enabled: boolean): void {
   }
 }
 
-function dropSection(
-  context: EditorOrderingContext,
-  target: SectionId,
-  enabled: boolean,
-  event: DragEvent,
-): void {
-  if (!enabled) {
-    return;
-  }
-  event.preventDefault();
-  const source = event.dataTransfer?.getData(SECTION_DRAG_TYPE) as SectionId | undefined;
-  if (source) {
-    context.reorderSection(source, target);
-  }
-}
-
 function dropOverviewEntity(
   context: EditorOrderingContext,
   target: EntityKey,
   enabled: boolean,
   event: DragEvent,
 ): void {
+  handleDrop(
+    enabled,
+    event,
+    OVERVIEW_DRAG_TYPE,
+    (source: EntityKey) => context.reorderOverviewEntity(source, target),
+  );
+}
+
+function dropSection(
+  context: EditorOrderingContext,
+  target: SectionId,
+  enabled: boolean,
+  event: DragEvent,
+): void {
+  handleDrop(
+    enabled,
+    event,
+    SECTION_DRAG_TYPE,
+    (source: SectionId) => context.reorderSection(source, target),
+  );
+}
+
+function handleDrop<T extends string>(
+  enabled: boolean,
+  event: DragEvent,
+  dragType: string,
+  moveItem: (source: T) => void,
+): void {
   if (!enabled) {
     return;
   }
   event.preventDefault();
-  const source = event.dataTransfer?.getData(OVERVIEW_DRAG_TYPE);
+  const source = event.dataTransfer?.getData(dragType) as T | undefined;
   if (source) {
-    context.reorderOverviewEntity(source, target);
+    moveItem(source);
+  }
+}
+
+function reorderByKeyboard<T extends string>(
+  event: KeyboardEvent,
+  current: T,
+  ordered: readonly T[],
+  moveItem: (target: T) => void,
+  enabled: boolean,
+): void {
+  if (!enabled || (event.key !== "ArrowUp" && event.key !== "ArrowDown")) {
+    return;
+  }
+  event.preventDefault();
+  event.stopPropagation();
+  const index = ordered.indexOf(current);
+  if (index < 0) {
+    return;
+  }
+  const delta = event.key === "ArrowUp" ? -1 : 1;
+  const target = ordered[index + delta];
+  if (target) {
+    moveItem(target);
   }
 }
 
 function entityDefinitionsForOverview(activeKeys: Set<EntityKey> | undefined): EntityDefinition[] {
-  const definitions = ENTITY_DEFINITIONS.filter((definition) => !definition.dynamic);
   if (!activeKeys) {
-    return definitions;
+    return ENTITY_DEFINITIONS;
   }
-  return definitions.filter((definition) => activeKeys.has(definition.key));
+  return ENTITY_DEFINITIONS.filter((definition) => activeKeys.has(definition.key));
 }
 
 function selectedEntityDefinitions(
   keys: EntityKey[],
   definitions: EntityDefinition[],
 ): EntityDefinition[] {
+  if (!keys.length || !definitions.length) {
+    return [];
+  }
+  const byKey = new Map<EntityKey, EntityDefinition>(
+    definitions.map((definition) => [definition.key, definition]),
+  );
   return keys
-    .map((key) => definitions.find((definition) => definition.key === key))
+    .map((key) => byKey.get(key))
     .filter((definition): definition is EntityDefinition => Boolean(definition));
+}
+
+function replaceActiveOverviewEntities(
+  keys: EntityKey[],
+  activeKeys: Set<EntityKey>,
+  nextActiveSelection: EntityKey[],
+): EntityKey[] {
+  const replacement = [...nextActiveSelection];
+  return keys.map((entry) => (activeKeys.has(entry) ? (replacement.shift() ?? entry) : entry));
 }

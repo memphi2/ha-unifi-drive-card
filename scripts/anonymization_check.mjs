@@ -23,6 +23,12 @@ const TEXT_EXTENSIONS = new Set([
 
 const PRIVATE_IPV4_PATTERN =
   /\b(?:10(?:\.\d{1,3}){3}|172\.(?:1[6-9]|2\d|3[01])(?:\.\d{1,3}){2}|192\.168(?:\.\d{1,3}){2})\b/g;
+const PRIVATE_FRAGMENT_PATTERN =
+  /\b(?:172\.(?:1[6-9]|2\d|3[01])\.\d{1,3}|192\.168\.\d{1,3})\b/g;
+
+const BLOCKLIST_TERMS = parseBlocklist(
+  process.env.ANONYMIZATION_BLOCKLIST_TERMS || process.env.ANONYMIZATION_BLOCKLIST || "",
+);
 
 const SECRET_ASSIGNMENT_PATTERNS = [
   /\b(?:password|passwd|token|secret|api[_-]?key|access[_-]?token|refresh[_-]?token)\b\s*[:=]\s*["']([^"']{4,})["']/gi,
@@ -88,12 +94,37 @@ function allowedSecretValue(value) {
   return ALLOWED_SECRET_VALUES.some((pattern) => pattern.test(trimmed));
 }
 
+function parseBlocklist(raw) {
+  return String(raw)
+    .split(/[,\n]/)
+    .map((term) => term.trim())
+    .filter((term) => term.length >= 2);
+}
+
+function lineForMatch(content, term, startAt = 0) {
+  const lowerContent = content.toLowerCase();
+  const lowerTerm = term.toLowerCase();
+  const index = lowerContent.indexOf(lowerTerm, startAt);
+  if (index === -1) {
+    return { index: -1, line: 1 };
+  }
+  return { index, line: lineFor(content, index) };
+}
+
 function checkFile(file, content) {
   for (const match of content.matchAll(PRIVATE_IPV4_PATTERN)) {
     findings.push({
       file,
       line: lineFor(content, match.index ?? 0),
       reason: "private LAN address must be replaced by an env var or placeholder",
+    });
+  }
+
+  for (const match of content.matchAll(PRIVATE_FRAGMENT_PATTERN)) {
+    findings.push({
+      file,
+      line: lineFor(content, match.index ?? 0),
+      reason: "private LAN fragment must be replaced by an env var or placeholder",
     });
   }
 
@@ -107,6 +138,22 @@ function checkFile(file, content) {
           reason: "literal secret-like value must be replaced by an env var or placeholder",
         });
       }
+    }
+  }
+
+  for (const term of BLOCKLIST_TERMS) {
+    let nextOffset = 0;
+    while (nextOffset < content.length) {
+      const { index, line } = lineForMatch(content, term, nextOffset);
+      if (index === -1) {
+        break;
+      }
+      findings.push({
+        file,
+        line,
+        reason: "blocklisted anonymization term detected",
+      });
+      nextOffset = index + term.length;
     }
   }
 }

@@ -47,6 +47,7 @@ export function normalizeConfig(
     overview_columns: boundedInteger(config.overview_columns, 3, 1, 6),
     sections: normalizeSections(config.sections),
     overview_entities: normalizeOverviewEntities(config.overview_entities),
+    section_entity_order: normalizeSectionEntityOrder(config.section_entity_order),
     hide_entities: normalizeEntityKeys(config.hide_entities),
     entities: normalizeEntityOverrides(config.entities),
   };
@@ -65,6 +66,33 @@ function normalizeOverviewEntities(keys: EntityKey[] | undefined): EntityKey[] {
     return [...OVERVIEW_KEYS];
   }
   return uniqueKnownItems(keys, OVERVIEW_ENTITY_KEY_SET);
+}
+
+function normalizeSectionEntityOrder(
+  value: unknown,
+): Partial<Record<SectionId, EntityKey[]>> {
+  if (!isRecord(value)) {
+    return {};
+  }
+  const normalized: Partial<Record<SectionId, EntityKey[]>> = {};
+  for (const [section, keys] of Object.entries(value)) {
+    if (!SECTION_SET.has(section) || !Array.isArray(keys)) {
+      continue;
+    }
+    const ordered = [
+      ...new Set(
+        keys.filter(
+          (key): key is EntityKey =>
+            isEntityKey(key) &&
+            ENTITY_DEFINITION_BY_KEY[key]?.section === section,
+        ),
+      ),
+    ];
+    if (ordered.length) {
+      normalized[section as SectionId] = ordered;
+    }
+  }
+  return normalized;
 }
 
 function uniqueKnownItems<T extends string>(items: T[], knownItems: Set<string>): T[] {
