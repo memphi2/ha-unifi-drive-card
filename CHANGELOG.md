@@ -6,6 +6,23 @@
 
 - None pending.
 
+## 0.3.0 - 2026-05-25
+
+### Changed
+
+- Aligned editor behavior and structure with the current `ha-dhe-connect-card`
+  baseline, including section/entity management flow and interaction parity.
+- Refactored section and overview editor internals to reduce duplication and
+  keep rendering logic modular and easier to maintain.
+- Hardened runtime/editor hot paths with targeted caching for hidden entities,
+  entity overrides and discovery-config signatures.
+- Improved shared editor event handling to robustly parse `value`, `device_id`
+  and `deviceId` payload variants.
+- Expanded tests for shared editor helpers and parity-sensitive editor/render
+  behavior.
+- Revalidated release readiness with full CI checks, browser smoke and Home
+  Assistant install/uninstall plus live entity audit checks.
+
 ## 0.2.3 - 2026-05-23
 
 ### Changed
