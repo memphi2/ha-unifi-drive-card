@@ -213,6 +213,41 @@ describe("UnifiDriveCard rendering", () => {
     expect(visibleText(card)).not.toContain("System Status");
   });
 
+  it("preserves configured section entity order for key sections", async () => {
+    const card = await renderCard(hassFixture(), {
+      sections: ["storage"],
+      section_entity_order: {
+        storage: ["used_storage", "usage_percent", "available_storage"],
+      },
+    });
+    const keys = [
+      ...(card.shadowRoot?.querySelectorAll('[data-section="storage"] .entity-row[data-entity-key]') ??
+        []),
+    ].map((row) => row.getAttribute("data-entity-key"));
+
+    expect(keys.slice(0, 2)).toEqual(["used_storage", "usage_percent"]);
+  });
+
+  it("renders only selected entities when hide_entities is configured", async () => {
+    const card = await renderCard(hassFixture(), {
+      sections: ["overview", "storage"],
+      overview_entities: ["usage_percent", "used_storage", "overall_status"],
+      hide_entities: ["used_storage", "overall_status"],
+    });
+
+    const overviewMetrics = [...(card.shadowRoot?.querySelectorAll('[data-section="overview"] .metric') ?? [])];
+    const storageRows = [
+      ...(card.shadowRoot?.querySelectorAll('[data-section="storage"] .entity-row[data-entity-key]') ?? []),
+    ];
+    const storageKeys = storageRows.map((row) => row.getAttribute("data-entity-key"));
+
+    expect(overviewMetrics).toHaveLength(1);
+    expect(overviewMetrics[0]?.textContent).toContain("Usage");
+    expect(overviewMetrics[0]?.textContent).not.toContain("Used Storage");
+    expect(overviewMetrics[0]?.textContent).not.toContain("Storage Status");
+    expect(storageKeys).not.toContain("used_storage");
+  });
+
   it("colors problem tiles by current state", async () => {
     const healthyCard = await renderCard(hassFixture(), {
       sections: ["overview"],
@@ -286,6 +321,52 @@ describe("UnifiDriveCard rendering", () => {
 
     expect(unavailableHeaderIcon.className).toContain("alert");
     expect(unavailableHeaderIcon.className).not.toContain("animated");
+  });
+
+  it("applies tone classes to header status, usage gauge and rows", async () => {
+    const healthyCard = await renderCard(hassFixture(), {
+      sections: ["overview", "storage"],
+      overview_entities: ["usage_percent", "storage_problem"],
+    });
+    const healthyHeaderStatus = healthyCard.shadowRoot?.querySelector(
+      "header .header-status",
+    ) as HTMLElement;
+    const healthyUsageGauge = healthyCard.shadowRoot?.querySelector(
+      ".usage-gauge",
+    ) as HTMLElement;
+    const healthyProblemMetric = healthyCard.shadowRoot?.querySelector(
+      ".metric.tone-ok",
+    ) as HTMLElement;
+
+    expect(healthyHeaderStatus.className).toContain("tone-ok");
+    expect(healthyUsageGauge.className).toContain("tone-ok");
+    expect(healthyProblemMetric.className).toContain("tone-ok");
+
+    const alertHass = hassFixture();
+    alertHass.states["binary_sensor.problem"] = entity("on", {
+      friendly_name: "UniFi Drive Storage Problem",
+    });
+    alertHass.states["sensor.usage"] = entity("94", {
+      friendly_name: "UniFi Drive Usage",
+      unit_of_measurement: "%",
+    });
+    const alertCard = await renderCard(alertHass, {
+      sections: ["overview", "storage"],
+      overview_entities: ["usage_percent", "storage_problem"],
+    });
+    const alertHeaderStatus = alertCard.shadowRoot?.querySelector(
+      "header .header-status",
+    ) as HTMLElement;
+    const alertUsageGauge = alertCard.shadowRoot?.querySelector(
+      ".usage-gauge",
+    ) as HTMLElement;
+    const alertProblemMetric = alertCard.shadowRoot?.querySelector(
+      ".metric.tone-alert",
+    ) as HTMLElement;
+
+    expect(alertHeaderStatus.className).toContain("tone-alert");
+    expect(alertUsageGauge.className).toContain("tone-alert");
+    expect(alertProblemMetric.className).toContain("tone-alert");
   });
 
   it("can render DHE-style display tiles for dense sections", async () => {

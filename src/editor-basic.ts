@@ -1,6 +1,6 @@
 import { html } from "lit";
 import { localize } from "./i18n";
-import { editorFoldout, formRow, switchFormField } from "./editor-form";
+import { editorFoldout, switchFormField } from "./editor-form";
 import { checkedFromEvent, textInputValue } from "./editor-shared";
 import {
   INTEGRATION_DOMAIN,
@@ -8,7 +8,6 @@ import {
   type NormalizedUnifiDriveCardConfig,
 } from "./types";
 
-export type BasicNumberConfigKey = "overview_columns";
 export type BasicBooleanConfigKey =
   | "compact"
   | "show_diagnostics"
@@ -17,14 +16,6 @@ export type BasicBooleanConfigKey =
   | "show_dangerous_actions"
   | "show_unavailable"
   | "show_optional";
-
-interface NumberField {
-  key: BasicNumberConfigKey;
-  labelKey: string;
-  max?: string;
-  min: string;
-  step: string;
-}
 
 interface BooleanField {
   key: BasicBooleanConfigKey;
@@ -38,7 +29,6 @@ interface EditorBasicContext {
   devicePreviewReady?: boolean;
   deviceChanged: (event: Event) => void;
   nameChanged: (event: Event) => void;
-  numberChanged: (key: BasicNumberConfigKey, event: Event) => void;
   checkboxChanged: (key: BasicBooleanConfigKey, checked: boolean) => void;
 }
 
@@ -48,10 +38,9 @@ const DRIVE_DEVICE_SELECTOR = {
     entity: [{ domain: "sensor" }],
   },
 };
-
-const NUMBER_FIELDS: NumberField[] = [
-  { key: "overview_columns", labelKey: "editor.overview_columns", min: "1", max: "6", step: "1" },
-];
+const NAME_SELECTOR = {
+  text: {},
+};
 
 const BOOLEAN_FIELDS: BooleanField[] = [
   { key: "compact", labelKey: "editor.compact" },
@@ -79,35 +68,19 @@ export function renderBasicEditor(context: EditorBasicContext) {
           @value-changed=${context.deviceChanged}
         ></ha-selector>
         ${devicePreview(context)}
-        ${formRow(
-          context.hass,
-          "editor.name",
-          "editor.name_help",
-          html`
-            <ha-textfield
-              .value=${textInputValue(context.config.name)}
-              aria-label=${localize(context.hass, "editor.name")}
-              .helper=${localize(context.hass, "editor.name_help")}
-              helperPersistent
-              @input=${context.nameChanged}
-            ></ha-textfield>
-          `,
-        )}
+        <ha-selector
+          class="ha-picker-control"
+          data-editor-field="name"
+          .hass=${context.hass}
+          .label=${localize(context.hass, "editor.name")}
+          .helper=${localize(context.hass, "editor.name_help")}
+          .selector=${NAME_SELECTOR}
+          .value=${textInputValue(context.config.name)}
+          @value-changed=${context.nameChanged}
+          @change=${context.nameChanged}
+        ></ha-selector>
       </div>
-
-      <div class="numeric-grid">
-        ${NUMBER_FIELDS.map((field) => numberField(context, field))}
-      </div>
-      ${editorFoldout(context.hass, {
-        className: "advanced-editor",
-        titleKey: "editor.advanced_options",
-        helpKey: "editor.advanced_options_help",
-        content: html`
-          <div class="advanced-group checks">
-            ${BOOLEAN_FIELDS.map((field) => checkbox(context, field))}
-          </div>
-        `,
-      })}
+      <div class="advanced-options-block">${advancedOptionsFoldout(context)}</div>
     </section>
   `;
 }
@@ -142,26 +115,17 @@ function devicePreview(context: EditorBasicContext) {
   });
 }
 
-function numberField(context: EditorBasicContext, field: NumberField) {
-  return formRow(
-    context.hass,
-    field.labelKey,
-    `${field.labelKey}_help`,
-    html`
-      <ha-textfield
-        type="number"
-        inputmode="numeric"
-        min=${field.min}
-        max=${field.max ?? ""}
-        step=${field.step}
-        .value=${String(context.config[field.key])}
-        aria-label=${localize(context.hass, field.labelKey)}
-        .helper=${localize(context.hass, `${field.labelKey}_help`)}
-        helperPersistent
-        @input=${(event: Event) => context.numberChanged(field.key, event)}
-      ></ha-textfield>
+function advancedOptionsFoldout(context: EditorBasicContext) {
+  return editorFoldout(context.hass, {
+    className: "advanced-editor",
+    titleKey: "editor.advanced_options",
+    helpKey: "editor.advanced_options_help",
+    content: html`
+      <div class="advanced-group checks">
+        ${BOOLEAN_FIELDS.map((field) => checkbox(context, field))}
+      </div>
     `,
-  );
+  });
 }
 
 function checkbox(context: EditorBasicContext, field: BooleanField) {

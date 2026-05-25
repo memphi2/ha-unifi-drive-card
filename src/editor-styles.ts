@@ -173,6 +173,14 @@ export const editorStyles = css`
     gap: 8px;
   }
 
+  .layout-options {
+    padding-top: 2px;
+  }
+
+  .advanced-options-block {
+    padding-top: 4px;
+  }
+
   .ha-picker-control {
     display: block;
     min-width: 0;
@@ -397,27 +405,18 @@ export const editorStyles = css`
     );
   }
 
-  .entity-section-list {
-    display: grid;
-    gap: 10px;
-  }
-
   .overview-editor {
     display: grid;
     gap: 8px;
   }
 
-  .overview-editor p,
-  .sections-editor p {
-    margin: 0;
-    color: var(--secondary-text-color);
-    font-size: 13px;
-    line-height: 1.4;
-  }
-
   .overview-entity-groups {
     display: grid;
     gap: 10px;
+  }
+
+  .section-entity-groups {
+    grid-template-columns: 1fr;
   }
 
   .overview-entity-section,
@@ -523,6 +522,11 @@ export const editorStyles = css`
     color: var(--primary-color);
   }
 
+  .drag-handle:focus-visible:not(:disabled) {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+  }
+
   .drag-handle:active:not(:disabled) {
     cursor: grabbing;
   }
@@ -553,35 +557,6 @@ export const editorStyles = css`
     display: flex;
     align-items: center;
     gap: 4px;
-  }
-
-  .icon-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    border: 0;
-    border-radius: 999px;
-    background: transparent;
-    color: var(--secondary-text-color);
-    cursor: pointer;
-  }
-
-  .icon-button:hover:not(:disabled),
-  .icon-button:focus-visible:not(:disabled) {
-    background: color-mix(in srgb, var(--primary-color) 10%, transparent);
-    color: var(--primary-color);
-  }
-
-  .icon-button:disabled {
-    cursor: default;
-    opacity: 0.38;
-  }
-
-  .icon-button ha-icon {
-    --mdc-icon-size: 20px;
   }
 
   .entity-section {
@@ -647,6 +622,12 @@ export const editorStyles = css`
     min-width: 0;
   }
 
+  .section-entity-toggle .entity-override-inline {
+    grid-column: 1 / -1;
+    padding-top: 4px;
+    border-top: 1px solid color-mix(in srgb, var(--divider-color) 56%, transparent);
+  }
+
   .entity-override-preview {
     display: block;
     min-width: 0;
@@ -660,7 +641,7 @@ export const editorStyles = css`
   @media (min-width: 560px) {
     .checks,
     .section-order-list,
-    .overview-entity-groups {
+    .overview-editor .overview-entity-groups {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }

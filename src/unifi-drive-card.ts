@@ -64,6 +64,7 @@ interface RenderableSectionEntry {
 }
 
 type EntityResolver = (key: string) => ResolvedEntity;
+type SurfaceToneClass = "tone-alert" | "tone-neutral" | "tone-ok";
 
 @customElement("unifi-drive-card")
 export class UnifiDriveCard extends LitElement {
@@ -76,6 +77,10 @@ export class UnifiDriveCard extends LitElement {
   private readonly _serviceCalls = new ServiceCallGuard((keys) => {
     this._busyActionKeys = new Set(keys);
   });
+  private _hiddenEntitySetCache?: {
+    source: NormalizedUnifiDriveCardConfig["hide_entities"];
+    values: Set<string>;
+  };
   private _sectionRenderCache?: {
     signature: string;
     sections: RenderableSectionEntry[];
@@ -83,6 +88,7 @@ export class UnifiDriveCard extends LitElement {
 
   public setConfig(config: UnifiDriveCardConfig): void {
     this._config = normalizeConfig(config);
+    this._hiddenEntitySetCache = undefined;
     this._sectionRenderCache = undefined;
   }
 
@@ -104,6 +110,7 @@ export class UnifiDriveCard extends LitElement {
   public override disconnectedCallback(): void {
     this._actions.clear();
     this._discoveryCache.clear();
+    this._hiddenEntitySetCache = undefined;
     this._sectionRenderCache = undefined;
     this._serviceCalls.clear();
     super.disconnectedCallback();
@@ -231,7 +238,7 @@ export class UnifiDriveCard extends LitElement {
             </div>
             <div>
               <h2>${title}</h2>
-              <p>
+              <p class=${["header-status", this._headerStatusToneClass(system.state, storage.state, problem.state)].join(" ")}>
                 ${headerStatusText(this.hass, {
                   system: system.state,
                   storage: storage.state,
@@ -252,7 +259,7 @@ export class UnifiDriveCard extends LitElement {
     const label = state ? displayState(this.hass!, state) : localize(this.hass, "state.unknown");
     const clamped = usage === undefined ? 0 : Math.min(Math.max(usage, 0), 100);
     return html`
-      <div class="usage-gauge" aria-label=${`Storage usage ${label}`}>
+      <div class=${["usage-gauge", this._usageToneClass(usage)].join(" ")} aria-label=${`Storage usage ${label}`}>
         <svg viewBox="0 0 44 44" role="img" aria-hidden="true">
           <circle class="track" cx="22" cy="22" r="18"></circle>
           <circle
@@ -294,9 +301,10 @@ export class UnifiDriveCard extends LitElement {
   }
 
   private _renderKeySection(section: SectionId, entityFor: EntityResolver, keys: string[]) {
+    const orderedKeys = orderedSectionKeys(this._config, section, keys);
     const content = this._config.show_display_buttons
-      ? this._displayButtonGrid(entityFor, keys, section)
-      : this._entityRowList(entityFor, keys);
+      ? this._displayButtonGrid(entityFor, orderedKeys, section)
+      : this._entityRowList(entityFor, orderedKeys);
     return this._renderCardSection(section, content, sectionLabel(section, this.hass));
   }
 
@@ -355,9 +363,10 @@ export class UnifiDriveCard extends LitElement {
     const control = this._rowControl(item.definition, item.entityId, item.state);
     const active = item.state ? booleanState(item.state) : false;
     const busy = this._isEntityBusy(item.entityId);
+    const toneClass = this._surfaceToneClass(item.definition, item.state);
     return html`
       <div
-        class="display-button-tile ${active ? "active" : ""} ${busy ? "busy" : ""}"
+        class="display-button-tile ${toneClass} ${active ? "active" : ""} ${busy ? "busy" : ""}"
         data-entity-key=${item.definition.key}
         aria-busy=${String(busy)}
       >
@@ -404,9 +413,10 @@ export class UnifiDriveCard extends LitElement {
   private _metricTile(definition: EntityDefinition, entityId?: string, state?: HassEntity) {
     const label = friendlyName(definition, state, this.hass);
     const value = displayState(this.hass!, state);
+    const toneClass = this._surfaceToneClass(definition, state);
     return this._renderActionButton(
       entityId,
-      "metric entity-action",
+      `metric ${toneClass} entity-action`,
       `${label}: ${value}`,
       html`
         <div class=${this._iconBubbleClass(definition, state)}>
@@ -441,8 +451,13 @@ export class UnifiDriveCard extends LitElement {
     const value = displayState(this.hass!, state);
     const control = this._rowControl(definition, entityId, state);
     const busy = this._isEntityBusy(entityId);
+    const toneClass = this._surfaceToneClass(definition, state);
     return html`
-      <div class="entity-row ${busy ? "busy" : ""}" aria-busy=${String(busy)} data-entity-key=${definition.key}>
+      <div
+        class="entity-row ${toneClass} ${busy ? "busy" : ""}"
+        aria-busy=${String(busy)}
+        data-entity-key=${definition.key}
+      >
         ${this._renderActionButton(
           entityId,
           "entity-main entity-action",
@@ -608,6 +623,9 @@ export class UnifiDriveCard extends LitElement {
   }
 
   private _canRender(definition: EntityDefinition, state?: HassEntity): boolean {
+    if (this._hiddenEntitySet().has(definition.key)) {
+      return false;
+    }
     if (definition.dangerous && !this._config.show_dangerous_actions) {
       return false;
     }
@@ -618,6 +636,16 @@ export class UnifiDriveCard extends LitElement {
       return this._config.show_optional && Boolean(definition.optional);
     }
     return this._config.show_unavailable || !isUnavailable(state);
+  }
+
+  private _hiddenEntitySet(): ReadonlySet<string> {
+    const source = this._config.hide_entities;
+    if (this._hiddenEntitySetCache?.source === source) {
+      return this._hiddenEntitySetCache.values;
+    }
+    const values = new Set(source);
+    this._hiddenEntitySetCache = { source, values };
+    return values;
   }
 
   private _iconBubbleClass(definition: EntityDefinition, state?: HassEntity): string {
@@ -641,6 +669,34 @@ export class UnifiDriveCard extends LitElement {
     ]
       .filter(Boolean)
       .join(" ");
+  }
+
+  private _headerStatusToneClass(
+    system?: HassEntity,
+    storage?: HassEntity,
+    problem?: HassEntity,
+  ): SurfaceToneClass {
+    const statusDefinition = ENTITY_DEFINITION_BY_KEY.system_status ?? FALLBACK_ENTITY_DEFINITION;
+    const storageDefinition = ENTITY_DEFINITION_BY_KEY.overall_status ?? FALLBACK_ENTITY_DEFINITION;
+    const problemDefinition = ENTITY_DEFINITION_BY_KEY.storage_problem ?? FALLBACK_ENTITY_DEFINITION;
+    const tones = [
+      iconVisualState(problemDefinition, problem, this._config.show_icon_animations).tone,
+      iconVisualState(statusDefinition, system, this._config.show_icon_animations).tone,
+      iconVisualState(storageDefinition, storage, this._config.show_icon_animations).tone,
+    ];
+    return toneClassFromVisualTones(tones);
+  }
+
+  private _usageToneClass(usage: number | undefined): SurfaceToneClass {
+    if (usage === undefined) {
+      return "tone-neutral";
+    }
+    return usage >= 90 ? "tone-alert" : "tone-ok";
+  }
+
+  private _surfaceToneClass(definition: EntityDefinition, state?: HassEntity): SurfaceToneClass {
+    const tone = iconVisualState(definition, state, this._config.show_icon_animations).tone;
+    return toneClassFromVisualTones([tone]);
   }
 
   private _handleTapAction(event: MouseEvent, entityId: string | undefined): void {
@@ -804,6 +860,37 @@ function collectRenderable<T>(
   return rendered;
 }
 
+function toneClassFromVisualTones(tones: string[]): SurfaceToneClass {
+  let hasOkTone = false;
+  for (const tone of tones) {
+    if (tone === "alert") {
+      return "tone-alert";
+    }
+    if (tone === "ok" || tone === "update") {
+      hasOkTone = true;
+    }
+  }
+  return hasOkTone ? "tone-ok" : "tone-neutral";
+}
+
+function orderedSectionKeys(
+  config: NormalizedUnifiDriveCardConfig,
+  section: SectionId,
+  keys: string[],
+): string[] {
+  const configured = config.section_entity_order[section];
+  if (!configured?.length || !keys.length) {
+    return keys;
+  }
+  const keySet = new Set(keys);
+  const preferred = configured.filter((key) => keySet.has(key));
+  if (!preferred.length) {
+    return keys;
+  }
+  const preferredSet = new Set(preferred);
+  return [...preferred, ...keys.filter((key) => !preferredSet.has(key))];
+}
+
 function renderSectionsSignature(
   config: NormalizedUnifiDriveCardConfig,
   discovered: DiscoveredEntities,
@@ -813,6 +900,7 @@ function renderSectionsSignature(
   return JSON.stringify({
     sections: config.sections,
     overview: config.overview_entities,
+    sectionEntityOrder: config.section_entity_order,
     optional: config.show_optional,
     unavailable: config.show_unavailable,
     diagnostics: config.show_diagnostics,

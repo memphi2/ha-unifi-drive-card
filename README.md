@@ -120,6 +120,7 @@ Common options:
 | --- | --- | --- |
 | `device_id` | required | Restricts discovery to one HA device. |
 | `sections` | all sections | Ordered visible sections. |
+| `section_entity_order` | `{}` | Optional per-section entity key order override for static key sections (for example `storage`, `system`, `updates`, `diagnostics`). |
 | `show_dangerous_actions` | `false` | Shows restart/shutdown actions with confirmation. |
 | `hide_entities` | `[]` | Known entity keys to hide. |
 | `entities` | `{}` | Per-key entity overrides. |

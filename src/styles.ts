@@ -19,6 +19,9 @@ export const cardStyles = css`
     --unifi-layout-section-gap: 14px;
     --unifi-layout-column-gap: 14px;
     --unifi-focus-ring-color: color-mix(in srgb, var(--primary-color) 84%, white 16%);
+    --unifi-ok-color: var(--success-color, #43a047);
+    --unifi-alert-color: var(--error-color, #e53935);
+    --unifi-neutral-color: var(--secondary-text-color);
     container-type: inline-size;
     display: block;
   }
@@ -218,6 +221,38 @@ export const cardStyles = css`
     font-weight: 600;
   }
 
+  .header-status.tone-alert {
+    color: var(--unifi-alert-color);
+  }
+
+  .header-status.tone-ok {
+    color: var(--unifi-ok-color);
+  }
+
+  .header-status.tone-neutral {
+    color: var(--secondary-text-color);
+  }
+
+  .usage-gauge.tone-alert .value {
+    stroke: var(--unifi-alert-color);
+  }
+
+  .usage-gauge.tone-alert strong {
+    color: var(--unifi-alert-color);
+  }
+
+  .usage-gauge.tone-ok .value {
+    stroke: var(--unifi-ok-color);
+  }
+
+  .usage-gauge.tone-ok strong {
+    color: var(--unifi-ok-color);
+  }
+
+  .usage-gauge.tone-neutral .value {
+    stroke: var(--unifi-neutral-color);
+  }
+
   .metric-grid,
   .display-button-grid,
   .group-grid,
@@ -268,6 +303,8 @@ export const cardStyles = css`
   .metric strong {
     grid-row: 2;
     grid-column: 2;
+    justify-self: end;
+    text-align: right;
     color: var(--primary-text-color);
     font-size: 16px;
     font-weight: 600;
@@ -319,6 +356,8 @@ export const cardStyles = css`
   }
 
   .main span {
+    justify-self: end;
+    text-align: right;
     color: var(--secondary-text-color);
     font-size: 13px;
     line-height: 1.25;
@@ -379,6 +418,42 @@ export const cardStyles = css`
     background: color-mix(in srgb, var(--primary-color) 10%, var(--unifi-row-background));
   }
 
+  .metric.tone-alert,
+  .entity-row.tone-alert,
+  .display-button-tile.tone-alert {
+    border-color: color-mix(in srgb, var(--unifi-alert-color) 44%, var(--unifi-row-border));
+    background: color-mix(in srgb, var(--unifi-alert-color) 7%, var(--unifi-row-background));
+  }
+
+  .metric.tone-ok,
+  .entity-row.tone-ok,
+  .display-button-tile.tone-ok {
+    border-color: color-mix(in srgb, var(--unifi-ok-color) 36%, var(--unifi-row-border));
+    background: color-mix(in srgb, var(--unifi-ok-color) 5%, var(--unifi-row-background));
+  }
+
+  .metric.tone-alert strong,
+  .display-button-tile.tone-alert .display-button-main strong,
+  .entity-row.tone-alert .main span {
+    color: var(--unifi-alert-color);
+  }
+
+  .metric.tone-ok strong,
+  .display-button-tile.tone-ok .display-button-main strong,
+  .entity-row.tone-ok .main span {
+    color: var(--unifi-ok-color);
+  }
+
+  .display-button-tile.tone-alert.active {
+    border-color: color-mix(in srgb, var(--unifi-alert-color) 56%, var(--unifi-row-border));
+    background: color-mix(in srgb, var(--unifi-alert-color) 12%, var(--unifi-row-background));
+  }
+
+  .display-button-tile.tone-ok.active {
+    border-color: color-mix(in srgb, var(--unifi-ok-color) 50%, var(--unifi-row-border));
+    background: color-mix(in srgb, var(--unifi-ok-color) 10%, var(--unifi-row-background));
+  }
+
   .display-button-main {
     display: grid;
     align-content: start;
@@ -398,6 +473,8 @@ export const cardStyles = css`
   }
 
   .display-button-main strong {
+    justify-self: end;
+    text-align: right;
     color: var(--primary-text-color);
     font-size: 14px;
     font-weight: 500;
@@ -860,27 +937,11 @@ export const cardStyles = css`
     }
 
     .entity-row {
-      flex-wrap: wrap;
       gap: 8px;
     }
 
     .entity-main {
       gap: 8px;
-    }
-
-    .entity-main,
-    .row-control {
-      flex: 1 1 100%;
-    }
-
-    .row-control {
-      justify-content: stretch;
-    }
-
-    .chip,
-    input,
-    select {
-      width: 100%;
     }
   }
 

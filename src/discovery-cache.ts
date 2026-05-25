@@ -7,18 +7,7 @@ import type {
 } from "./types";
 
 const DISCOVERY_DOMAINS = new Set(ENTITY_DEFINITIONS.map((definition) => definition.domain));
-const DISCOVERY_ATTRIBUTE_KEYS = [
-  "drive_key",
-  "drive_name",
-  "pool_key",
-  "pool_name",
-  "target_key",
-  "target_name",
-  "target_type",
-  "task_id",
-  "task_name",
-  "friendly_name",
-];
+const CONFIG_SIGNATURE_CACHE = new WeakMap<NormalizedUnifiDriveCardConfig, string>();
 
 export class DiscoveryCache {
   private _entry?: {
@@ -95,49 +84,64 @@ export class DiscoveryCache {
 }
 
 function discoveryConfigSignature(config: NormalizedUnifiDriveCardConfig): string {
-  return JSON.stringify({
+  const cached = CONFIG_SIGNATURE_CACHE.get(config);
+  if (cached !== undefined) {
+    return cached;
+  }
+  const signature = JSON.stringify({
     device_id: config.device_id ?? "",
     hide_entities: config.hide_entities,
     entities: config.entities,
   });
+  CONFIG_SIGNATURE_CACHE.set(config, signature);
+  return signature;
 }
 
 function registrySignature(hass: HomeAssistant): string {
-  return Object.entries(hass.entities ?? {})
-    .filter(([entityId]) => supportedDomain(entityId))
-    .map(([entityId, registry]) =>
-      [
-        entityId,
-        registry?.config_entry_id ?? "",
-        registry?.device_id ?? "",
-        registry?.disabled_by ?? "",
-        registry?.hidden === true ? "1" : "",
-        registry?.hidden_by ?? "",
-        registry?.platform ?? "",
-        registry?.translation_key ?? "",
-        registry?.unique_id ?? "",
-      ].join("\u001f"),
-    )
-    .sort((left, right) => left.localeCompare(right))
-    .join("\u001e");
+  const entities = hass.entities ?? {};
+  let signature = "";
+  for (const entityId in entities) {
+    if (!hasOwn(entities, entityId)) {
+      continue;
+    }
+    if (!supportedDomain(entityId)) {
+      continue;
+    }
+    const registry = entities[entityId];
+    signature += `${entityId}\u001f${registry?.config_entry_id ?? ""}\u001f${registry?.device_id ?? ""}\u001f${registry?.disabled_by ?? ""}\u001f${registry?.hidden === true ? "1" : ""}\u001f${registry?.hidden_by ?? ""}\u001f${registry?.platform ?? ""}\u001f${registry?.translation_key ?? ""}\u001f${registry?.unique_id ?? ""}\u001e`;
+  }
+  return signature;
 }
 
 function stateSignature(hass: HomeAssistant): string {
-  return Object.entries(hass.states ?? {})
-    .filter(([entityId]) => supportedDomain(entityId))
-    .map(([entityId, state]) =>
-      [
-        entityId,
-        ...DISCOVERY_ATTRIBUTE_KEYS.map((key) => String(state?.attributes?.[key] ?? "")),
-      ].join("\u001f"),
-    )
-    .sort((left, right) => left.localeCompare(right))
-    .join("\u001e");
+  const states = hass.states && typeof hass.states === "object" ? hass.states : {};
+  let signature = "";
+  for (const entityId in states) {
+    if (!hasOwn(states, entityId)) {
+      continue;
+    }
+    if (!supportedDomain(entityId)) {
+      continue;
+    }
+    const state = states[entityId];
+    const friendly =
+      state?.attributes && typeof state.attributes === "object" && !Array.isArray(state.attributes)
+        ? state.attributes.friendly_name ?? ""
+        : "";
+    signature += `${entityId}\u001f${typeof friendly === "string" ? friendly : ""}\u001e`;
+  }
+  return signature;
 }
 
 function supportedDomain(entityId: string): boolean {
-  const domain = entityId.split(".", 1)[0];
-  return domain
-    ? DISCOVERY_DOMAINS.has(domain as (typeof ENTITY_DEFINITIONS)[number]["domain"])
-    : false;
+  const separator = entityId.indexOf(".");
+  if (separator <= 0) {
+    return false;
+  }
+  const domain = entityId.slice(0, separator);
+  return domain ? DISCOVERY_DOMAINS.has(domain as (typeof ENTITY_DEFINITIONS)[number]["domain"]) : false;
+}
+
+function hasOwn(object: object, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(object, key);
 }
