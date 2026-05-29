@@ -422,8 +422,8 @@ export class UnifiDriveCard extends LitElement {
         <div class=${this._iconBubbleClass(definition, state)}>
           <ha-icon icon=${definition.icon}></ha-icon>
         </div>
-        <span>${label}</span>
-        <strong>${value}</strong>
+        <span class="metric-label">${label}</span>
+        <strong class="metric-value">${value}</strong>
       `,
     );
   }

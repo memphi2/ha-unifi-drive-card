@@ -6,6 +6,18 @@
 
 - None pending.
 
+## 0.3.3 - 2026-05-29
+
+### Fixed
+
+- Improved overview metric text stability by explicitly separating metric label
+  and value rendering classes, avoiding cramped/overlap behavior in narrow
+  card widths.
+- Aligned regular entity-row label typography with Home Assistant body text
+  tokens so labels match native HA styling while keeping value readability.
+- Refined non-overview value sizing for better scanability without changing row
+  control behavior.
+
 ## 0.3.2 - 2026-05-29
 
 ### Fixed
