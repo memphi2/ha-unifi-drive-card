@@ -367,7 +367,7 @@ export const cardStyles = css`
     display: grid;
     flex: 1;
     min-width: 0;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: center;
     gap: 8px;
   }
