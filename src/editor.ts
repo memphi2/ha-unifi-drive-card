@@ -681,6 +681,13 @@ export class UnifiDriveCardEditor extends LitElement {
 
   private _entityVisibilityChanged(key: EntityKey, checked: boolean): void {
     const hidden = new Set(this._config.hide_entities);
+    const enableDangerousActions =
+      checked && DANGEROUS_ENTITY_KEYS.has(key) && !this._config.show_dangerous_actions;
+    if (enableDangerousActions) {
+      for (const dangerousKey of DANGEROUS_ENTITY_KEYS) {
+        hidden.add(dangerousKey);
+      }
+    }
     if (checked) {
       hidden.delete(key);
     } else {
@@ -688,10 +695,9 @@ export class UnifiDriveCardEditor extends LitElement {
     }
     this._updateConfig({
       hide_entities: [...hidden],
-      show_dangerous_actions:
-        checked && DANGEROUS_ENTITY_KEYS.has(key)
-          ? true
-          : this._config.show_dangerous_actions,
+      show_dangerous_actions: enableDangerousActions
+        ? true
+        : this._config.show_dangerous_actions,
     });
   }
 

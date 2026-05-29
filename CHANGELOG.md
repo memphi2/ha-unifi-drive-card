@@ -6,6 +6,16 @@
 
 - None pending.
 
+## 0.3.2 - 2026-05-29
+
+### Fixed
+
+- Corrected dangerous-action editor behavior so enabling one dangerous entity
+  while `show_dangerous_actions` is off keeps the other dangerous entities
+  hidden instead of enabling them implicitly.
+- Updated editor tests to cover the dangerous-entity single-selection flow and
+  prevent regressions for this state transition.
+
 ## 0.3.1 - 2026-05-29
 
 ### Changed

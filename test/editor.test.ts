@@ -474,12 +474,11 @@ describe("UnifiDriveCardEditor", () => {
     expect(shutdownSwitch.checked).toBe(false);
   });
 
-  it("enabling a dangerous entity also enables system actions", async () => {
+  it("enabling one dangerous entity keeps others hidden and enables system actions", async () => {
     const listener = vi.fn();
     const editor = await createEditor({
       config: {
         show_dangerous_actions: false,
-        hide_entities: ["shutdown"],
       },
       listener,
     });
@@ -494,6 +493,7 @@ describe("UnifiDriveCardEditor", () => {
     const config = getLatestConfig(listener);
     expect(config.show_dangerous_actions).toBe(true);
     expect(config.hide_entities).not.toContain("shutdown");
+    expect(config.hide_entities).toContain("reboot");
   });
 
   it("edits service actions with target and data through GUI controls", async () => {
