@@ -6,6 +6,18 @@
 
 - None pending.
 
+## 0.3.1 - 2026-05-29
+
+### Changed
+
+- Fixed editor visibility behavior for dangerous entities so shutdown/restart
+  toggles and `show_dangerous_actions` stay synchronized in GUI mode.
+- Added editor coverage to assert dangerous-action visibility and toggle flow
+  behavior.
+- Hardened Home Assistant deploy smoke for GVFS/CIFS targets by falling back
+  from `copyFile` to buffered write when the target filesystem rejects
+  copyfile operations.
+
 ## 0.3.0 - 2026-05-25
 
 ### Changed

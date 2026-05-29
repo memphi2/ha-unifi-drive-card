@@ -461,6 +461,41 @@ describe("UnifiDriveCardEditor", () => {
     expect(row.querySelector(".drag-handle")).toBeNull();
   });
 
+  it("treats dangerous entities as unchecked when system actions are disabled", async () => {
+    const editor = await createEditor({
+      config: {
+        show_dangerous_actions: false,
+      },
+    });
+
+    const shutdownSwitch = editor.shadowRoot?.querySelector(
+      '[data-entity-section="system"][data-entity-key="shutdown"] ha-switch',
+    ) as HTMLElement & { checked: boolean };
+    expect(shutdownSwitch.checked).toBe(false);
+  });
+
+  it("enabling a dangerous entity also enables system actions", async () => {
+    const listener = vi.fn();
+    const editor = await createEditor({
+      config: {
+        show_dangerous_actions: false,
+        hide_entities: ["shutdown"],
+      },
+      listener,
+    });
+
+    const shutdownSwitch = editor.shadowRoot?.querySelector(
+      '[data-entity-section="system"][data-entity-key="shutdown"] ha-switch',
+    ) as HTMLElement & { checked: boolean };
+    shutdownSwitch.checked = true;
+    shutdownSwitch.dispatchEvent(new Event("change"));
+    await editor.updateComplete;
+
+    const config = getLatestConfig(listener);
+    expect(config.show_dangerous_actions).toBe(true);
+    expect(config.hide_entities).not.toContain("shutdown");
+  });
+
   it("edits service actions with target and data through GUI controls", async () => {
     const listener = vi.fn();
     const editor = await createEditor({ listener });

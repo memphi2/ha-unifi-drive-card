@@ -301,7 +301,15 @@ async function copyWithRetry(source, target) {
   for (let attempt = 0; attempt < 5; attempt += 1) {
     try {
       await mkdirWithRetry(path.dirname(target));
-      await copyFile(source, target);
+      try {
+        await copyFile(source, target);
+      } catch (error) {
+        if (!isCopyFileUnsupported(error)) {
+          throw error;
+        }
+        const content = await readFile(source);
+        await writeFile(target, content);
+      }
       return;
     } catch (error) {
       if (attempt === 4) {
@@ -310,6 +318,11 @@ async function copyWithRetry(source, target) {
       await sleep(500);
     }
   }
+}
+
+function isCopyFileUnsupported(error) {
+  const code = String(error?.code || "");
+  return code === "ENOTSUP" || code === "EXDEV";
 }
 
 async function validateServedBundle() {
