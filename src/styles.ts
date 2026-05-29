@@ -269,6 +269,7 @@ export const cardStyles = css`
   .metric {
     display: grid;
     grid-template-columns: var(--unifi-ha-icon-bubble-size) minmax(0, 1fr);
+    grid-template-rows: auto auto;
     align-items: center;
     box-sizing: border-box;
     min-width: 0;
@@ -283,6 +284,8 @@ export const cardStyles = css`
 
   .metric span,
   .metric strong,
+  .metric .metric-label,
+  .metric .metric-value,
   .main strong,
   .main span,
   .display-button-main span,
@@ -298,16 +301,35 @@ export const cardStyles = css`
   .metric span {
     grid-row: 1;
     grid-column: 2;
+    position: relative;
+    display: block;
+    color: var(--secondary-text-color);
+    font-size: 12px;
+    line-height: 1.2;
   }
 
   .metric strong {
     grid-row: 2;
     grid-column: 2;
+    position: relative;
+    display: block;
     justify-self: end;
+    align-self: end;
     text-align: right;
     color: var(--primary-text-color);
     font-size: 16px;
     font-weight: 600;
+    line-height: 1.25;
+  }
+
+  .metric .metric-label {
+    grid-row: 1;
+    grid-column: 2;
+  }
+
+  .metric .metric-value {
+    grid-row: 2;
+    grid-column: 2;
   }
 
   .metric .icon-bubble {
@@ -345,21 +367,24 @@ export const cardStyles = css`
     display: grid;
     flex: 1;
     min-width: 0;
-    gap: 2px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
   }
 
   .main strong {
     color: var(--primary-text-color);
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 1.25;
+    font-size: var(--paper-font-body1_-_font-size, 16px);
+    font-weight: var(--paper-font-body1_-_font-weight, 400);
+    line-height: var(--paper-font-body1_-_line-height, 1.5);
   }
 
   .main span {
+    min-width: 0;
     justify-self: end;
     text-align: right;
     color: var(--secondary-text-color);
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.25;
   }
 
@@ -476,7 +501,7 @@ export const cardStyles = css`
     justify-self: end;
     text-align: right;
     color: var(--primary-text-color);
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 500;
   }
 
@@ -942,6 +967,12 @@ export const cardStyles = css`
 
     .entity-main {
       gap: 8px;
+    }
+  }
+
+  @container (max-width: 390px) {
+    .metric-grid {
+      grid-template-columns: minmax(0, 1fr);
     }
   }
 
