@@ -118,6 +118,11 @@ const SECTION_DEFAULT_KEY_ORDER: Partial<Record<SectionId, EntityKey[]>> = {
   system: SYSTEM_KEYS,
   updates: UPDATE_KEYS,
 };
+const DANGEROUS_ENTITY_KEYS = new Set<EntityKey>(
+  Object.values(ENTITY_DEFINITION_BY_KEY)
+    .filter((definition) => definition.dangerous)
+    .map((definition) => definition.key),
+);
 
 
 @customElement("unifi-drive-card-editor")
@@ -144,7 +149,7 @@ export class UnifiDriveCardEditor extends LitElement {
 
   protected override render() {
     const activeEntityKeys = this._activeEntityKeys();
-    const hiddenEntityKeys = new Set(this._config.hide_entities);
+    const hiddenEntityKeys = this._effectiveHiddenEntityKeys();
     const pinnedEntityKeys = this._pinnedEntityKeys(hiddenEntityKeys);
     const orderingContext = this._orderingContext(activeEntityKeys);
     return html`
@@ -681,7 +686,13 @@ export class UnifiDriveCardEditor extends LitElement {
     } else {
       hidden.add(key);
     }
-    this._updateConfig({ hide_entities: [...hidden] });
+    this._updateConfig({
+      hide_entities: [...hidden],
+      show_dangerous_actions:
+        checked && DANGEROUS_ENTITY_KEYS.has(key)
+          ? true
+          : this._config.show_dangerous_actions,
+    });
   }
 
   private _setSectionEntityDragData(event: DragEvent, key: EntityKey): void {
@@ -899,6 +910,16 @@ export class UnifiDriveCardEditor extends LitElement {
     hiddenEntityKeys = new Set(this._config.hide_entities),
   ): Set<EntityKey> {
     return new Set<EntityKey>([...hiddenEntityKeys, ...this._entityOverrideKeys()]);
+  }
+
+  private _effectiveHiddenEntityKeys(): Set<EntityKey> {
+    const hidden = new Set(this._config.hide_entities);
+    if (!this._config.show_dangerous_actions) {
+      for (const key of DANGEROUS_ENTITY_KEYS) {
+        hidden.add(key);
+      }
+    }
+    return hidden;
   }
 
   static override styles = editorStyles;
