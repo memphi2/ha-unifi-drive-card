@@ -158,6 +158,13 @@ describe("UnifiDriveCard rendering", () => {
   it("uses the compact layout by default and can disable it explicitly", async () => {
     const compactCard = await renderCard(hassFixture(), { sections: ["overview"] });
     expect(compactCard.getCardSize()).toBe(5);
+    expect(compactCard.getGridOptions()).toEqual({
+      rows: 5,
+      columns: 6,
+      min_rows: 3,
+      min_columns: 3,
+      max_columns: 12,
+    });
     expect(compactCard.shadowRoot?.querySelector("ha-card")?.classList.contains("compact")).toBe(
       true,
     );
@@ -167,6 +174,13 @@ describe("UnifiDriveCard rendering", () => {
       sections: ["overview"],
     });
     expect(fullCard.getCardSize()).toBe(9);
+    expect(fullCard.getGridOptions()).toEqual({
+      rows: 9,
+      columns: 6,
+      min_rows: 5,
+      min_columns: 3,
+      max_columns: 12,
+    });
     expect(fullCard.shadowRoot?.querySelector("ha-card")?.classList.contains("compact")).toBe(
       false,
     );

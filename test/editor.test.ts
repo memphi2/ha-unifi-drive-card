@@ -110,7 +110,7 @@ describe("UnifiDriveCardEditor", () => {
   it("does not render overview columns field in the visual editor", async () => {
     const editor = await createEditor({ config: {} });
     const overviewField = editor.shadowRoot?.querySelector(
-      'ha-textfield[data-editor-field="overview_columns"]',
+      'ha-input[data-editor-field="overview_columns"]',
     );
     const advancedFoldout = editor.shadowRoot?.querySelector(
       ".advanced-editor",
@@ -367,7 +367,7 @@ describe("UnifiDriveCardEditor", () => {
       '[data-entity-section="storage"][data-entity-key="usage_percent"]',
     ) as HTMLElement;
     expect(row.querySelector("ha-selector, ha-entity-picker")).toBeTruthy();
-    expect(row.querySelector("ha-textfield")).toBeTruthy();
+    expect(row.querySelector("ha-input")).toBeTruthy();
   });
 
   it("updates section entity overrides from selector controls", async () => {
@@ -390,7 +390,7 @@ describe("UnifiDriveCardEditor", () => {
     let config = getLatestConfig(listener);
     expect(config.entities?.usage_percent).toBe("sensor.custom_usage_picker");
 
-    const textfield = row.querySelector("ha-textfield") as HTMLElement & { value: string };
+    const textfield = row.querySelector("ha-input") as HTMLElement & { value: string };
     textfield.value = "sensor.custom_usage_manual";
     textfield.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
     await editor.updateComplete;
@@ -508,7 +508,7 @@ describe("UnifiDriveCardEditor", () => {
     await editor.updateComplete;
 
     const serviceInput = editor.shadowRoot?.querySelector(
-      'ha-textfield[data-action-key="tap_action"][data-action-property="service"]',
+      'ha-input[data-action-key="tap_action"][data-action-property="service"]',
     ) as HTMLElement & { value: string };
     serviceInput.value = "script.unifi_unas_backup";
     serviceInput.dispatchEvent(new Event("input"));
@@ -525,7 +525,7 @@ describe("UnifiDriveCardEditor", () => {
     await editor.updateComplete;
 
     const areaInput = editor.shadowRoot?.querySelector(
-      'ha-textfield[data-action-key="tap_action"][data-action-property="target_area_id"]',
+      'ha-input[data-action-key="tap_action"][data-action-property="target_area_id"]',
     ) as HTMLElement & { value: string };
     areaInput.value = "rack, storage";
     areaInput.dispatchEvent(new Event("input"));
@@ -588,7 +588,7 @@ describe("UnifiDriveCardEditor", () => {
     });
     await setTextInput(
       editor,
-      'ha-textfield[data-action-key="tap_action"][data-action-property="service"]',
+      'ha-input[data-action-key="tap_action"][data-action-property="service"]',
       "",
       "input",
     );

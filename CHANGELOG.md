@@ -6,6 +6,19 @@
 
 - None pending.
 
+## 0.3.4 - 2026-08-22
+
+### Changed
+
+- Updated the visual editor for current Home Assistant input components and
+  improved its compatibility with current frontend releases.
+- Added focused card-picker suggestions for UniFi Drive entities and a direct
+  documentation link from the picker.
+- Refined metric and entity-row typography for a clearer, more native
+  Home Assistant appearance.
+- Added Sections View grid sizing and refreshed development dependencies for
+  current Home Assistant and Node tooling compatibility.
+
 ## 0.3.3 - 2026-05-29
 
 ### Fixed

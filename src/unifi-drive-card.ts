@@ -96,6 +96,22 @@ export class UnifiDriveCard extends LitElement {
     return this._config.compact ? 5 : 9;
   }
 
+  public getGridOptions(): {
+    rows: number;
+    columns: number;
+    min_rows: number;
+    min_columns: number;
+    max_columns: number;
+  } {
+    return {
+      rows: this._config.compact ? 5 : 9,
+      columns: 6,
+      min_rows: this._config.compact ? 3 : 5,
+      min_columns: 3,
+      max_columns: 12,
+    };
+  }
+
   public static getConfigElement(): HTMLElement {
     return document.createElement("unifi-drive-card-editor");
   }

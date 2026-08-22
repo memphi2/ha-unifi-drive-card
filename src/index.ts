@@ -1,16 +1,12 @@
 import "./editor";
 import "./unifi-drive-card";
+import { unifiDriveCardRegistration, type CustomCardRegistration } from "./card-picker";
 
 declare global {
   interface Window {
-    customCards?: Array<Record<string, string | boolean>>;
+    customCards?: CustomCardRegistration[];
   }
 }
 
 window.customCards = window.customCards ?? [];
-window.customCards.push({
-  type: "unifi-drive-card",
-  name: "Drive Storage Card",
-  description: "Mushroom-style card for Home Assistant's unifi_unas integration",
-  preview: true,
-});
+window.customCards.push(unifiDriveCardRegistration);

@@ -35,7 +35,7 @@ export const editorStyles = css`
     border-color: var(--error-color);
   }
 
-  ha-textfield,
+  ha-input,
   ha-textarea {
     display: block;
     min-width: 0;
@@ -43,7 +43,7 @@ export const editorStyles = css`
   }
 
   ha-textarea.invalid {
-    --mdc-theme-error: var(--error-color);
+    --ha-color-danger: var(--error-color);
   }
 
   input:focus-visible,
