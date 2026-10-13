@@ -6,6 +6,20 @@
 
 - None pending.
 
+## 0.3.5 - 2026-10-13
+
+### Fixed
+
+- Recognize the current UniFi Drive `restart` and `backup_task` translation
+  keys when discovering system and backup actions.
+- Prefer integration translation keys for dynamic entities, preventing partial
+  alias collisions between pool, drive and snapshot entity definitions.
+
+### Changed
+
+- Added a full current-integration entity contract test for aggregate, pool,
+  drive, snapshot, backup and update entities.
+
 ## 0.3.4 - 2026-08-22
 
 ### Changed

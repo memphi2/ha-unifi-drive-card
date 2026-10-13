@@ -26,7 +26,7 @@ const DISCOVERY_DOMAIN_SET = new Set<EntityDomain>(
 );
 
 const DYNAMIC_KEY_ALIASES: Record<EntityKey, string[]> = {
-  backup_run: ["run_backup", "backup"],
+  backup_run: ["run_backup", "backup", "backup_task"],
   drive_power_on_hours: ["power_on_hours"],
   drive_status: ["status"],
   drive_temperature: ["temperature"],
@@ -322,23 +322,28 @@ function dynamicDefinitionMatches(
   if (!entityId.startsWith(`${definition.domain}.`)) {
     return false;
   }
-  const aliases = definitionAliases(definition);
+  const aliases = dynamicDefinitionAliases(definition);
   if (definition.dynamic && !hasDynamicKindEvidence(entityId, state, registry, definition.dynamic, aliases)) {
     return false;
   }
-  const extraAliases = DYNAMIC_KEY_ALIAS_SLUGS[definition.key] ?? [];
-  const allAliases = [...aliases, ...extraAliases];
+  const translationKey = slugify(registry?.translation_key ?? "");
+  if (translationKey) {
+    return aliases.includes(translationKey);
+  }
   const candidates = [
     objectIdFromEntityId(entityId),
-    registry?.translation_key,
     registry?.unique_id,
   ]
     .filter((value): value is string => typeof value === "string")
     .map(slugify);
 
   return candidates.some((candidate) =>
-    allAliases.some((alias) => slugContainsAlias(candidate, alias)),
+    aliases.some((alias) => slugContainsAlias(candidate, alias)),
   );
+}
+
+function dynamicDefinitionAliases(definition: EntityDefinition): string[] {
+  return [...definitionAliases(definition), ...(DYNAMIC_KEY_ALIAS_SLUGS[definition.key] ?? [])];
 }
 
 function slugContainsAlias(candidate: string, alias: string): boolean {

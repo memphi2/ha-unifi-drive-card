@@ -115,7 +115,7 @@ const aggregateDefinitions: EntityDefinition[] = [
   binary("maintenance_active", "diagnostics", "Maintenance active", "mdi:wrench", 51, true),
   select("fan_mode", "system", "Fan mode", "mdi:fan-auto", 60),
   button("wake_on_lan", "system", "Wake on LAN", "mdi:lan-connect", 70, true),
-  button("reboot", "system", "Restart", "mdi:restart", 80, true, true),
+  button("reboot", "system", "Restart", "mdi:restart", 80, true, true, undefined, ["restart"]),
   button("shutdown", "system", "Shut down", "mdi:power", 81, true, true),
   update("unifi_os_update", "updates", "UniFi OS update", "mdi:console", 90, ["unifi_os"]),
   update("drive_update", "updates", "Drive update", "mdi:application-cog", 91, ["drive"]),
@@ -241,8 +241,20 @@ function button(
   optional = false,
   dangerous = false,
   dynamic?: EntityDefinition["dynamic"],
+  aliases: string[] = [],
 ): EntityDefinition {
-  return { key, domain: "button", section, label, icon, optional, dangerous, dynamic, order };
+  return {
+    key,
+    domain: "button",
+    section,
+    label,
+    icon,
+    optional,
+    dangerous,
+    dynamic,
+    aliases,
+    order,
+  };
 }
 
 function number(
