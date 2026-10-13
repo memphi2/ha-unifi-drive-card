@@ -613,7 +613,7 @@ async function createEditor({
 } = {}) {
   const editor = document.createElement("unifi-drive-card-editor") as UnifiDriveCardEditor;
   if (listener) {
-    editor.addEventListener("config-changed", listener);
+    editor.addEventListener("config-changed", listener as EventListener);
   }
   if (hass) {
     editor.hass = hass;
