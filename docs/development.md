@@ -2,7 +2,7 @@
 
 ## Tooling
 
-- Node.js 22
+- Node.js 24 LTS (Node.js 22.22.2 or later is also supported)
 - npm
 - TypeScript
 - ESLint

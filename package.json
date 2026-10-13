@@ -5,6 +5,9 @@
   "type": "module",
   "private": false,
   "license": "MIT",
+  "engines": {
+    "node": "^22.22.2 || ^24.15.0"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/memphi2/ha-unifi-drive-card.git"
