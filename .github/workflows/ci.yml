@@ -6,6 +6,13 @@ on:
     branches:
       - main
 
+# None of these jobs writes anything back: they check out the repository and
+# run npm. Granting the token read access to the contents and nothing else
+# keeps a compromised dependency in the install step from pushing, tagging or
+# commenting as this workflow.
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
