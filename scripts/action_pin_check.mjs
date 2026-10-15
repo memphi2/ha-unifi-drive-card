@@ -16,8 +16,12 @@ const CANONICAL_USES =
   /^\s*(?:-\s+)?uses:\s*([^@\s]+)@(\S+)(?:\s+#\s*(\S+).*)?$/;
 const ACTION_SHA = /^[0-9a-f]{40}$/;
 // A SHA says nothing about which release it is, so the trailing comment has to
-// name one. Branch-pinned actions name the branch instead of a version.
-const ACTION_VERSION = /^(?:v\d+(?:\.\d+)*|main|master)$/;
+// name one: a v-prefixed release, optionally with a prerelease or build suffix
+// such as v2.0.0-beta.1, or one of the two branch names actually pinned from
+// here. Keeping the branch side an allow-list rather than "any name" is what
+// stops the label from degenerating into free text.
+const ACTION_VERSION =
+  /^(?:v\d+(?:\.\d+)*(?:[-+][0-9A-Za-z.-]+)?|main|master)$/;
 
 function pass(message) {
   console.log(`PASS: ${message}`);
