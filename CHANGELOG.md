@@ -4,7 +4,10 @@
 
 ### Changed
 
-- None pending.
+- Updated the CI and test toolchain to current compatible releases.
+- Pinned transitive `minimatch` resolution to the patched 11.x line, removing
+  development-tooling audit findings from the ESLint and TypeScript-ESLint
+  dependency paths.
 
 ## 0.3.5 - 2026-10-13
 
