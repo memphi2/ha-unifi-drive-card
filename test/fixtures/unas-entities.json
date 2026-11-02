@@ -1,0 +1,657 @@
+{
+  "entities": {
+    "binary_sensor.unas_device_connection": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "device_online",
+      "unique_id": "contract-device_device_online"
+    },
+    "binary_sensor.unas_main_maintenance_active": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "pool_maintenance_active",
+      "unique_id": "contract-device_pool_a_pool_maintenance_active"
+    },
+    "binary_sensor.unas_main_problem": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "pool_problem",
+      "unique_id": "contract-device_pool_a_pool_problem"
+    },
+    "binary_sensor.unas_maintenance_active": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "maintenance_active",
+      "unique_id": "contract-device_maintenance_active"
+    },
+    "binary_sensor.unas_storage_problem": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "storage_problem",
+      "unique_id": "contract-device_storage_problem"
+    },
+    "button.unas_nightly_backup_run_backup": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "backup_task",
+      "unique_id": "contract-device_backup_task-1"
+    },
+    "button.unas_restart": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "restart",
+      "unique_id": "contract-device_reboot"
+    },
+    "button.unas_shut_down": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "shutdown",
+      "unique_id": "contract-device_shutdown"
+    },
+    "button.unas_team_drive_create_snapshot": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "snapshot_create",
+      "unique_id": "contract-device_snapshot_shared_shared_1"
+    },
+    "number.unas_team_drive_snapshot_limit": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "snapshot_limit",
+      "unique_id": "contract-device_snapshot_shared_shared_1_limit"
+    },
+    "number.unas_team_drive_snapshot_month_day": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "snapshot_month_day",
+      "unique_id": "contract-device_snapshot_shared_shared_1_month_day"
+    },
+    "select.unas_fan_mode": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "fan_mode",
+      "unique_id": "contract-device_fan_mode"
+    },
+    "select.unas_team_drive_snapshot_schedule": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "snapshot_schedule",
+      "unique_id": "contract-device_snapshot_shared_shared_1_schedule"
+    },
+    "select.unas_team_drive_snapshot_weekday": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "snapshot_weekday",
+      "unique_id": "contract-device_snapshot_shared_shared_1_weekday"
+    },
+    "sensor.unas_at_risk_disk_count": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "at_risk_disk_count",
+      "unique_id": "contract-device_at_risk_disk_count"
+    },
+    "sensor.unas_available_storage": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "available_storage",
+      "unique_id": "contract-device_available_storage"
+    },
+    "sensor.unas_average_disk_temperature": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "average_disk_temperature",
+      "unique_id": "contract-device_average_disk_temperature"
+    },
+    "sensor.unas_cpu_temperature": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "cpu_temperature",
+      "unique_id": "contract-device_cpu_temperature"
+    },
+    "sensor.unas_degraded_pool_count": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "degraded_pool_count",
+      "unique_id": "contract-device_degraded_pool_count"
+    },
+    "sensor.unas_drive_version": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "drive_version",
+      "unique_id": "contract-device_drive_version"
+    },
+    "sensor.unas_main_at_risk_drive_count": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "pool_at_risk_drive_count",
+      "unique_id": "contract-device_pool_a_pool_at_risk_drive_count"
+    },
+    "sensor.unas_main_available": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "pool_available",
+      "unique_id": "contract-device_pool_a_pool_available"
+    },
+    "sensor.unas_main_average_drive_temperature": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "pool_average_drive_temperature",
+      "unique_id": "contract-device_pool_a_pool_average_drive_temperature"
+    },
+    "sensor.unas_main_capacity": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "pool_capacity",
+      "unique_id": "contract-device_pool_a_pool_capacity"
+    },
+    "sensor.unas_main_drive_1_power_on_hours": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "drive_power_on_hours",
+      "unique_id": "contract-device_pool_a_1_drive_power_on_hours"
+    },
+    "sensor.unas_main_drive_1_status": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "drive_status",
+      "unique_id": "contract-device_pool_a_1_drive_status"
+    },
+    "sensor.unas_main_drive_1_temperature": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "drive_temperature",
+      "unique_id": "contract-device_pool_a_1_drive_temperature"
+    },
+    "sensor.unas_main_drive_count": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "pool_drive_count",
+      "unique_id": "contract-device_pool_a_pool_drive_count"
+    },
+    "sensor.unas_main_raid_level": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "pool_raid_level",
+      "unique_id": "contract-device_pool_a_pool_raid_level"
+    },
+    "sensor.unas_main_rebuild_progress": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "pool_rebuild_progress",
+      "unique_id": "contract-device_pool_a_pool_rebuild_progress"
+    },
+    "sensor.unas_main_status": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "pool_status",
+      "unique_id": "contract-device_pool_a_pool_status"
+    },
+    "sensor.unas_main_sync_progress": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "pool_sync_progress",
+      "unique_id": "contract-device_pool_a_pool_sync_progress"
+    },
+    "sensor.unas_main_usage": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "pool_usage_percent",
+      "unique_id": "contract-device_pool_a_pool_usage_percent"
+    },
+    "sensor.unas_main_used": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "pool_used",
+      "unique_id": "contract-device_pool_a_pool_used"
+    },
+    "sensor.unas_maintenance_pool_count": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "maintenance_pool_count",
+      "unique_id": "contract-device_maintenance_pool_count"
+    },
+    "sensor.unas_overall_status": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "overall_status",
+      "unique_id": "contract-device_overall_status"
+    },
+    "sensor.unas_pool_count": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "pool_count",
+      "unique_id": "contract-device_pool_count"
+    },
+    "sensor.unas_read_throughput": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "read_throughput",
+      "unique_id": "contract-device_read_throughput"
+    },
+    "sensor.unas_storage_usage": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "usage_percent",
+      "unique_id": "contract-device_usage_percent"
+    },
+    "sensor.unas_system_ip": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "system_ip",
+      "unique_id": "contract-device_system_ip"
+    },
+    "sensor.unas_system_status": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "system_status",
+      "unique_id": "contract-device_system_status"
+    },
+    "sensor.unas_system_uptime": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "system_uptime",
+      "unique_id": "contract-device_system_uptime"
+    },
+    "sensor.unas_team_drive_snapshot_inventory": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "snapshot_inventory",
+      "unique_id": "contract-device_snapshot_shared_shared_1_inventory"
+    },
+    "sensor.unas_total_storage": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "total_storage",
+      "unique_id": "contract-device_total_storage"
+    },
+    "sensor.unas_unifi_os_version": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "unifi_os_version",
+      "unique_id": "contract-device_unifi_os_version"
+    },
+    "sensor.unas_used_storage": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "used_storage",
+      "unique_id": "contract-device_used_storage"
+    },
+    "sensor.unas_write_throughput": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "write_throughput",
+      "unique_id": "contract-device_write_throughput"
+    },
+    "switch.unas_team_drive_snapshots": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "snapshot_enabled",
+      "unique_id": "contract-device_snapshot_shared_shared_1_enabled"
+    },
+    "time.unas_team_drive_snapshot_schedule_time": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "snapshot_schedule_time",
+      "unique_id": "contract-device_snapshot_shared_shared_1_schedule_time"
+    },
+    "update.unas_drive": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "drive",
+      "unique_id": "contract-device_drive_update"
+    },
+    "update.unas_unifi_os": {
+      "config_entry_id": "contract-entry",
+      "device_id": "contract-device",
+      "platform": "unifi_unas",
+      "translation_key": "unifi_os",
+      "unique_id": "contract-device_unifi_os_update"
+    }
+  },
+  "schema_version": 1,
+  "states": {
+    "binary_sensor.unas_device_connection": {
+      "attributes": {},
+      "state": "on"
+    },
+    "binary_sensor.unas_main_maintenance_active": {
+      "attributes": {
+        "pool_key": "pool_a",
+        "pool_name": "Main"
+      },
+      "state": "off"
+    },
+    "binary_sensor.unas_main_problem": {
+      "attributes": {
+        "pool_key": "pool_a",
+        "pool_name": "Main"
+      },
+      "state": "off"
+    },
+    "binary_sensor.unas_maintenance_active": {
+      "attributes": {},
+      "state": "off"
+    },
+    "binary_sensor.unas_storage_problem": {
+      "attributes": {},
+      "state": "off"
+    },
+    "button.unas_nightly_backup_run_backup": {
+      "attributes": {
+        "task_id": "task-1",
+        "task_name": "Nightly Backup"
+      },
+      "state": "unknown"
+    },
+    "button.unas_restart": {
+      "attributes": {},
+      "state": "unknown"
+    },
+    "button.unas_shut_down": {
+      "attributes": {},
+      "state": "unknown"
+    },
+    "button.unas_team_drive_create_snapshot": {
+      "attributes": {
+        "target_key": "shared_shared-1",
+        "target_name": "Team Drive",
+        "target_type": "shared"
+      },
+      "state": "unknown"
+    },
+    "number.unas_team_drive_snapshot_limit": {
+      "attributes": {
+        "target_key": "shared_shared-1",
+        "target_name": "Team Drive",
+        "target_type": "shared"
+      },
+      "state": "12"
+    },
+    "number.unas_team_drive_snapshot_month_day": {
+      "attributes": {
+        "target_key": "shared_shared-1",
+        "target_name": "Team Drive",
+        "target_type": "shared"
+      },
+      "state": "15"
+    },
+    "select.unas_fan_mode": {
+      "attributes": {},
+      "state": "Balance"
+    },
+    "select.unas_team_drive_snapshot_schedule": {
+      "attributes": {
+        "target_key": "shared_shared-1",
+        "target_name": "Team Drive",
+        "target_type": "shared"
+      },
+      "state": "Daily"
+    },
+    "select.unas_team_drive_snapshot_weekday": {
+      "attributes": {
+        "target_key": "shared_shared-1",
+        "target_name": "Team Drive",
+        "target_type": "shared"
+      },
+      "state": "Monday"
+    },
+    "sensor.unas_at_risk_disk_count": {
+      "attributes": {},
+      "state": "0"
+    },
+    "sensor.unas_available_storage": {
+      "attributes": {},
+      "state": "6.0"
+    },
+    "sensor.unas_average_disk_temperature": {
+      "attributes": {},
+      "state": "31.0"
+    },
+    "sensor.unas_cpu_temperature": {
+      "attributes": {},
+      "state": "unknown"
+    },
+    "sensor.unas_degraded_pool_count": {
+      "attributes": {},
+      "state": "0"
+    },
+    "sensor.unas_drive_version": {
+      "attributes": {},
+      "state": "1.2.3"
+    },
+    "sensor.unas_main_at_risk_drive_count": {
+      "attributes": {
+        "pool_key": "pool_a",
+        "pool_name": "Main"
+      },
+      "state": "0"
+    },
+    "sensor.unas_main_available": {
+      "attributes": {
+        "pool_key": "pool_a",
+        "pool_name": "Main"
+      },
+      "state": "6.0"
+    },
+    "sensor.unas_main_average_drive_temperature": {
+      "attributes": {
+        "pool_key": "pool_a",
+        "pool_name": "Main"
+      },
+      "state": "31.0"
+    },
+    "sensor.unas_main_capacity": {
+      "attributes": {
+        "pool_key": "pool_a",
+        "pool_name": "Main"
+      },
+      "state": "10.0"
+    },
+    "sensor.unas_main_drive_1_power_on_hours": {
+      "attributes": {
+        "drive_key": "pool_a_1",
+        "drive_name": "Drive 1",
+        "pool_key": "pool_a",
+        "pool_name": "Main"
+      },
+      "state": "1200"
+    },
+    "sensor.unas_main_drive_1_status": {
+      "attributes": {
+        "drive_key": "pool_a_1",
+        "drive_name": "Drive 1",
+        "pool_key": "pool_a",
+        "pool_name": "Main"
+      },
+      "state": "optimal"
+    },
+    "sensor.unas_main_drive_1_temperature": {
+      "attributes": {
+        "drive_key": "pool_a_1",
+        "drive_name": "Drive 1",
+        "pool_key": "pool_a",
+        "pool_name": "Main"
+      },
+      "state": "31.0"
+    },
+    "sensor.unas_main_drive_count": {
+      "attributes": {
+        "pool_key": "pool_a",
+        "pool_name": "Main"
+      },
+      "state": "1"
+    },
+    "sensor.unas_main_raid_level": {
+      "attributes": {
+        "pool_key": "pool_a",
+        "pool_name": "Main"
+      },
+      "state": "unknown"
+    },
+    "sensor.unas_main_rebuild_progress": {
+      "attributes": {
+        "pool_key": "pool_a",
+        "pool_name": "Main"
+      },
+      "state": "unknown"
+    },
+    "sensor.unas_main_status": {
+      "attributes": {
+        "pool_key": "pool_a",
+        "pool_name": "Main"
+      },
+      "state": "healthy"
+    },
+    "sensor.unas_main_sync_progress": {
+      "attributes": {
+        "pool_key": "pool_a",
+        "pool_name": "Main"
+      },
+      "state": "unknown"
+    },
+    "sensor.unas_main_usage": {
+      "attributes": {
+        "pool_key": "pool_a",
+        "pool_name": "Main"
+      },
+      "state": "40.0"
+    },
+    "sensor.unas_main_used": {
+      "attributes": {
+        "pool_key": "pool_a",
+        "pool_name": "Main"
+      },
+      "state": "4.0"
+    },
+    "sensor.unas_maintenance_pool_count": {
+      "attributes": {},
+      "state": "0"
+    },
+    "sensor.unas_overall_status": {
+      "attributes": {},
+      "state": "healthy"
+    },
+    "sensor.unas_pool_count": {
+      "attributes": {},
+      "state": "1"
+    },
+    "sensor.unas_read_throughput": {
+      "attributes": {},
+      "state": "12.0"
+    },
+    "sensor.unas_storage_usage": {
+      "attributes": {},
+      "state": "40.0"
+    },
+    "sensor.unas_system_ip": {
+      "attributes": {},
+      "state": "unknown"
+    },
+    "sensor.unas_system_status": {
+      "attributes": {},
+      "state": "online"
+    },
+    "sensor.unas_system_uptime": {
+      "attributes": {},
+      "state": "unknown"
+    },
+    "sensor.unas_team_drive_snapshot_inventory": {
+      "attributes": {
+        "target_key": "shared_shared-1",
+        "target_name": "Team Drive",
+        "target_type": "shared"
+      },
+      "state": "unknown"
+    },
+    "sensor.unas_total_storage": {
+      "attributes": {},
+      "state": "10.0"
+    },
+    "sensor.unas_unifi_os_version": {
+      "attributes": {},
+      "state": "v4.1.9"
+    },
+    "sensor.unas_used_storage": {
+      "attributes": {},
+      "state": "4.0"
+    },
+    "sensor.unas_write_throughput": {
+      "attributes": {},
+      "state": "3.0"
+    },
+    "switch.unas_team_drive_snapshots": {
+      "attributes": {
+        "target_key": "shared_shared-1",
+        "target_name": "Team Drive",
+        "target_type": "shared"
+      },
+      "state": "on"
+    },
+    "time.unas_team_drive_snapshot_schedule_time": {
+      "attributes": {
+        "target_key": "shared_shared-1",
+        "target_name": "Team Drive",
+        "target_type": "shared"
+      },
+      "state": "08:15:00"
+    },
+    "update.unas_drive": {
+      "attributes": {},
+      "state": "on"
+    },
+    "update.unas_unifi_os": {
+      "attributes": {},
+      "state": "on"
+    }
+  }
+}
