@@ -1,0 +1,8 @@
+name: "UniFi Drive Card CodeQL config"
+
+paths-ignore:
+  # Prose and images, not code. The built bundle is not committed -- dist/ is
+  # gitignored -- so there is nothing to exclude on that side.
+  - "docs/**"
+  - "assets/**"
+  - "release-notes/**"
