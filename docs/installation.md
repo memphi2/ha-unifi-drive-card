@@ -35,8 +35,11 @@ Reference: [Marketplace dashboard packaging](https://contributors.home-assistant
 
 ### Earlier Home Assistant Versions: HACS
 
+The card is included in the [default HACS catalog](https://github.com/hacs/default/blob/master/plugin).
+No custom repository is required.
+
 1. Open HACS in Home Assistant.
-2. Add this repository as a **Custom repository** in the **Dashboard** category.
+2. Search the **Dashboard** catalog for **Unifi Drive / UNAS Card**.
 3. Install `Unifi Drive / UNAS Card`.
 4. Reload Home Assistant.
 5. Open your dashboard, add a new card, and select `custom:unifi-drive-card`.

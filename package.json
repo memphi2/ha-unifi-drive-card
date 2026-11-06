@@ -6,7 +6,7 @@
   "private": false,
   "license": "MIT",
   "engines": {
-    "node": "^22.22.2 || >=24.15.0"
+    "node": "^22.22.2 || ^24.15.0 || ^26.0.0"
   },
   "repository": {
     "type": "git",
@@ -24,11 +24,13 @@
     "compat": "node scripts/compat_check.mjs",
     "ha:live-entity-audit": "node scripts/ha_live_entity_audit.mjs",
     "ha:storage-smoke": "node scripts/ha_storage_smoke.mjs",
+    "ha:components-smoke": "npm run build && node scripts/ha_components_smoke.mjs",
+    "release-archive-check": "node scripts/release_archive_check.mjs",
     "license-check": "node scripts/license_check.mjs",
     "lint": "eslint . --max-warnings=0",
     "release-check": "node scripts/release_check.mjs",
     "render-smoke": "npm run build && node scripts/render_smoke.mjs",
-    "security-audit": "npm audit --omit=dev --audit-level=moderate",
+    "security-audit": "npm audit --package-lock-only --audit-level=low",
     "smoke": "node scripts/ha_card_smoke.mjs",
     "smoke:install-uninstall": "npm run build && node scripts/ha_card_smoke.mjs --deploy --uninstall",
     "test": "vitest run",
@@ -53,7 +55,7 @@
     "puppeteer-core": "^25.16.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.72.1",
-    "vite": "^8.3.5",
+    "vite": "^8.3.6",
     "vitest": "^5.1.0"
   },
   "overrides": {

@@ -2,7 +2,8 @@
 
 ## Tooling
 
-- Node.js 24 LTS (Node.js 22.22.2 or later is also supported)
+- Node.js 26 LTS for development, CI and release builds (`nvm use`).
+- Supported Node lines: 22.22.2+, 24.15.0+ and 26.x; odd majors are excluded.
 - npm
 - TypeScript
 - ESLint
@@ -29,17 +30,37 @@ npm run release-check
 npm run security-audit
 npm run check
 npm run render-smoke
+npm run ha:components-smoke
 ```
 
 `npm run check` runs type checking, linting, unit tests, production build, HACS
 compatibility, license notice validation, anonymization checks, release metadata
-validation and a runtime dependency security audit.
+validation and a locked dependency audit covering runtime and development tools.
 
 `npm run render-smoke` builds the bundle and verifies in Chromium that the card
 renders, groups dynamic UniFi Drive entities, hides dangerous actions by
 default, validates overview tile columns, flows from a narrow dashboard column
 into a reordered wide horizontal layout, and dispatches tap, double-tap and hold
 actions.
+
+`npm run ha:components-smoke` loads the original HA 2026.11.0 frontend
+(`20261028.4`) from a SHA-256-pinned PyPI wheel. It renders the card and its
+visual editor against original HA components and types a name through the real
+text selector, then toggles compact mode off and on using the real switch.
+Registry, context and API data are synthetic. This checks frontend
+compatibility; it does not test a live HA backend, device services, or a Marketplace
+installation. No minimum HA version is claimed by this test.
+
+If Chromium reports `Disk quota exceeded` for its temporary profile, select a
+writable temporary filesystem, for example `TMPDIR=/var/tmp npm run render-smoke`.
+The test does not retry or suppress browser errors.
+
+CI and release automation run the original-component test and the synthetic
+render smoke. Releases also validate storage fixtures and compare the ZIP
+members byte-for-byte with the generated bundle and source map using
+`npm run release-archive-check -- release/ha-unifi-drive-card.zip`.
+The unit-check job runs on Node 22, 24 and 26. CodeQL analyzes JavaScript and
+TypeScript on pull requests, main pushes and a weekly schedule.
 
 `npm run anonymization-check:github` scans GitHub release bodies, issue/PR
 titles and bodies, comments, and recent commit messages for private LAN IPs and

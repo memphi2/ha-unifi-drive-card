@@ -51,6 +51,8 @@ jobs:
         run: |
           npm run check
           npm run render-smoke
+          npm run ha:components-smoke
+          npm run ha:storage-smoke -- test/fixtures/ha-config
 
       - name: Package HACS asset
         run: |
@@ -58,6 +60,9 @@ jobs:
           cp dist/ha-unifi-drive-card.js release/ha-unifi-drive-card.js
           cp dist/ha-unifi-drive-card.js.map release/ha-unifi-drive-card.js.map
           (cd release && zip -r ha-unifi-drive-card.zip ha-unifi-drive-card.js ha-unifi-drive-card.js.map)
+
+      - name: Validate release archive
+        run: npm run release-archive-check -- release/ha-unifi-drive-card.zip
 
       - name: Upload release artifact
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7

@@ -1,7 +1,7 @@
 # Unifi Drive / UNAS Card
 
 [![CI](https://github.com/memphi2/ha-unifi-drive-card/actions/workflows/ci.yml/badge.svg)](https://github.com/memphi2/ha-unifi-drive-card/actions/workflows/ci.yml)
-[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/docs/faq/custom_repositories)
+[![HACS Default](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/default/blob/master/plugin)
 [![Marketplace](https://img.shields.io/badge/Home_Assistant-Marketplace-41BDF5?style=flat-square)](https://contributors.home-assistant.io/marketplace/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
@@ -35,7 +35,7 @@ Built with Codex.
 ## 5-Minute Setup
 
 1. Install the `unifi_unas` integration in Home Assistant and verify entities are present.
-2. Install this card (HACS is easiest; details below).
+2. Install this card through the Marketplace or HACS catalog (details below).
 3. Add a new dashboard card and choose `custom:unifi-drive-card`.
 4. If you run multiple UniFi Drive/UNAS devices, set `device_id`.
 5. Keep `compact: true` for the default dense layout.
@@ -61,9 +61,12 @@ On Home Assistant 2026.11 or newer, open the button above or go to
 **Settings > Marketplace**, search for **Unifi Drive / UNAS Card**, and install it
 from the Dashboard category. Reload the browser after installation.
 
-On earlier Home Assistant versions, add this repository as a HACS custom
-repository in the Dashboard category, install `Unifi Drive / UNAS Card`, then reload
-the dashboard page. Marketplace and HACS installations use the same release
+The card is included in the [default HACS catalog](https://github.com/hacs/default/blob/master/plugin).
+No custom repository is required.
+
+On earlier Home Assistant versions, search the HACS Dashboard catalog for
+`Unifi Drive / UNAS Card`, install it, then reload the dashboard page.
+Marketplace and HACS installations use the same release
 asset; do not install a second copy or add a duplicate resource.
 
 HACS resource entry:

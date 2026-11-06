@@ -21,6 +21,11 @@
   dynamic group compatibility.
 - Hardened CI and release automation with Node 26, pinned GitHub Actions,
   dependency auditing and Dependabot security updates.
+- Added checks against original HA 2026.11 frontend components and byte-exact
+  release archive validation, following the DHE Connect Card test approach.
+- Corrected default-catalog installation instructions and limited supported
+  Node versions to the maintained 22, 24 and 26 lines.
+- Added a Node 22/24/26 CI matrix and scheduled JavaScript/TypeScript CodeQL analysis.
 
 ## 0.3.5 - 2026-10-13
 
