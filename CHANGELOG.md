@@ -33,6 +33,12 @@
   retaining separate immediate security updates and reviewed npm major changes.
 - Isolated release publication from read-only builds and added workflow policy
   tests, bounded jobs and a stable protected Node-matrix result check.
+- Share discovery state projections across cards and ignore state-map ordering
+  changes to avoid redundant discovery work.
+- Updated the locked transitive `undici` dependency to its current patched 8.x
+  version before release.
+- Make editor help available through keyboard focus and touch, with visible
+  tooltips that fit mobile and desktop viewports.
 
 ### Fixed
 
@@ -40,6 +46,15 @@
   interaction started under the old configuration cannot run a new action.
 - Preserve explicitly empty section selections, invalidate discovery on dynamic
   group attribute changes, and preserve new service locks after reconnects.
+- Refresh cached section values and names when Home Assistant replaces its
+  formatting helpers without a state change.
+- Never substitute an auto-discovered entity for a missing or wrong-domain
+  explicit override, including system action buttons.
+- Prefer registry translation keys over misleading entity ID suffixes so pool
+  readings and renamed actions cannot be mistaken for aggregate values or other
+  controls.
+- Keep switch labels clickable and help controls independent of their switches.
+- Label tap, hold and double-tap settings as card actions, not backups.
 
 ## 0.3.5 - 2026-10-13
 

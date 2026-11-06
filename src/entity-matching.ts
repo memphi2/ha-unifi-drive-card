@@ -21,9 +21,13 @@ export function definitionIdentityScore(
   registry?: HassRegistryEntity,
 ): number {
   const aliases = definitionAliases(definition);
-  const objectId = slugify(objectIdFromEntityId(entityId));
   const translationKey =
     typeof registry?.translation_key === "string" ? slugify(registry.translation_key) : "";
+  // Registry semantics take precedence over user-renamed IDs and suffix matches.
+  if (translationKey && !aliases.includes(translationKey)) {
+    return 0;
+  }
+  const objectId = slugify(objectIdFromEntityId(entityId));
   const uniqueId = typeof registry?.unique_id === "string" ? slugify(registry.unique_id) : "";
   let score = 0;
 

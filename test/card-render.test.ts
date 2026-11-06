@@ -3,6 +3,33 @@ import { UnifiDriveCard } from "../src/unifi-drive-card";
 import { INTEGRATION_DOMAIN, type HomeAssistant } from "../src/types";
 
 describe("UnifiDriveCard rendering", () => {
+  it.each(["formatEntityState", "formatEntityName"] as const)(
+    "refreshes cached sections when HA replaces %s with stable states",
+    async (formatter) => {
+      const hass = { ...hassFixture(), [formatter]: () => "Before formatting change" };
+      const card = await renderCard(hass, { sections: ["storage"] });
+      const sectionText = () => card.shadowRoot!.querySelector('[data-section="storage"]')!.textContent;
+      expect(sectionText()).toContain("Before formatting change");
+      card.hass = { ...hass, [formatter]: () => "After formatting change" };
+      await card.updateComplete;
+      expect(sectionText()).toContain("After formatting change");
+      expect(sectionText()).not.toContain("Before formatting change");
+      card.remove();
+    },
+  );
+
+  it("does not expose a replacement shutdown control for a missing override", async () => {
+    const hass = hassFixture();
+    const card = await renderCard(hass, {
+      sections: ["system"], show_dangerous_actions: true, show_optional: true,
+      entities: { shutdown: "button.selected_shutdown" },
+    });
+    const row = card.shadowRoot!.querySelector('[data-entity-key="shutdown"]')!;
+    expect(row.querySelector("button.chip")).toBeNull();
+    expect(hass.callService).not.toHaveBeenCalled();
+    card.remove();
+  });
+
   it.each(["tap", "hold"])("cancels pending %s actions when configuration changes", async (trigger) => {
     const card = await renderCard(hassFixture(), {
       sections: ["overview"],

@@ -48,7 +48,11 @@ actions.
 PyPI wheels. Pass `-- minimum` or `-- current` to run a single baseline.
 It renders the card and its
 visual editor against original HA components and types a name through the real
-text selector, then toggles compact mode off and on using the real switch.
+text selector, then toggles compact mode using the real switch, its label and
+the keyboard. It checks help tooltips through keyboard focus, Escape and touch
+at 390px and 900px viewport widths, including their bounds and absence of
+unintended setting changes. Set `HA_COMPONENTS_SCREENSHOT_DIR` to retain these
+synthetic editor screenshots outside the repository.
 Registry, context and API data are synthetic. This checks frontend
 compatibility; it does not test a live HA backend, device services, or a Marketplace
 installation. The `hacs.json` minimum is tied to the tested 2026.4.0 baseline.

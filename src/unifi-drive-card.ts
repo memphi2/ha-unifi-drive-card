@@ -947,7 +947,7 @@ const OBJECT_TOKENS = new WeakMap<object, number>();
 let nextObjectToken = 1;
 
 function objectIdentityToken(value: unknown): number {
-  if (!value || typeof value !== "object") {
+  if (!value || (typeof value !== "object" && typeof value !== "function")) {
     return 0;
   }
   const objectValue = value as object;

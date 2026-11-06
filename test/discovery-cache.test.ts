@@ -1,10 +1,42 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { normalizeConfig } from "../src/config";
 import { DiscoveryCache } from "../src/discovery-cache";
 import type { HomeAssistant } from "../src/types";
 import { INTEGRATION_DOMAIN } from "../src/types";
 
 describe("DiscoveryCache", () => {
+  it("shares discovery state projections across cards with different configurations", () => {
+    const hass = hassFixture();
+    const projectName = vi.fn(() => "Pool 1");
+    Object.defineProperty(hass.states["sensor.pool_status"]!.attributes, "pool_name", {
+      get: projectName,
+    });
+    const config = normalizeConfig({ hide_entities: ["pool_status"] });
+    new DiscoveryCache().get(hass, config);
+    expect(projectName).toHaveBeenCalledOnce();
+    new DiscoveryCache().get(hass, normalizeConfig({ ...config, device_id: "device-a" }));
+    expect(projectName).toHaveBeenCalledOnce();
+  });
+
+  it("reuses discovery when HA reorders equivalent states", () => {
+    const hass = hassFixture();
+    const cache = new DiscoveryCache();
+    const config = normalizeConfig({});
+    const initial = cache.get(hass, config);
+    expect(cache.get({ ...hass, states: Object.fromEntries(Object.entries(hass.states).reverse()) }, config))
+      .toBe(initial);
+  });
+
+  it("refreshes overrides as selected entities appear and disappear", () => {
+    const cache = new DiscoveryCache();
+    const hass = hassFixture();
+    const config = normalizeConfig({ entities: { usage_percent: "sensor.selected_usage" } });
+    expect(cache.get(hass, config).entityIds.usage_percent).toBeUndefined();
+    const selected = { ...hass, states: { ...hass.states, "sensor.selected_usage": entity("71", {}) } };
+    expect(cache.get(selected, config).entityIds.usage_percent).toBe("sensor.selected_usage");
+    expect(cache.get(hass, config).entityIds.usage_percent).toBeUndefined();
+  });
+
   it.each([
     ["pool", "sensor", "pool_status", "pool_key", "pool_name"],
     ["drive", "sensor", "drive_status", "drive_key", "drive_name"],

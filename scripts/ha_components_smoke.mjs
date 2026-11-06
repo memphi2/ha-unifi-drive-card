@@ -5,7 +5,7 @@ import { Buffer } from "node:buffer";
 import { URL } from "node:url";
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
-import { readFile, writeFile, mkdtemp, readdir, rm } from "node:fs/promises";
+import { readFile, writeFile, mkdtemp, mkdir, readdir, rm } from "node:fs/promises";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -85,6 +85,7 @@ async function runBaseline(baseline) {
       args: ["--no-sandbox", "--disable-dev-shm-usage"],
     });
     const page = await browser.newPage();
+    await page.setViewport({ width: 900, height: 900, hasTouch: true });
     page.setDefaultTimeout(30000);
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.stack ?? String(error)));
@@ -231,6 +232,62 @@ async function runBaseline(baseline) {
     await page.waitForFunction(
       () => window.__editorChanges.at(-1)?.compact === true,
     );
+    const label = await page.waitForSelector(
+      "unifi-drive-card-editor >>> .advanced-group .switch-formfield-label",
+    );
+    const changeCount = await page.evaluate(() => window.__editorChanges.length);
+    await label.click();
+    await page.waitForFunction(() => window.__editorChanges.at(-1)?.compact === false);
+    assert.equal(await page.evaluate(() => window.__editorChanges.length), changeCount + 1,
+      "A switch label must toggle exactly once");
+    const advancedHelp = await page.waitForSelector(
+      "unifi-drive-card-editor >>> .advanced-editor > summary .help-icon",
+    );
+    await advancedHelp.focus();
+    await page.keyboard.press("Tab");
+    assert(await compact.evaluate((element) => {
+      let active = document.activeElement;
+      while (active) {
+        if (active === element) return true;
+        active = active.shadowRoot?.activeElement;
+      }
+      return false;
+    }), "The native switch must be reachable with Tab");
+    await page.keyboard.press("Space");
+    await page.waitForFunction(() => window.__editorChanges.at(-1)?.compact === true);
+    assert.equal(await page.evaluate(() => window.__editorChanges.length), changeCount + 2,
+      "Keyboard switch activation must toggle exactly once");
+    for (const width of [390, 900]) {
+      await page.setViewport({ width, height: 900, hasTouch: true });
+      const help = await page.waitForSelector(
+        "unifi-drive-card-editor >>> .advanced-editor > summary .help-icon",
+      );
+      await help.evaluate((button) => button.scrollIntoView({ block: "center" }));
+      await help.focus();
+      await page.waitForFunction(() => document.querySelector("unifi-drive-card-editor")
+        .shadowRoot.querySelector(".help-tooltip:popover-open"));
+      const bounds = await page.$eval("unifi-drive-card-editor >>> .help-tooltip:popover-open", (tooltip) => {
+        const rect = tooltip.getBoundingClientRect();
+        return { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom, width: rect.width };
+      });
+      assert(bounds.width > 0 && bounds.left >= 0 && bounds.right <= width &&
+        bounds.top >= 0 && bounds.bottom <= 900, "Help tooltip must fit the viewport");
+      if (process.env.HA_COMPONENTS_SCREENSHOT_DIR) {
+        await mkdir(process.env.HA_COMPONENTS_SCREENSHOT_DIR, { recursive: true });
+        await page.screenshot({ path: path.join(process.env.HA_COMPONENTS_SCREENSHOT_DIR,
+          `editor-${baseline.homeassistant}-${width}.png`) });
+      }
+      await page.keyboard.press("Escape");
+      assert.equal(await page.$("unifi-drive-card-editor >>> .help-tooltip:popover-open"), null);
+      await help.tap();
+      assert(await page.$("unifi-drive-card-editor >>> .help-tooltip:popover-open"));
+      assert(await page.$eval("unifi-drive-card-editor >>> .advanced-editor", (details) => details.open),
+        "Help activation must not close its containing section");
+      await page.keyboard.press("Escape");
+      await page.keyboard.press("Tab");
+    }
+    assert.equal(await page.evaluate(() => window.__editorChanges.length), changeCount + 2,
+      "Help activation must not change card settings");
     const result = await page.evaluate(() => {
       const root = document.querySelector("unifi-drive-card").shadowRoot;
       return {
@@ -246,7 +303,7 @@ async function runBaseline(baseline) {
     assert(result.grid.columns > 0, "Sections sizing missing");
     assert.deepEqual(errors, [], "HA component errors");
     console.log(
-      `PASS: original HA ${baseline.homeassistant} components (${baseline.version}), card render, editor name and switch round trip`,
+      `PASS: original HA ${baseline.homeassistant} components (${baseline.version}), card render, editor name, switch labels, keyboard and touch help at mobile/desktop widths`,
     );
   } finally {
     try {
