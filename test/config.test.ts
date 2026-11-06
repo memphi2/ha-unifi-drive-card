@@ -4,6 +4,10 @@ import { normalizeConfig } from "../src/config";
 import { OVERVIEW_KEYS } from "../src/entity-groups";
 
 describe("normalizeConfig", () => {
+  it("preserves an explicitly empty section selection", () => {
+    expect(normalizeConfig({ sections: [] }).sections).toEqual([]);
+  });
+
   it("provides stable UniFi Drive defaults", () => {
     const config = normalizeConfig({});
     expect(config.type).toBe("custom:unifi-drive-card");

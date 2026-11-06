@@ -5,6 +5,46 @@ import type { HomeAssistant } from "../src/types";
 import { INTEGRATION_DOMAIN } from "../src/types";
 
 describe("DiscoveryCache", () => {
+  it.each([
+    ["pool", "sensor", "pool_status", "pool_key", "pool_name"],
+    ["drive", "sensor", "drive_status", "drive_key", "drive_name"],
+    ["snapshot", "switch", "snapshot_enabled", "target_key", "target_name"],
+    ["backup", "button", "backup_task", "task_id", "task_name"],
+  ] as const)("refreshes %s identity and labels from integration attributes", (kind, domain, key, idKey, nameKey) => {
+    const cache = new DiscoveryCache();
+    const config = normalizeConfig({ device_id: "device-a" });
+    const entityId = `${domain}.group_fixture`;
+    const fixture = (id: string, name: string): HomeAssistant => ({
+      states: { [entityId]: entity("on", { [idKey]: id, [nameKey]: name }) },
+      entities: { [entityId]: registry(key) },
+      callService: async () => undefined,
+    });
+    cache.get(fixture("first", "First group"), config);
+    const updated = cache.get(fixture("second", "Second group"), config);
+    expect(updated.groups[kind]).toHaveLength(1);
+    expect(updated.groups[kind][0]).toMatchObject({ id: "second", name: "Second group" });
+  });
+
+  it("invalidates when a pool is renamed without a friendly-name change", () => {
+    const cache = new DiscoveryCache();
+    const config = normalizeConfig({});
+    const first = cache.get(hassFixture("Pool 1"), config);
+    const second = cache.get(hassFixture("Pool 2"), config);
+    expect(second).not.toBe(first);
+    expect(second.groups.pool[0]?.name).toBe("Pool 2");
+  });
+
+  it("keeps discovery cached when only sensor readings change", () => {
+    const cache = new DiscoveryCache();
+    const config = normalizeConfig({});
+    const initial = hassFixture();
+    const first = cache.get(initial, config);
+    const updated = { ...initial, states: { ...initial.states,
+      "sensor.usage": entity("75", {}),
+    } };
+    expect(cache.get(updated, config)).toBe(first);
+  });
+
   it("reuses discovery when equivalent HA snapshots arrive with new objects", () => {
     const cache = new DiscoveryCache();
     const first = cache.get(hassFixture(), normalizeConfig({}));

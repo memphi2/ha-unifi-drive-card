@@ -54,8 +54,11 @@ export function normalizeConfig(
 }
 
 function normalizeSections(sections: SectionId[] | undefined): SectionId[] {
-  if (!sections?.length) {
+  if (!Array.isArray(sections)) {
     return [...DEFAULT_SECTIONS];
+  }
+  if (!sections.length) {
+    return [];
   }
   const normalized = uniqueKnownItems(sections, SECTION_SET);
   return normalized.length ? normalized : [...DEFAULT_SECTIONS];

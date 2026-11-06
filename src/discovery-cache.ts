@@ -8,6 +8,10 @@ import type {
 
 const DISCOVERY_DOMAINS = new Set(ENTITY_DEFINITIONS.map((definition) => definition.domain));
 const CONFIG_SIGNATURE_CACHE = new WeakMap<NormalizedUnifiDriveCardConfig, string>();
+const DISCOVERY_ATTRIBUTES = [
+  "friendly_name", "pool_key", "pool_name", "drive_key", "drive_name",
+  "target_key", "target_name", "target_type", "task_id", "task_name",
+];
 
 export class DiscoveryCache {
   private _entry?: {
@@ -124,11 +128,13 @@ function stateSignature(hass: HomeAssistant): string {
       continue;
     }
     const state = states[entityId];
-    const friendly =
+    const attributes =
       state?.attributes && typeof state.attributes === "object" && !Array.isArray(state.attributes)
-        ? state.attributes.friendly_name ?? ""
-        : "";
-    signature += `${entityId}\u001f${typeof friendly === "string" ? friendly : ""}\u001e`;
+        ? state.attributes
+        : {};
+    signature += JSON.stringify([entityId, ...DISCOVERY_ATTRIBUTES.map(
+      (key) => attributes[key] == null ? "" : String(attributes[key]).trim(),
+    )]);
   }
   return signature;
 }

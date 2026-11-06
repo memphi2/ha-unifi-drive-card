@@ -1,7 +1,7 @@
 type BusyChangeListener = (keys: ReadonlySet<string>) => void;
 
 export class ServiceCallGuard {
-  private readonly activeKeys = new Set<string>();
+  private readonly activeKeys = new Map<string, symbol>();
 
   public constructor(private readonly onChange: BusyChangeListener = () => undefined) {}
 
@@ -11,7 +11,7 @@ export class ServiceCallGuard {
 
   public isEntityBusy(entityId: string): boolean {
     const prefix = `${entityId}:`;
-    for (const key of this.activeKeys) {
+    for (const key of this.activeKeys.keys()) {
       if (key.startsWith(prefix)) {
         return true;
       }
@@ -23,13 +23,16 @@ export class ServiceCallGuard {
     if (this.activeKeys.has(key)) {
       return undefined;
     }
-    this.activeKeys.add(key);
+    const invocation = Symbol(key);
+    this.activeKeys.set(key, invocation);
     this.emit();
     try {
       return await action();
     } finally {
-      this.activeKeys.delete(key);
-      this.emit();
+      if (this.activeKeys.get(key) === invocation) {
+        this.activeKeys.delete(key);
+        this.emit();
+      }
     }
   }
 
@@ -42,7 +45,7 @@ export class ServiceCallGuard {
   }
 
   private emit(): void {
-    this.onChange(new Set(this.activeKeys));
+    this.onChange(new Set(this.activeKeys.keys()));
   }
 }
 
