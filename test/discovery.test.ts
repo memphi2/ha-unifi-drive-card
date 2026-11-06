@@ -5,6 +5,42 @@ import type { HomeAssistant } from "../src/types";
 import { INTEGRATION_DOMAIN } from "../src/types";
 
 describe("discoverEntities", () => {
+  it.each(["sensor.selected_usage", "button.wrong_domain"])(
+    "does not replace an explicit missing or wrong-domain override: %s",
+    (override) => {
+      const hass: HomeAssistant = {
+        states: { "sensor.usage": state("42"), "button.wrong_domain": state("unknown") },
+        entities: { "sensor.usage": registry("dev-a", "usage_percent") },
+        callService: async () => undefined,
+      };
+      const config = normalizeConfig({ entities: { usage_percent: override } });
+      expect(discoverEntities(hass, config).entityIds.usage_percent).toBeUndefined();
+      expect(discoverEntities(hass, normalizeConfig({})).entityIds.usage_percent).toBe("sensor.usage");
+    },
+  );
+
+  it("does not use a pool sensor as aggregate usage when the aggregate is absent", () => {
+    const hass: HomeAssistant = {
+      states: { "sensor.pool_usage_percent": entity("42", { pool_key: "pool-1" }) },
+      entities: { "sensor.pool_usage_percent": registry("dev-a", "pool_usage_percent") },
+      callService: async () => undefined,
+    };
+    const discovered = discoverEntities(hass, normalizeConfig({ device_id: "dev-a" }));
+    expect(discovered.entityIds.usage_percent).toBeUndefined();
+    expect(discovered.groups.pool[0]?.entityIds.pool_usage_percent).toBe("sensor.pool_usage_percent");
+  });
+
+  it("uses registry translation keys instead of misleading renamed entity IDs", () => {
+    const hass: HomeAssistant = {
+      states: { "button.shutdown": state("unknown") },
+      entities: { "button.shutdown": registry("dev-a", "restart") },
+      callService: async () => undefined,
+    };
+    const discovered = discoverEntities(hass, normalizeConfig({ device_id: "dev-a" }));
+    expect(discovered.entityIds.shutdown).toBeUndefined();
+    expect(discovered.entityIds.reboot).toBe("button.shutdown");
+  });
+
   it("discovers aggregate entities by registry metadata", () => {
     const hass: HomeAssistant = {
       states: {

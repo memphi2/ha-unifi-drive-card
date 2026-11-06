@@ -3,6 +3,9 @@
 ## Before You Start
 
 - Home Assistant with dashboards enabled.
+- Home Assistant 2026.4 or newer. Original frontend components from 2026.4.0
+  and 2026.11.0 are tested in Chromium; see the
+  [validation boundaries](development.md#tooling).
 - The `unifi_unas` integration is installed and exposes entities.
 - You can refresh browser cache after updates.
 
@@ -15,13 +18,32 @@ Quick pre-check in Home Assistant:
 If the integration is missing, install/fix that first. This card only renders
 existing Home Assistant entities.
 
-## HACS
+## Marketplace Or HACS
 
-Recommended for most users.
+[![Open in Home Assistant Marketplace](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=memphi2&repository=ha-unifi-drive-card&category=plugin)
+
+### Home Assistant 2026.11 Or Newer: Marketplace
+
+Open the button above or go to **Settings > Marketplace**, search for
+**Unifi Drive / UNAS Card**, and install it from the **Dashboard** category
+(`plugin` in the catalog). Reload the browser after installation.
+
+The Marketplace uses the existing `hacs.json` metadata and the JavaScript asset
+from the latest release. It adds a module resource with a version query
+parameter, so each update receives a new browser cache key. Existing HACS
+repositories and `/hacsfiles/` resources carry over; do not add a duplicate
+card resource.
+
+Reference: [Marketplace dashboard packaging](https://contributors.home-assistant.io/marketplace/guides/dashboard/).
+
+### Earlier Home Assistant Versions: HACS
+
+The card is included in the [default HACS catalog](https://github.com/hacs/default/blob/master/plugin).
+No custom repository is required.
 
 1. Open HACS in Home Assistant.
-2. Add this repository as a **Custom repository** in the **Dashboard** category.
-3. Install `Drive Storage Card`.
+2. Search the **Dashboard** catalog for **Unifi Drive / UNAS Card**.
+3. Install `Unifi Drive / UNAS Card`.
 4. Reload Home Assistant.
 5. Open your dashboard, add a new card, and select `custom:unifi-drive-card`.
 

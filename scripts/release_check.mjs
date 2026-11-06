@@ -28,6 +28,9 @@ const pkg = await readJson("package.json");
 const lock = await readJson("package-lock.json");
 const EXPECTED_VERSION = pkg.version;
 const EXPECTED_TAG = `v${EXPECTED_VERSION}`;
+if (process.env.GITHUB_REF_TYPE === "tag" && process.env.GITHUB_REF_NAME !== EXPECTED_TAG) {
+  fail(`release tag must match package version ${EXPECTED_TAG}`);
+}
 const hacs = await readJson("hacs.json");
 const changelog = await readFile("CHANGELOG.md", "utf8");
 const releaseNotesPath = `release-notes/${EXPECTED_TAG}.md`;
@@ -55,16 +58,16 @@ if (typeof pkg.repository?.url === "string" && typeof pkg.bugs?.url === "string"
   fail("package repository and bugs URLs are required for release");
 }
 
-if (hacs.filename === EXPECTED_FILENAME && hacs.name === "Drive Storage Card") {
+if (hacs.filename === EXPECTED_FILENAME && hacs.name === "Unifi Drive / UNAS Card") {
   pass("HACS metadata is release-ready");
 } else {
-  fail("hacs.json must use the stable bundle filename and trademark-neutral display name");
+  fail("hacs.json must use the stable bundle filename and expected display name");
 }
 
 requireIncludes("CHANGELOG.md", changelog, `## ${EXPECTED_VERSION} -`, "changelog has dated release entry");
-requireIncludes(releaseNotesPath, releaseNotes, `# Drive Storage Card ${EXPECTED_VERSION}`, "release notes exist");
+requireIncludes(releaseNotesPath, releaseNotes, `# Unifi Drive / UNAS Card ${EXPECTED_VERSION}`, "release notes exist");
 requireIncludes(releaseNotesPath, releaseNotes, "Built with Codex", "release notes credit Codex");
-requireIncludes(".github/workflows/release.yml", releaseWorkflow, `body_path: release-notes/${"${{ github.ref_name }}.md"}`, "release workflow uses tag-specific notes");
+requireIncludes(".github/workflows/release.yml", releaseWorkflow, "body_path: release/release-notes.md", "release workflow uses validated release notes artifact");
 requireIncludes(".github/workflows/release.yml", releaseWorkflow, EXPECTED_FILENAME, "release workflow uploads JS asset");
 requireIncludes(".github/workflows/release.yml", releaseWorkflow, `${EXPECTED_FILENAME}.map`, "release workflow uploads sourcemap asset");
 requireIncludes(".github/workflows/release.yml", releaseWorkflow, "ha-unifi-drive-card.zip", "release workflow uploads ZIP asset");

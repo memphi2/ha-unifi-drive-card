@@ -1,5 +1,6 @@
 {
-  "name": "Drive Storage Card",
+  "name": "Unifi Drive / UNAS Card",
+  "homeassistant": "2026.4.0",
   "render_readme": true,
   "filename": "ha-unifi-drive-card.js"
 }

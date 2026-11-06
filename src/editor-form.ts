@@ -1,5 +1,4 @@
 import { html, type TemplateResult } from "lit";
-import { ifDefined } from "lit/directives/if-defined.js";
 import { localize } from "./i18n";
 import type { HomeAssistant, Renderable } from "./types";
 
@@ -88,21 +87,18 @@ export function switchFormField(
     onChange(event);
   };
   return html`
-    <ha-formfield
-      class="switch-formfield"
-      .label=${label}
-      title=${help ?? label}
-      aria-label=${help ?? label}
-    >
-      <ha-switch
-        .checked=${checked}
-        aria-label=${help ?? label}
-        @click=${stopEvent}
-        @change=${change}
-      ></ha-switch>
-      <span slot="label" class="switch-formfield-label">${label}</span>
-      ${help ? helpIconText(help, "label") : ""}
-    </ha-formfield>
+    <div class="switch-formfield">
+      <label class="switch-label" @click=${toggleSwitchLabel}>
+        <ha-switch
+          .checked=${checked}
+          aria-label=${label}
+          @click=${stopEvent}
+          @change=${change}
+        ></ha-switch>
+        <span class="switch-formfield-label">${label}</span>
+      </label>
+      ${help ? helpIconText(help) : ""}
+    </div>
   `;
 }
 
@@ -123,31 +119,84 @@ function helpIcon(hass: HomeAssistant | undefined, helpKey: string): TemplateRes
   return helpIconText(localize(hass, helpKey));
 }
 
-function helpIconText(help: string, slot?: string): TemplateResult {
+let helpId = 0;
+
+function helpIconText(help: string): TemplateResult {
+  const id = `unifi-help-${++helpId}`;
   return html`
-    <button
-      class="help-icon"
-      type="button"
-      slot=${ifDefined(slot)}
-      title=${help}
-      aria-label=${help}
-      @click=${stopEvent}
-      @pointerdown=${stopEvent}
-      @keydown=${stopSummaryToggleKeydown}
+    <span class="help-control"
+      @pointerenter=${showHelp}
+      @pointerleave=${hideHoverHelp}
+      @focusout=${hideHelp}
     >
-      <ha-icon icon="mdi:information-outline" aria-hidden="true"></ha-icon>
-    </button>
+      <button
+        class="help-icon"
+        type="button"
+        aria-label=${help}
+        aria-describedby=${id}
+        @click=${showHelp}
+        @focus=${showHelp}
+        @pointerdown=${stopEvent}
+        @keydown=${stopSummaryToggleKeydown}
+      >
+        <ha-icon icon="mdi:information-outline" aria-hidden="true"></ha-icon>
+      </button>
+      <span class="help-tooltip" id=${id} popover="auto" role="tooltip">${help}</span>
+    </span>
   `;
+}
+
+function helpElements(event: Event) {
+  const control = (event.currentTarget as HTMLElement).closest(".help-control");
+  return {
+    button: control?.querySelector<HTMLButtonElement>(".help-icon"),
+    tooltip: control?.querySelector<HTMLElement>(".help-tooltip"),
+  };
+}
+
+function showHelp(event: Event): void {
+  event.stopPropagation();
+  const { button, tooltip } = helpElements(event);
+  if (!button || !tooltip?.showPopover) return;
+  tooltip.showPopover();
+  const anchor = button.getBoundingClientRect();
+  const bounds = tooltip.getBoundingClientRect();
+  const left = Math.max(12, Math.min(anchor.left, window.innerWidth - bounds.width - 12));
+  const top = anchor.bottom + bounds.height + 8 <= window.innerHeight
+    ? anchor.bottom + 8
+    : Math.max(12, anchor.top - bounds.height - 8);
+  tooltip.style.left = `${left}px`;
+  tooltip.style.top = `${top}px`;
+}
+
+function hideHelp(event: Event): void {
+  helpElements(event).tooltip?.hidePopover?.();
+}
+
+function hideHoverHelp(event: Event): void {
+  const control = event.currentTarget as HTMLElement;
+  const root = control.getRootNode() as Document | ShadowRoot;
+  if (control.contains(root.activeElement)) return;
+  helpElements(event).tooltip?.hidePopover?.();
 }
 
 function stopEvent(event: Event): void {
   event.stopPropagation();
 }
 
+function toggleSwitchLabel(event: MouseEvent): void {
+  event.preventDefault();
+  event.stopPropagation();
+  const control = (event.currentTarget as HTMLElement).querySelector("ha-switch") as
+    (HTMLElement & { checked: boolean; disabled?: boolean }) | null;
+  if (!control || control.disabled) return;
+  control.checked = !control.checked;
+  control.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
+}
+
 function stopSummaryToggleKeydown(event: KeyboardEvent): void {
   if (event.key !== "Enter" && event.key !== " ") {
     return;
   }
-  event.preventDefault();
   event.stopPropagation();
 }

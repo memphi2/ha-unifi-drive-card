@@ -2,7 +2,8 @@
 
 ## Tooling
 
-- Node.js 24 LTS (Node.js 22.22.2 or later is also supported)
+- Node.js 26 LTS for development, CI and release builds (`nvm use`).
+- Supported Node lines: 22.22.2+, 24.15.0+ and 26.x; odd majors are excluded.
 - npm
 - TypeScript
 - ESLint
@@ -29,17 +30,52 @@ npm run release-check
 npm run security-audit
 npm run check
 npm run render-smoke
+npm run ha:components-smoke
 ```
 
 `npm run check` runs type checking, linting, unit tests, production build, HACS
 compatibility, license notice validation, anonymization checks, release metadata
-validation and a runtime dependency security audit.
+validation and a locked dependency audit covering runtime and development tools.
 
 `npm run render-smoke` builds the bundle and verifies in Chromium that the card
 renders, groups dynamic UniFi Drive entities, hides dangerous actions by
 default, validates overview tile columns, flows from a narrow dashboard column
 into a reordered wide horizontal layout, and dispatches tap, double-tap and hold
 actions.
+
+`npm run ha:components-smoke` loads the original HA 2026.4.0 frontend
+(`20260325.5`) and HA 2026.11.0 frontend (`20261028.4`) from SHA-256-pinned
+PyPI wheels. Pass `-- minimum` or `-- current` to run a single baseline.
+It renders the card and its
+visual editor against original HA components and types a name through the real
+text selector, then toggles compact mode using the real switch, its label and
+the keyboard. It checks help tooltips through keyboard focus, Escape and touch
+at 390px and 900px viewport widths, including their bounds and absence of
+unintended setting changes. Set `HA_COMPONENTS_SCREENSHOT_DIR` to retain these
+synthetic editor screenshots outside the repository.
+Registry, context and API data are synthetic. This checks frontend
+compatibility; it does not test a live HA backend, device services, or a Marketplace
+installation. The `hacs.json` minimum is tied to the tested 2026.4.0 baseline.
+
+If Chromium reports `Disk quota exceeded` for its temporary profile, select a
+writable temporary filesystem, for example `TMPDIR=/var/tmp npm run render-smoke`.
+The test does not retry or suppress browser errors.
+
+CI and release automation run the original-component test and the synthetic
+render smoke. Releases also validate storage fixtures and compare the ZIP
+members byte-for-byte with the generated bundle and source map using
+`npm run release-archive-check -- release/ha-unifi-drive-card.zip`.
+The unit-check job runs on Node 22, 24 and 26. CodeQL analyzes JavaScript and
+TypeScript on pull requests, main pushes and a weekly schedule.
+Workflow security tests parse the YAML and guard immutable action pins, checkout
+credentials, job limits, the stable protected `test` check, separate publication
+permissions and Dependabot update scope. Quarterly routine updates are grouped;
+npm majors require separate compatibility review. GitHub security-update settings
+are managed separately from the committed Dependabot configuration.
+
+`npm run deprecation-check` rejects packages marked as deprecated in the lockfile.
+It runs as part of `npm run check`; refresh dependencies regularly because registry
+deprecations added after lockfile generation are not recorded in that file.
 
 `npm run anonymization-check:github` scans GitHub release bodies, issue/PR
 titles and bodies, comments, and recent commit messages for private LAN IPs and

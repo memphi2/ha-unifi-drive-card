@@ -1,12 +1,12 @@
 {
   "name": "ha-unifi-drive-card",
-  "version": "0.3.5",
-  "description": "Mushroom-style Lovelace card for the UniFi Drive / UNAS Home Assistant integration.",
+  "version": "0.3.6",
+  "description": "Unifi Drive / UNAS Card for the Home Assistant unifi_unas integration.",
   "type": "module",
   "private": false,
   "license": "MIT",
   "engines": {
-    "node": "^22.22.2 || ^24.15.0"
+    "node": "^22.22.2 || ^24.15.0 || ^26.0.0"
   },
   "repository": {
     "type": "git",
@@ -20,16 +20,19 @@
     "anonymization-check:github": "node scripts/anonymization_check_github.mjs",
     "build": "vite build",
     "anonymization-check": "node scripts/anonymization_check.mjs",
-    "check": "npm run typecheck && npm run lint && npm run test && npm run build && npm run compat && npm run pin-check && npm run license-check && npm run anonymization-check && npm run release-check && npm run security-audit",
+    "check": "npm run typecheck && npm run lint && npm run test && npm run build && npm run compat && npm run pin-check && npm run license-check && npm run anonymization-check && npm run release-check && npm run deprecation-check && npm run security-audit",
+    "deprecation-check": "node scripts/deprecated_dependency_check.mjs",
     "compat": "node scripts/compat_check.mjs",
     "pin-check": "node scripts/action_pin_check.mjs",
     "ha:live-entity-audit": "node scripts/ha_live_entity_audit.mjs",
     "ha:storage-smoke": "node scripts/ha_storage_smoke.mjs",
+    "ha:components-smoke": "npm run build && node scripts/ha_components_smoke.mjs",
+    "release-archive-check": "node scripts/release_archive_check.mjs",
     "license-check": "node scripts/license_check.mjs",
     "lint": "eslint . --max-warnings=0",
     "release-check": "node scripts/release_check.mjs",
     "render-smoke": "npm run build && node scripts/render_smoke.mjs",
-    "security-audit": "npm audit --omit=dev --audit-level=moderate",
+    "security-audit": "npm audit --package-lock-only --audit-level=low",
     "smoke": "node scripts/ha_card_smoke.mjs",
     "smoke:install-uninstall": "npm run build && node scripts/ha_card_smoke.mjs --deploy --uninstall",
     "test": "vitest run",
@@ -48,13 +51,17 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@types/node": "^26.6.5",
-    "eslint": "^10.12.0",
-    "jsdom": "^30.1.2",
-    "puppeteer-core": "^25.13.0",
+    "@types/node": "^26.6.6",
+    "eslint": "^10.14.0",
+    "jsdom": "^30.1.3",
+    "puppeteer-core": "^25.16.0",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.71.2",
-    "vite": "^8.3.4",
-    "vitest": "^5.0.4"
+    "typescript-eslint": "^8.72.1",
+    "vite": "^8.3.6",
+    "vitest": "^5.1.0",
+    "yaml": "^2.9.1"
+  },
+  "overrides": {
+    "minimatch": "^11.0.1"
   }
 }

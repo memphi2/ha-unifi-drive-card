@@ -7,6 +7,8 @@ Releases are produced by GitHub Actions, not from unvalidated local builds.
 ```bash
 npm run check
 npm run render-smoke
+npm run ha:components-smoke
+npm run ha:storage-smoke -- test/fixtures/ha-config
 ```
 
 `npm run check` includes the release metadata gate for the current
@@ -57,6 +59,14 @@ The release workflow runs validation, packages `ha-unifi-drive-card.js`,
 `ha-unifi-drive-card.js.map` and `ha-unifi-drive-card.zip`, then publishes the
 GitHub release for tag-triggered runs. Do not create or push this tag during
 release-prep-only work.
+
+The workflow rejects ZIP archives whose members differ from the generated
+bundle and source map. Its dependency audit includes development tools and
+fails for low-severity findings or higher.
+Build and validation run with read-only permissions. A separate publication job
+downloads the validated bundle, map, ZIP and version-specific notes from the same
+workflow run and holds the release write permission. It executes no repository
+code. The ZIP itself contains only the bundle and source map.
 
 ## Compliance Checklist
 

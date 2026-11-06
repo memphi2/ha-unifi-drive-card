@@ -6,6 +6,58 @@
 
 - None pending.
 
+## 0.3.6 - 2026-11-06
+
+### Changed
+
+- Updated the CI and test toolchain to current compatible releases.
+- Pinned transitive `minimatch` resolution to the patched 11.x line, removing
+  development-tooling audit findings from the ESLint and TypeScript-ESLint
+  dependency paths.
+- Renamed the Marketplace and card-picker display name to `Unifi Drive / UNAS Card`.
+- Added the Home Assistant Marketplace installation path and its automatic
+  resource versioning documentation.
+- Added a real-integration entity contract fixture to protect discovery and
+  dynamic group compatibility.
+- Hardened CI and release automation with Node 26, pinned GitHub Actions,
+  dependency auditing and Dependabot security updates.
+- Added checks against original HA 2026.11 frontend components and byte-exact
+  release archive validation, following the DHE Connect Card test approach.
+- Corrected default-catalog installation instructions and limited supported
+  Node versions to the maintained 22, 24 and 26 lines.
+- Added a Node 22/24/26 CI matrix and scheduled JavaScript/TypeScript CodeQL analysis.
+- Validated the minimum HA 2026.4.0 frontend alongside 2026.11.0 and declared
+  that minimum in Marketplace metadata.
+- Added locked-package deprecation, source-map integrity and release-tag checks.
+- Aligned quarterly grouped Dependabot maintenance with the integration repos,
+  retaining separate immediate security updates and reviewed npm major changes.
+- Isolated release publication from read-only builds and added workflow policy
+  tests, bounded jobs and a stable protected Node-matrix result check.
+- Share discovery state projections across cards and ignore state-map ordering
+  changes to avoid redundant discovery work.
+- Updated the locked transitive `undici` dependency to its current patched 8.x
+  version before release.
+- Make editor help available through keyboard focus and touch, with visible
+  tooltips that fit mobile and desktop viewports.
+
+### Fixed
+
+- Cancel pending tap and hold gestures when card configuration changes so an
+  interaction started under the old configuration cannot run a new action.
+- Preserve explicitly empty section selections, invalidate discovery on dynamic
+  group attribute changes, and preserve new service locks after reconnects.
+- Refresh cached section values and names when Home Assistant replaces its
+  formatting helpers without a state change.
+- Never substitute an auto-discovered entity for a missing or wrong-domain
+  explicit override, including system action buttons.
+- Prefer registry translation keys over misleading entity ID suffixes so pool
+  readings and renamed actions cannot be mistaken for aggregate values or other
+  controls.
+- Keep switch labels clickable and help controls independent of their switches.
+- Close hover-only help when the pointer leaves while keeping keyboard-focused
+  help open.
+- Label tap, hold and double-tap settings as card actions, not backups.
+
 ## 0.3.5 - 2026-10-13
 
 ### Fixed

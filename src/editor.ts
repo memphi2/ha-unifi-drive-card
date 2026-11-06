@@ -166,7 +166,7 @@ export class UnifiDriveCardEditor extends LitElement {
         <section class="actions-editor">
           ${editorFoldout(this.hass, {
             className: "actions-foldout",
-            titleKey: "section.actions",
+            titleKey: "editor.actions",
             helpKey: "editor.actions_help",
             content: html`
               <div class="action-list">

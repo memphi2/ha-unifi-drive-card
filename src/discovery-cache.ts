@@ -8,18 +8,26 @@ import type {
 
 const DISCOVERY_DOMAINS = new Set(ENTITY_DEFINITIONS.map((definition) => definition.domain));
 const CONFIG_SIGNATURE_CACHE = new WeakMap<NormalizedUnifiDriveCardConfig, string>();
+const DISCOVERY_ATTRIBUTES = [
+  "friendly_name", "pool_key", "pool_name", "drive_key", "drive_name",
+  "target_key", "target_name", "target_type", "task_id", "task_name",
+];
+type StateSnapshot = ReadonlyMap<string, string>;
+// HA replaces state maps; share projections without retaining old snapshots globally.
+const STATE_SNAPSHOTS = new WeakMap<HomeAssistant["states"], StateSnapshot>();
+const EMPTY_STATE_SNAPSHOT: StateSnapshot = new Map();
 
 export class DiscoveryCache {
   private _entry?: {
     configSignature: string;
     registrySignature: string;
-    stateSignature: string;
+    stateSnapshot: StateSnapshot;
     discovered: DiscoveredEntities;
   };
   private _registrySource?: HomeAssistant["entities"];
   private _registrySignatureCache = "";
   private _stateSource?: HomeAssistant["states"];
-  private _stateSignatureCache = "";
+  private _stateSnapshotCache = EMPTY_STATE_SNAPSHOT;
 
   public get(
     hass: HomeAssistant,
@@ -35,12 +43,12 @@ export class DiscoveryCache {
       return this._entry.discovered;
     }
     const registrySignature = this._registrySignature(hass);
-    const stateSignature = this._stateSignature(hass);
+    const stateSnapshot = this._stateSnapshot(hass);
     if (
       this._entry &&
       this._entry.configSignature === configSignature &&
       this._entry.registrySignature === registrySignature &&
-      this._entry.stateSignature === stateSignature
+      equalStateSnapshots(this._entry.stateSnapshot, stateSnapshot)
     ) {
       return this._entry.discovered;
     }
@@ -48,7 +56,7 @@ export class DiscoveryCache {
     this._entry = {
       configSignature,
       registrySignature,
-      stateSignature,
+      stateSnapshot,
       discovered,
     };
     return discovered;
@@ -59,7 +67,7 @@ export class DiscoveryCache {
     this._registrySource = undefined;
     this._registrySignatureCache = "";
     this._stateSource = undefined;
-    this._stateSignatureCache = "";
+    this._stateSnapshotCache = EMPTY_STATE_SNAPSHOT;
   }
 
   private _registrySignature(hass: HomeAssistant): string {
@@ -72,14 +80,14 @@ export class DiscoveryCache {
     return this._registrySignatureCache;
   }
 
-  private _stateSignature(hass: HomeAssistant): string {
+  private _stateSnapshot(hass: HomeAssistant): StateSnapshot {
     const source = hass.states;
     if (this._stateSource === source) {
-      return this._stateSignatureCache;
+      return this._stateSnapshotCache;
     }
     this._stateSource = source;
-    this._stateSignatureCache = stateSignature(hass);
-    return this._stateSignatureCache;
+    this._stateSnapshotCache = stateSnapshot(hass);
+    return this._stateSnapshotCache;
   }
 }
 
@@ -113,9 +121,16 @@ function registrySignature(hass: HomeAssistant): string {
   return signature;
 }
 
-function stateSignature(hass: HomeAssistant): string {
-  const states = hass.states && typeof hass.states === "object" ? hass.states : {};
-  let signature = "";
+function stateSnapshot(hass: HomeAssistant): StateSnapshot {
+  const states = hass.states;
+  if (!states || typeof states !== "object" || Array.isArray(states)) {
+    return EMPTY_STATE_SNAPSHOT;
+  }
+  const cached = STATE_SNAPSHOTS.get(states);
+  if (cached) {
+    return cached;
+  }
+  const snapshot = new Map<string, string>();
   for (const entityId in states) {
     if (!hasOwn(states, entityId)) {
       continue;
@@ -124,13 +139,26 @@ function stateSignature(hass: HomeAssistant): string {
       continue;
     }
     const state = states[entityId];
-    const friendly =
+    const attributes =
       state?.attributes && typeof state.attributes === "object" && !Array.isArray(state.attributes)
-        ? state.attributes.friendly_name ?? ""
-        : "";
-    signature += `${entityId}\u001f${typeof friendly === "string" ? friendly : ""}\u001e`;
+        ? state.attributes
+        : {};
+    snapshot.set(entityId, JSON.stringify([Boolean(state), ...DISCOVERY_ATTRIBUTES.map((key) => {
+      const value = attributes[key];
+      return value == null ? "" : String(value).trim();
+    })]));
   }
-  return signature;
+  STATE_SNAPSHOTS.set(states, snapshot);
+  return snapshot;
+}
+
+function equalStateSnapshots(left: StateSnapshot, right: StateSnapshot): boolean {
+  if (left === right) return true;
+  if (left.size !== right.size) return false;
+  for (const [entityId, signature] of left) {
+    if (right.get(entityId) !== signature) return false;
+  }
+  return true;
 }
 
 function supportedDomain(entityId: string): boolean {

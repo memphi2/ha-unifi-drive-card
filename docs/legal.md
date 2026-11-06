@@ -19,7 +19,8 @@ or documentation.
 Repository hygiene commitments:
 
 - Use third-party names only when needed to describe compatibility.
-- Keep the user-facing project name trademark-neutral: `Drive Storage Card`.
+- Use `Unifi Drive / UNAS Card` only as a descriptive compatibility name and
+  do not imply affiliation with a trademark owner.
 - Keep credentials, tokens, cookies, hostnames, internal IP addresses and private
   screenshots out of committed files.
 - Use environment variables for live Home Assistant smoke tests.
@@ -45,8 +46,9 @@ repository should be read as an official certification, partnership, authorized
 reseller status, support relationship or compatibility guarantee from any of
 those parties.
 
-The user-facing project name is `Drive Storage Card` to avoid presenting a
-third-party mark as this project's own brand. Technical identifiers such as
+The user-facing project name `Unifi Drive / UNAS Card` uses third-party terms
+only to describe compatibility. It does not identify an official vendor product
+or imply affiliation with a vendor. Technical identifiers such as
 `ha-unifi-drive-card`, `unifi-drive-card` and `unifi_unas` are retained for
 repository, HACS and Home Assistant compatibility.
 
@@ -57,8 +59,8 @@ synthetic Home Assistant state data.
 
 Trademark usage rules for this repository:
 
-- Do not use Ubiquiti, UniFi, Home Assistant, HACS or Mushroom names as the
-  user-facing project brand.
+- Use Ubiquiti, UniFi, Home Assistant, HACS and Mushroom names only when they
+  accurately describe compatibility.
 - Do not use third-party marks in a way that implies sponsorship, endorsement,
   official status, reseller status or affiliation.
 - Do not copy, alter, animate or visually imitate third-party logos, product

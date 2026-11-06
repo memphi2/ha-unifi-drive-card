@@ -3,13 +3,16 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "quarterly"
       time: "05:00"
-      timezone: "Europe/Berlin"
-    open-pull-requests-limit: 5
+      timezone: "Europe/Paris"
+    open-pull-requests-limit: 1
     groups:
       github-actions:
+        applies-to: "version-updates"
+        patterns: ["*"]
+      github-actions-security:
+        applies-to: "security-updates"
         patterns:
           - "*"
     commit-message:
@@ -18,24 +21,20 @@ updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "monthly"
+      interval: "quarterly"
       time: "05:30"
-      timezone: "Europe/Berlin"
-    open-pull-requests-limit: 3
+      timezone: "Europe/Paris"
+    open-pull-requests-limit: 1
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
-      npm-patch-minor:
+      npm-tooling:
+        applies-to: "version-updates"
+        patterns: ["*"]
+      npm-security:
+        applies-to: "security-updates"
         patterns:
           - "*"
-        update-types:
-          - "minor"
-          - "patch"
     commit-message:
       prefix: "deps"
-    ignore:
-      # Majors are compatibility work, not routine maintenance. Two of them are
-      # not ours to pick freely: lit has to stay on the line the Home Assistant
-      # frontend ships, or the card loads a second copy of it, and @types/node
-      # has to match the engines range this package declares.
-      - dependency-name: "*"
-        update-types:
-          - "version-update:semver-major"

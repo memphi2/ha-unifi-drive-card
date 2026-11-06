@@ -4,6 +4,54 @@ import type { UnifiDriveCardEditor } from "../src/editor";
 import type { HomeAssistant, UnifiDriveCardConfig } from "../src/types";
 
 describe("UnifiDriveCardEditor", () => {
+  it("toggles a switch exactly once when its label is clicked", async () => {
+    const listener = vi.fn();
+    const editor = await createEditor({ listener });
+    const label = editor.shadowRoot!.querySelector<HTMLElement>(".advanced-group .switch-formfield-label")!;
+    label.click();
+    await editor.updateComplete;
+    expect(listener).toHaveBeenCalledOnce();
+    expect(getLatestConfig(listener).compact).toBe(false);
+    label.click();
+    await editor.updateComplete;
+    expect(listener).toHaveBeenCalledTimes(2);
+    expect(getLatestConfig(listener).compact).toBe(true);
+    editor.remove();
+  });
+
+  it("associates help with visible tooltips without toggling settings or foldouts", async () => {
+    const listener = vi.fn();
+    const editor = await createEditor({ listener });
+    const foldout = editor.shadowRoot!.querySelector<HTMLDetailsElement>("details.advanced-editor")!;
+    const help = foldout.querySelector<HTMLButtonElement>("summary .help-icon")!;
+    const tooltip = foldout.querySelector<HTMLElement>("summary .help-tooltip")!;
+    const show = vi.fn();
+    const hide = vi.fn();
+    Object.defineProperty(tooltip, "showPopover", { value: show });
+    Object.defineProperty(tooltip, "hidePopover", { value: hide });
+    expect(help.getAttribute("aria-describedby")).toBe(tooltip.id);
+    expect(tooltip.getAttribute("role")).toBe("tooltip");
+    expect(tooltip.textContent?.trim()).toBe(help.getAttribute("aria-label"));
+    help.focus();
+    help.click();
+    expect(show).toHaveBeenCalledTimes(2);
+    help.closest(".help-control")!.dispatchEvent(new Event("pointerleave"));
+    expect(hide).not.toHaveBeenCalled();
+    help.blur();
+    hide.mockClear();
+    help.closest(".help-control")!.dispatchEvent(new Event("pointerenter"));
+    expect(show).toHaveBeenCalledTimes(3);
+    help.closest(".help-control")!.dispatchEvent(new Event("pointerleave"));
+    expect(hide).toHaveBeenCalledOnce();
+    expect(foldout.open).toBe(false);
+    const key = new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true });
+    help.dispatchEvent(key);
+    expect(key.defaultPrevented).toBe(false);
+    foldout.querySelector<HTMLButtonElement>(".advanced-group .help-icon")!.click();
+    expect(listener).not.toHaveBeenCalled();
+    editor.remove();
+  });
+
   it("renders compact defaults and advanced action controls", async () => {
     const editor = await createEditor({
       config: { device_id: "device-a" },
@@ -22,6 +70,10 @@ describe("UnifiDriveCardEditor", () => {
     expect(text).toContain("Sections");
     expect(text).toContain("Overview tiles");
     expect(text).toContain("Tap action");
+    expect(editor.shadowRoot?.querySelector(".actions-foldout > summary .summary-label")?.textContent)
+      .toContain("Actions");
+    expect(editor.shadowRoot?.querySelector(".actions-foldout > summary .summary-label")?.textContent)
+      .not.toContain("Backups");
     expect(text).toContain("Hold action");
     expect(text).toContain("Selected entities");
     expect(text).not.toContain("Overview columns");

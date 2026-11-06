@@ -1,10 +1,82 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { normalizeConfig } from "../src/config";
 import { DiscoveryCache } from "../src/discovery-cache";
 import type { HomeAssistant } from "../src/types";
 import { INTEGRATION_DOMAIN } from "../src/types";
 
 describe("DiscoveryCache", () => {
+  it("shares discovery state projections across cards with different configurations", () => {
+    const hass = hassFixture();
+    const projectName = vi.fn(() => "Pool 1");
+    Object.defineProperty(hass.states["sensor.pool_status"]!.attributes, "pool_name", {
+      get: projectName,
+    });
+    const config = normalizeConfig({ hide_entities: ["pool_status"] });
+    new DiscoveryCache().get(hass, config);
+    expect(projectName).toHaveBeenCalledOnce();
+    new DiscoveryCache().get(hass, normalizeConfig({ ...config, device_id: "device-a" }));
+    expect(projectName).toHaveBeenCalledOnce();
+  });
+
+  it("reuses discovery when HA reorders equivalent states", () => {
+    const hass = hassFixture();
+    const cache = new DiscoveryCache();
+    const config = normalizeConfig({});
+    const initial = cache.get(hass, config);
+    expect(cache.get({ ...hass, states: Object.fromEntries(Object.entries(hass.states).reverse()) }, config))
+      .toBe(initial);
+  });
+
+  it("refreshes overrides as selected entities appear and disappear", () => {
+    const cache = new DiscoveryCache();
+    const hass = hassFixture();
+    const config = normalizeConfig({ entities: { usage_percent: "sensor.selected_usage" } });
+    expect(cache.get(hass, config).entityIds.usage_percent).toBeUndefined();
+    const selected = { ...hass, states: { ...hass.states, "sensor.selected_usage": entity("71", {}) } };
+    expect(cache.get(selected, config).entityIds.usage_percent).toBe("sensor.selected_usage");
+    expect(cache.get(hass, config).entityIds.usage_percent).toBeUndefined();
+  });
+
+  it.each([
+    ["pool", "sensor", "pool_status", "pool_key", "pool_name"],
+    ["drive", "sensor", "drive_status", "drive_key", "drive_name"],
+    ["snapshot", "switch", "snapshot_enabled", "target_key", "target_name"],
+    ["backup", "button", "backup_task", "task_id", "task_name"],
+  ] as const)("refreshes %s identity and labels from integration attributes", (kind, domain, key, idKey, nameKey) => {
+    const cache = new DiscoveryCache();
+    const config = normalizeConfig({ device_id: "device-a" });
+    const entityId = `${domain}.group_fixture`;
+    const fixture = (id: string, name: string): HomeAssistant => ({
+      states: { [entityId]: entity("on", { [idKey]: id, [nameKey]: name }) },
+      entities: { [entityId]: registry(key) },
+      callService: async () => undefined,
+    });
+    cache.get(fixture("first", "First group"), config);
+    const updated = cache.get(fixture("second", "Second group"), config);
+    expect(updated.groups[kind]).toHaveLength(1);
+    expect(updated.groups[kind][0]).toMatchObject({ id: "second", name: "Second group" });
+  });
+
+  it("invalidates when a pool is renamed without a friendly-name change", () => {
+    const cache = new DiscoveryCache();
+    const config = normalizeConfig({});
+    const first = cache.get(hassFixture("Pool 1"), config);
+    const second = cache.get(hassFixture("Pool 2"), config);
+    expect(second).not.toBe(first);
+    expect(second.groups.pool[0]?.name).toBe("Pool 2");
+  });
+
+  it("keeps discovery cached when only sensor readings change", () => {
+    const cache = new DiscoveryCache();
+    const config = normalizeConfig({});
+    const initial = hassFixture();
+    const first = cache.get(initial, config);
+    const updated = { ...initial, states: { ...initial.states,
+      "sensor.usage": entity("75", {}),
+    } };
+    expect(cache.get(updated, config)).toBe(first);
+  });
+
   it("reuses discovery when equivalent HA snapshots arrive with new objects", () => {
     const cache = new DiscoveryCache();
     const first = cache.get(hassFixture(), normalizeConfig({}));

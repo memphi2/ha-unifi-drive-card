@@ -169,6 +169,14 @@ entities:
   usage_percent: sensor.custom_usage
 ```
 
+If an explicitly selected entity is missing or belongs to the wrong domain, the
+card does not replace it with an automatically discovered entity. Correct or
+remove the override to restore the control. Missing optional entities can be
+shown as non-operable placeholders with `show_optional: true`.
+
+Registry translation keys take precedence over renamed entity IDs. For example,
+a pool usage sensor is not used as the appliance's aggregate storage usage.
+
 Dynamic pools, drives, snapshots and backup tasks are grouped from entity
 attributes such as `pool_key`, `drive_key`, `target_key` and `task_id`.
 

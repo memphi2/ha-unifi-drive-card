@@ -3,6 +3,68 @@ import { UnifiDriveCard } from "../src/unifi-drive-card";
 import { INTEGRATION_DOMAIN, type HomeAssistant } from "../src/types";
 
 describe("UnifiDriveCard rendering", () => {
+  it.each(["formatEntityState", "formatEntityName"] as const)(
+    "refreshes cached sections when HA replaces %s with stable states",
+    async (formatter) => {
+      const hass = { ...hassFixture(), [formatter]: () => "Before formatting change" };
+      const card = await renderCard(hass, { sections: ["storage"] });
+      const sectionText = () => card.shadowRoot!.querySelector('[data-section="storage"]')!.textContent;
+      expect(sectionText()).toContain("Before formatting change");
+      card.hass = { ...hass, [formatter]: () => "After formatting change" };
+      await card.updateComplete;
+      expect(sectionText()).toContain("After formatting change");
+      expect(sectionText()).not.toContain("Before formatting change");
+      card.remove();
+    },
+  );
+
+  it("does not expose a replacement shutdown control for a missing override", async () => {
+    const hass = hassFixture();
+    const card = await renderCard(hass, {
+      sections: ["system"], show_dangerous_actions: true, show_optional: true,
+      entities: { shutdown: "button.selected_shutdown" },
+    });
+    const row = card.shadowRoot!.querySelector('[data-entity-key="shutdown"]')!;
+    expect(row.querySelector("button.chip")).toBeNull();
+    expect(hass.callService).not.toHaveBeenCalled();
+    card.remove();
+  });
+
+  it.each(["tap", "hold"])("cancels pending %s actions when configuration changes", async (trigger) => {
+    const card = await renderCard(hassFixture(), {
+      sections: ["overview"],
+      tap_action: { action: "more-info" },
+      double_tap_action: { action: "toggle" },
+      hold_action: { action: "navigate", navigation_path: "/old" },
+    });
+    const actionSpy = vi.fn();
+    card.addEventListener("hass-action", actionSpy);
+    vi.useFakeTimers();
+    try {
+      const row = card.shadowRoot!.querySelector<HTMLButtonElement>(".metric.entity-action")!;
+      if (trigger === "tap") {
+        row.click();
+      } else {
+        row.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true, button: 0 }));
+        await vi.advanceTimersByTimeAsync(550);
+      }
+      card.setConfig({
+        type: "custom:unifi-drive-card", sections: ["overview"],
+        tap_action: { action: "navigate", navigation_path: "/new" },
+        hold_action: { action: "navigate", navigation_path: "/new" },
+      });
+      await card.updateComplete;
+      row.dispatchEvent(new MouseEvent("pointerup", { bubbles: true, button: 0 }));
+      await vi.advanceTimersByTimeAsync(600);
+      expect(actionSpy).not.toHaveBeenCalled();
+      card.shadowRoot!.querySelector<HTMLButtonElement>(".metric.entity-action")!.click();
+      expect(actionSpy).toHaveBeenCalledOnce();
+    } finally {
+      card.remove();
+      vi.useRealTimers();
+    }
+  });
+
   it("renders aggregate storage, dynamic groups and hides dangerous actions by default", async () => {
     const card = await renderCard(hassFixture(), {
       sections: ["overview", "pools", "drives", "snapshots", "system"],

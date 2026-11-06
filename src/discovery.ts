@@ -82,9 +82,11 @@ export function discoverEntities(
       continue;
     }
     const explicit = explicitEntity(config, definition.key, definition.domain);
-    const explicitEntityId = existingEntity(states, explicit, definition.domain);
-    if (explicitEntityId) {
-      entityIds[definition.key] = explicitEntityId;
+    if (explicit !== undefined) {
+      const explicitEntityId = existingEntity(states, explicit, definition.domain);
+      if (explicitEntityId) {
+        entityIds[definition.key] = explicitEntityId;
+      }
       continue;
     }
     const discovered = discoverEntityForDefinition(
