@@ -67,7 +67,7 @@ if (hacs.filename === EXPECTED_FILENAME && hacs.name === "Unifi Drive / UNAS Car
 requireIncludes("CHANGELOG.md", changelog, `## ${EXPECTED_VERSION} -`, "changelog has dated release entry");
 requireIncludes(releaseNotesPath, releaseNotes, `# Unifi Drive / UNAS Card ${EXPECTED_VERSION}`, "release notes exist");
 requireIncludes(releaseNotesPath, releaseNotes, "Built with Codex", "release notes credit Codex");
-requireIncludes(".github/workflows/release.yml", releaseWorkflow, `body_path: release-notes/${"${{ github.ref_name }}.md"}`, "release workflow uses tag-specific notes");
+requireIncludes(".github/workflows/release.yml", releaseWorkflow, "body_path: release/release-notes.md", "release workflow uses validated release notes artifact");
 requireIncludes(".github/workflows/release.yml", releaseWorkflow, EXPECTED_FILENAME, "release workflow uploads JS asset");
 requireIncludes(".github/workflows/release.yml", releaseWorkflow, `${EXPECTED_FILENAME}.map`, "release workflow uploads sourcemap asset");
 requireIncludes(".github/workflows/release.yml", releaseWorkflow, "ha-unifi-drive-card.zip", "release workflow uploads ZIP asset");

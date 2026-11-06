@@ -29,11 +29,17 @@
 - Validated the minimum HA 2026.4.0 frontend alongside 2026.11.0 and declared
   that minimum in Marketplace metadata.
 - Added locked-package deprecation, source-map integrity and release-tag checks.
+- Aligned quarterly grouped Dependabot maintenance with the integration repos,
+  retaining separate immediate security updates and reviewed npm major changes.
+- Isolated release publication from read-only builds and added workflow policy
+  tests, bounded jobs and a stable protected Node-matrix result check.
 
 ### Fixed
 
 - Cancel pending tap and hold gestures when card configuration changes so an
   interaction started under the old configuration cannot run a new action.
+- Preserve explicitly empty section selections, invalidate discovery on dynamic
+  group attribute changes, and preserve new service locks after reconnects.
 
 ## 0.3.5 - 2026-10-13
 

@@ -63,6 +63,11 @@ members byte-for-byte with the generated bundle and source map using
 `npm run release-archive-check -- release/ha-unifi-drive-card.zip`.
 The unit-check job runs on Node 22, 24 and 26. CodeQL analyzes JavaScript and
 TypeScript on pull requests, main pushes and a weekly schedule.
+Workflow security tests parse the YAML and guard immutable action pins, checkout
+credentials, job limits, the stable protected `test` check, separate publication
+permissions and Dependabot update scope. Quarterly routine updates are grouped;
+npm majors require separate compatibility review. GitHub security-update settings
+are managed separately from the committed Dependabot configuration.
 
 `npm run deprecation-check` rejects packages marked as deprecated in the lockfile.
 It runs as part of `npm run check`; refresh dependencies regularly because registry

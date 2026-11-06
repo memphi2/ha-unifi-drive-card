@@ -192,6 +192,7 @@ Do not commit hostnames, IPs, tokens, passwords or screenshots with private data
 - [Troubleshooting](docs/troubleshooting.md)
 - [Development and smoke tests](docs/development.md)
 - [Legal notes](docs/legal.md)
+- [Security policy](SECURITY.md)
 - [Release process](RELEASING.md)
 - [0.3.6 release notes](release-notes/v0.3.6.md)
 - [0.3.5 release notes](release-notes/v0.3.5.md)

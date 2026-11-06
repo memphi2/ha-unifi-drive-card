@@ -3,9 +3,14 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 0
+      interval: "quarterly"
+      time: "05:00"
+      timezone: "Europe/Paris"
+    open-pull-requests-limit: 1
     groups:
+      github-actions:
+        applies-to: "version-updates"
+        patterns: ["*"]
       github-actions-security:
         applies-to: "security-updates"
         patterns:
@@ -16,9 +21,17 @@ updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 0
+      interval: "quarterly"
+      time: "05:30"
+      timezone: "Europe/Paris"
+    open-pull-requests-limit: 1
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
+      npm-tooling:
+        applies-to: "version-updates"
+        patterns: ["*"]
       npm-security:
         applies-to: "security-updates"
         patterns:

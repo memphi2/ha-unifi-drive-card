@@ -63,6 +63,10 @@ release-prep-only work.
 The workflow rejects ZIP archives whose members differ from the generated
 bundle and source map. Its dependency audit includes development tools and
 fails for low-severity findings or higher.
+Build and validation run with read-only permissions. A separate publication job
+downloads the validated bundle, map, ZIP and version-specific notes from the same
+workflow run and holds the release write permission. It executes no repository
+code. The ZIP itself contains only the bundle and source map.
 
 ## Compliance Checklist
 
