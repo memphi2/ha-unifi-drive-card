@@ -4,10 +4,23 @@
 
 ### Changed
 
+- None pending.
+
+## 0.3.6 - 2026-11-06
+
+### Changed
+
 - Updated the CI and test toolchain to current compatible releases.
 - Pinned transitive `minimatch` resolution to the patched 11.x line, removing
   development-tooling audit findings from the ESLint and TypeScript-ESLint
   dependency paths.
+- Renamed the Marketplace and card-picker display name to `Unifi Drive / UNAS Card`.
+- Added the Home Assistant Marketplace installation path and its automatic
+  resource versioning documentation.
+- Added a real-integration entity contract fixture to protect discovery and
+  dynamic group compatibility.
+- Hardened CI and release automation with Node 26, pinned GitHub Actions,
+  dependency auditing and Dependabot security updates.
 
 ## 0.3.5 - 2026-10-13
 

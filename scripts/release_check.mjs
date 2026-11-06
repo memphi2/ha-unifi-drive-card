@@ -55,14 +55,14 @@ if (typeof pkg.repository?.url === "string" && typeof pkg.bugs?.url === "string"
   fail("package repository and bugs URLs are required for release");
 }
 
-if (hacs.filename === EXPECTED_FILENAME && hacs.name === "Drive Storage Card") {
+if (hacs.filename === EXPECTED_FILENAME && hacs.name === "Unifi Drive / UNAS Card") {
   pass("HACS metadata is release-ready");
 } else {
-  fail("hacs.json must use the stable bundle filename and trademark-neutral display name");
+  fail("hacs.json must use the stable bundle filename and expected display name");
 }
 
 requireIncludes("CHANGELOG.md", changelog, `## ${EXPECTED_VERSION} -`, "changelog has dated release entry");
-requireIncludes(releaseNotesPath, releaseNotes, `# Drive Storage Card ${EXPECTED_VERSION}`, "release notes exist");
+requireIncludes(releaseNotesPath, releaseNotes, `# Unifi Drive / UNAS Card ${EXPECTED_VERSION}`, "release notes exist");
 requireIncludes(releaseNotesPath, releaseNotes, "Built with Codex", "release notes credit Codex");
 requireIncludes(".github/workflows/release.yml", releaseWorkflow, `body_path: release-notes/${"${{ github.ref_name }}.md"}`, "release workflow uses tag-specific notes");
 requireIncludes(".github/workflows/release.yml", releaseWorkflow, EXPECTED_FILENAME, "release workflow uploads JS asset");

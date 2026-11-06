@@ -35,7 +35,7 @@ export function unifiDriveEntitySuggestion(
 
 export const unifiDriveCardRegistration: CustomCardRegistration = {
   type: "unifi-drive-card",
-  name: "Drive Storage Card",
+  name: "Unifi Drive / UNAS Card",
   description: "Mushroom-style card for Home Assistant's unifi_unas integration",
   preview: true,
   documentationURL: "https://github.com/memphi2/ha-unifi-drive-card",

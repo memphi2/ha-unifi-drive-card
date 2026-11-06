@@ -1,7 +1,8 @@
-# Drive Storage Card
+# Unifi Drive / UNAS Card
 
 [![CI](https://github.com/memphi2/ha-unifi-drive-card/actions/workflows/ci.yml/badge.svg)](https://github.com/memphi2/ha-unifi-drive-card/actions/workflows/ci.yml)
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/docs/faq/custom_repositories)
+[![Marketplace](https://img.shields.io/badge/Home_Assistant-Marketplace-41BDF5?style=flat-square)](https://contributors.home-assistant.io/marketplace/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 Mushroom-style Lovelace card for the `unifi_unas` Home Assistant integration.
@@ -15,9 +16,9 @@ Built with Codex.
 
 | Compact overview | Snapshot controls |
 | --- | --- |
-| <img src="assets/screenshot-card.png" alt="Drive Storage Card compact overview" width="320"> | <img src="assets/screenshot2-card.png" alt="Drive Storage Card snapshot controls" width="320"> |
+| <img src="assets/screenshot-card.png" alt="Unifi Drive / UNAS Card compact overview" width="320"> | <img src="assets/screenshot2-card.png" alt="Unifi Drive / UNAS Card snapshot controls" width="320"> |
 | System controls | Updates and diagnostics |
-| <img src="assets/screenshot3-card.png" alt="Drive Storage Card system controls with private address redacted" width="320"> | <img src="assets/screenshot4-card.png" alt="Drive Storage Card updates and diagnostics" width="320"> |
+| <img src="assets/screenshot3-card.png" alt="Unifi Drive / UNAS Card system controls with private address redacted" width="320"> | <img src="assets/screenshot4-card.png" alt="Unifi Drive / UNAS Card updates and diagnostics" width="320"> |
 
 ## Highlights
 
@@ -54,12 +55,16 @@ device_id: your_home_assistant_device_id
 
 ## Installation
 
-Recommended path (HACS):
+[![Open in Home Assistant Marketplace](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=memphi2&repository=ha-unifi-drive-card&category=plugin)
 
-1. Add this repository as a HACS custom repository (Dashboard category).
-2. Install `Drive Storage Card`.
-3. Reload Home Assistant.
-4. Add the card to your dashboard.
+On Home Assistant 2026.11 or newer, open the button above or go to
+**Settings > Marketplace**, search for **Unifi Drive / UNAS Card**, and install it
+from the Dashboard category. Reload the browser after installation.
+
+On earlier Home Assistant versions, add this repository as a HACS custom
+repository in the Dashboard category, install `Unifi Drive / UNAS Card`, then reload
+the dashboard page. Marketplace and HACS installations use the same release
+asset; do not install a second copy or add a duplicate resource.
 
 HACS resource entry:
 
@@ -185,6 +190,7 @@ Do not commit hostnames, IPs, tokens, passwords or screenshots with private data
 - [Development and smoke tests](docs/development.md)
 - [Legal notes](docs/legal.md)
 - [Release process](RELEASING.md)
+- [0.3.6 release notes](release-notes/v0.3.6.md)
 - [0.3.5 release notes](release-notes/v0.3.5.md)
 - [0.3.4 release notes](release-notes/v0.3.4.md)
 - [0.3.3 release notes](release-notes/v0.3.3.md)
@@ -234,7 +240,7 @@ independent and is not affiliated with, sponsored by or endorsed by Ubiquiti,
 Home Assistant, HACS or Mushroom.
 
 Third-party names are used only for truthful, descriptive compatibility
-references. `Drive Storage Card` is the user-facing project name; repository,
+references. `Unifi Drive / UNAS Card` is the user-facing project name; repository,
 custom element and Home Assistant identifiers such as `ha-unifi-drive-card`,
 `unifi-drive-card` and `unifi_unas` are retained for technical compatibility
 and should not be read as ownership of any third-party mark.

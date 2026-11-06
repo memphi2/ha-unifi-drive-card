@@ -9,6 +9,9 @@ const EXPECTED_REPOSITORY = "ha-unifi-drive-card";
 const EXPECTED_CARD_TYPE = "unifi-drive-card";
 const EXPECTED_CUSTOM_ELEMENT = "unifi-drive-card";
 const EXPECTED_EDITOR_ELEMENT = "unifi-drive-card-editor";
+const EXPECTED_DISPLAY_NAME = "Unifi Drive / UNAS Card";
+const MARKETPLACE_BUTTON =
+  "https://my.home-assistant.io/redirect/marketplace_repository/?owner=memphi2&repository=ha-unifi-drive-card&category=plugin";
 
 function pass(message) {
   console.log(`PASS: ${message}`);
@@ -49,7 +52,24 @@ async function checkHacs() {
   } else {
     pass("hacs filename matches repository asset name");
   }
+  if (hacs.name !== EXPECTED_DISPLAY_NAME) {
+    fail(`hacs display name must be ${EXPECTED_DISPLAY_NAME}`);
+  } else {
+    pass("hacs display name matches Marketplace branding");
+  }
   return filename;
+}
+
+async function checkMarketplaceDocumentation() {
+  const readme = await readFile("README.md", "utf8");
+  const installation = await readFile("docs/installation.md", "utf8");
+  for (const [name, document] of [["README", readme], ["installation guide", installation]]) {
+    if (!document.includes(MARKETPLACE_BUTTON)) {
+      fail(`${name} is missing the Marketplace installation button`);
+    } else {
+      pass(`${name} links to the Marketplace installation button`);
+    }
+  }
 }
 
 async function checkPackage() {
@@ -102,6 +122,7 @@ try {
   const filename = await checkHacs();
   await checkPackage();
   await checkBundle(filename);
+  await checkMarketplaceDocumentation();
 } catch (error) {
   fail(error instanceof Error ? error.message : String(error));
 }

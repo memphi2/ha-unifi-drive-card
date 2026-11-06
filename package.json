@@ -1,12 +1,12 @@
 {
   "name": "ha-unifi-drive-card",
   "version": "0.3.6",
-  "description": "Mushroom-style Lovelace card for the UniFi Drive / UNAS Home Assistant integration.",
+  "description": "Unifi Drive / UNAS Card for the Home Assistant unifi_unas integration.",
   "type": "module",
   "private": false,
   "license": "MIT",
   "engines": {
-    "node": "^22.22.2 || ^24.15.0"
+    "node": "^22.22.2 || >=24.15.0"
   },
   "repository": {
     "type": "git",
