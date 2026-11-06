@@ -54,6 +54,8 @@
   readings and renamed actions cannot be mistaken for aggregate values or other
   controls.
 - Keep switch labels clickable and help controls independent of their switches.
+- Close hover-only help when the pointer leaves while keeping keyboard-focused
+  help open.
 - Label tap, hold and double-tap settings as card actions, not backups.
 
 ## 0.3.5 - 2026-10-13

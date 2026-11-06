@@ -126,6 +126,7 @@ function helpIconText(help: string): TemplateResult {
   return html`
     <span class="help-control"
       @pointerenter=${showHelp}
+      @pointerleave=${hideHoverHelp}
       @focusout=${hideHelp}
     >
       <button
@@ -169,6 +170,13 @@ function showHelp(event: Event): void {
 }
 
 function hideHelp(event: Event): void {
+  helpElements(event).tooltip?.hidePopover?.();
+}
+
+function hideHoverHelp(event: Event): void {
+  const control = event.currentTarget as HTMLElement;
+  const root = control.getRootNode() as Document | ShadowRoot;
+  if (control.contains(root.activeElement)) return;
   helpElements(event).tooltip?.hidePopover?.();
 }
 

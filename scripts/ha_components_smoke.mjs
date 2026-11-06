@@ -286,6 +286,15 @@ async function runBaseline(baseline) {
       await page.keyboard.press("Escape");
       await page.keyboard.press("Tab");
     }
+    const hoverHelp = await page.waitForSelector(
+      "unifi-drive-card-editor >>> .advanced-editor > summary .help-icon",
+    );
+    await hoverHelp.hover();
+    await page.waitForFunction(() => document.querySelector("unifi-drive-card-editor")
+      .shadowRoot.querySelector(".help-tooltip:popover-open"));
+    await page.mouse.move(0, 0);
+    await page.waitForFunction(() => !document.querySelector("unifi-drive-card-editor")
+      .shadowRoot.querySelector(".help-tooltip:popover-open"));
     assert.equal(await page.evaluate(() => window.__editorChanges.length), changeCount + 2,
       "Help activation must not change card settings");
     const result = await page.evaluate(() => {
