@@ -26,6 +26,14 @@
 - Corrected default-catalog installation instructions and limited supported
   Node versions to the maintained 22, 24 and 26 lines.
 - Added a Node 22/24/26 CI matrix and scheduled JavaScript/TypeScript CodeQL analysis.
+- Validated the minimum HA 2026.4.0 frontend alongside 2026.11.0 and declared
+  that minimum in Marketplace metadata.
+- Added locked-package deprecation, source-map integrity and release-tag checks.
+
+### Fixed
+
+- Cancel pending tap and hold gestures when card configuration changes so an
+  interaction started under the old configuration cannot run a new action.
 
 ## 0.3.5 - 2026-10-13
 

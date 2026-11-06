@@ -57,6 +57,12 @@ async function checkHacs() {
   } else {
     pass("hacs display name matches Marketplace branding");
   }
+  const { minimum } = await readJson("test/fixtures/ha-frontends.json");
+  if (hacs.homeassistant !== minimum.homeassistant) {
+    fail("hacs minimum Home Assistant must match the tested frontend baseline");
+  } else {
+    pass(`minimum Home Assistant ${hacs.homeassistant} matches tested baseline`);
+  }
   return filename;
 }
 
@@ -115,6 +121,20 @@ async function checkBundle(filename) {
     fail("bundle sourcemap is missing");
   } else {
     pass("bundle sourcemap exists");
+    const map = JSON.parse(await readFile(sourceMapPath, "utf8"));
+    if (
+      map.version !== 3 || map.file !== filename ||
+      !Array.isArray(map.sources) || !map.sources.length ||
+      !Array.isArray(map.sourcesContent) || map.sourcesContent.length !== map.sources.length ||
+      !map.sources.every((source) => typeof source === "string" && !/^(?:\/|[a-zA-Z]:[\\/])/.test(source)) ||
+      !map.sourcesContent.every((source) => typeof source === "string") ||
+      typeof map.mappings !== "string" || !map.mappings ||
+      !bundle.includes(`sourceMappingURL=${filename}.map`)
+    ) {
+      fail("bundle sourcemap is invalid or contains absolute source paths");
+    } else {
+      pass("bundle sourcemap is valid, linked and free of absolute source paths");
+    }
   }
 }
 

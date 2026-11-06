@@ -28,6 +28,9 @@ const pkg = await readJson("package.json");
 const lock = await readJson("package-lock.json");
 const EXPECTED_VERSION = pkg.version;
 const EXPECTED_TAG = `v${EXPECTED_VERSION}`;
+if (process.env.GITHUB_REF_TYPE === "tag" && process.env.GITHUB_REF_NAME !== EXPECTED_TAG) {
+  fail(`release tag must match package version ${EXPECTED_TAG}`);
+}
 const hacs = await readJson("hacs.json");
 const changelog = await readFile("CHANGELOG.md", "utf8");
 const releaseNotesPath = `release-notes/${EXPECTED_TAG}.md`;

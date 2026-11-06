@@ -43,13 +43,15 @@ default, validates overview tile columns, flows from a narrow dashboard column
 into a reordered wide horizontal layout, and dispatches tap, double-tap and hold
 actions.
 
-`npm run ha:components-smoke` loads the original HA 2026.11.0 frontend
-(`20261028.4`) from a SHA-256-pinned PyPI wheel. It renders the card and its
+`npm run ha:components-smoke` loads the original HA 2026.4.0 frontend
+(`20260325.5`) and HA 2026.11.0 frontend (`20261028.4`) from SHA-256-pinned
+PyPI wheels. Pass `-- minimum` or `-- current` to run a single baseline.
+It renders the card and its
 visual editor against original HA components and types a name through the real
 text selector, then toggles compact mode off and on using the real switch.
 Registry, context and API data are synthetic. This checks frontend
 compatibility; it does not test a live HA backend, device services, or a Marketplace
-installation. No minimum HA version is claimed by this test.
+installation. The `hacs.json` minimum is tied to the tested 2026.4.0 baseline.
 
 If Chromium reports `Disk quota exceeded` for its temporary profile, select a
 writable temporary filesystem, for example `TMPDIR=/var/tmp npm run render-smoke`.
@@ -61,6 +63,10 @@ members byte-for-byte with the generated bundle and source map using
 `npm run release-archive-check -- release/ha-unifi-drive-card.zip`.
 The unit-check job runs on Node 22, 24 and 26. CodeQL analyzes JavaScript and
 TypeScript on pull requests, main pushes and a weekly schedule.
+
+`npm run deprecation-check` rejects packages marked as deprecated in the lockfile.
+It runs as part of `npm run check`; refresh dependencies regularly because registry
+deprecations added after lockfile generation are not recorded in that file.
 
 `npm run anonymization-check:github` scans GitHub release bodies, issue/PR
 titles and bodies, comments, and recent commit messages for private LAN IPs and

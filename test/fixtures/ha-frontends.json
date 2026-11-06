@@ -1,4 +1,10 @@
 {
+  "minimum": {
+    "homeassistant": "2026.4.0",
+    "version": "20260325.5",
+    "url": "https://files.pythonhosted.org/packages/3b/73/84ea751185bdf90996710e836524cabd2034908a477d5bf1b61f8527c2df/home_assistant_frontend-20260325.5-py3-none-any.whl",
+    "sha256": "25142ba1c29e0b6bd8b1805893a28b6ee0190032ffe7b4fb7a02c7645feff142"
+  },
   "current": {
     "homeassistant": "2026.11.0",
     "version": "20261028.4",

@@ -3,6 +3,9 @@
 ## Before You Start
 
 - Home Assistant with dashboards enabled.
+- Home Assistant 2026.4 or newer. Original frontend components from 2026.4.0
+  and 2026.11.0 are tested in Chromium; see the
+  [validation boundaries](development.md#tooling).
 - The `unifi_unas` integration is installed and exposes entities.
 - You can refresh browser cache after updates.
 

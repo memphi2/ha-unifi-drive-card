@@ -88,6 +88,7 @@ export class UnifiDriveCard extends LitElement {
 
   public setConfig(config: UnifiDriveCardConfig): void {
     this._config = normalizeConfig(config);
+    this._actions.clear();
     this._hiddenEntitySetCache = undefined;
     this._sectionRenderCache = undefined;
   }
